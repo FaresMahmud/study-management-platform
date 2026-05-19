@@ -5,7 +5,7 @@ A full-stack study management platform built with:
 - Java
 - Spring Boot
 - React
-- PostgreSQL
+- SqlServer
 
 ## Features
 - User authentication
