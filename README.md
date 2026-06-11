@@ -1,29 +1,37 @@
 # Study Management Platform
 
-API REST para gerenciamento de estudos desenvolvida com Spring Boot, JWT e MySQL.
+Plataforma completa para gerenciamento de estudos com API REST (Spring Boot) e interface Web (React + Vite).
 
 ## Stack
 
-- Java 21
-- Spring Boot 3.2
-- Spring Security + JWT
-- Spring Data JPA
-- MySQL
-- Swagger/OpenAPI
+### Backend
+- **Java 21** com **Spring Boot 3.2**
+- **Spring Security** + **JWT** para autenticação
+- **Spring Data JPA** com **MySQL**
+- **Swagger/OpenAPI** para documentação
+
+### Frontend
+- **React 18**
+- **Vite** (Build tool)
+- **Tailwind CSS** (Estilização)
+- **Axios** (Consumo da API)
 
 ## Funcionalidades
 
-- Cadastro e login de usuários com JWT
+- Interface responsiva para gestão de estudos
+- Cadastro e login de usuários com autenticação JWT
 - Gerenciamento de matérias
 - Registro de sessões de estudo
 - Criação e acompanhamento de metas
 - Documentação automática da API via Swagger
+- Dashboard com métricas de progresso
 
 ## Pré-requisitos
 
 - Java 21
 - Maven 3.9+
 - MySQL 8+
+- Node.js 18+ e npm/yarn
 
 ## Configuração
 
@@ -42,9 +50,16 @@ API REST para gerenciamento de estudos desenvolvida com Spring Boot, JWT e MySQL
    - `JWT_SECRET`
    - `JWT_EXPIRATION`
 
-3. Verifique se o `.env` continua fora do Git. O repositório já ignora `.env`, `.env.*` e mantém `.env.example` versionado.
+3. Para o Frontend, navegue até a pasta `frontend` e configure o arquivo `.env`:
+   ```bash
+   VITE_API_URL=http://localhost:8080/api
+   ```
+
+4. Verifique se os arquivos `.env` continuam fora do Git. O repositório já ignora `.env` e `.env.*`.
 
 ## Como executar
+
+### Backend
 
 ```bash
 mvn spring-boot:run

@@ -17,6 +17,10 @@ import org.springframework.security.crypto.bcrypt.BCryptPasswordEncoder;
 import org.springframework.security.crypto.password.PasswordEncoder;
 import org.springframework.security.web.SecurityFilterChain;
 import org.springframework.security.web.authentication.UsernamePasswordAuthenticationFilter;
+import org.springframework.web.cors.CorsConfiguration;
+import org.springframework.web.cors.CorsConfigurationSource;
+import org.springframework.web.cors.UrlBasedCorsConfigurationSource;
+import java.util.List;
 
 // Configuração principal do Spring Security.
 // Define quais rotas são públicas, que a API é stateless (sem sessão) e onde o filtro JWT entra.
@@ -31,6 +35,9 @@ public class SecurityConfig {
     @Bean
     public SecurityFilterChain securityFilterChain(HttpSecurity http) throws Exception {
         http
+            // Habilita e configura CORS
+            .cors(cors -> cors.configurationSource(corsConfigurationSource()))
+            
             // CSRF desabilitado pois usamos JWT — não há cookies de sessão pra proteger
             .csrf(AbstractHttpConfigurer::disable)
 
@@ -59,6 +66,20 @@ public class SecurityConfig {
             );
 
         return http.build();
+    }
+
+    // Configuração de CORS para permitir que o frontend React acesse a API
+    @Bean
+    public CorsConfigurationSource corsConfigurationSource() {
+        CorsConfiguration configuration = new CorsConfiguration();
+        configuration.setAllowedOrigins(List.of("http://localhost:5173"));
+        configuration.setAllowedMethods(List.of("GET", "POST", "PUT", "DELETE", "OPTIONS", "PATCH"));
+        configuration.setAllowedHeaders(List.of("Authorization", "Content-Type", "Cache-Control"));
+        configuration.setAllowCredentials(true);
+
+        UrlBasedCorsConfigurationSource source = new UrlBasedCorsConfigurationSource();
+        source.registerCorsConfiguration("/**", configuration);
+        return source;
     }
 
     // Conecta o Spring Security com nosso banco: carrega o usuário pelo email e compara a senha com BCrypt.
