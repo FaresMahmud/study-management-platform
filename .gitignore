@@ -16,8 +16,7 @@ backend/!.mvn/wrapper/maven-wrapper.jar
 backend/!**/src/main/**/target/
 backend/!**/src/test/**/target/
 backend/.env
-backend/.env.*
-backend/!.env.example
+backend/.env.local
 
 # Frontend (Node/React/Vite)
 frontend/node_modules/
@@ -25,8 +24,7 @@ frontend/dist/
 frontend/dist-ssr/
 frontend/*.local
 frontend/.env
-frontend/.env.*
-frontend/!.env.example
+frontend/.env.local
 frontend/.eslintcache
 
 # Logs and system files

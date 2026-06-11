@@ -2,6 +2,13 @@
 
 Plataforma completa para gerenciamento de estudos com API REST (Spring Boot) e interface Web (React + Vite).
 
+## Estrutura do Projeto
+
+O repositório está organizado da seguinte forma:
+
+- `/backend`: API REST desenvolvida em Spring Boot.
+- `/frontend`: Aplicação Single Page (SPA) desenvolvida em React + TypeScript + Vite.
+
 ## Stack
 
 ### Backend
