@@ -37,7 +37,7 @@ export default function Register() {
       const response = await apiClient.post<AuthResponse>('/api/auth/register', {
         nameUser: name,
         email,
-        passwordUser: password,
+        password,
       });
 
       const { token, userName, userEmail } = response.data;
