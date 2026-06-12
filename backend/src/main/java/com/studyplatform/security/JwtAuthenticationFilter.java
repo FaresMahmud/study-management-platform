@@ -40,7 +40,13 @@ public class JwtAuthenticationFilter extends OncePerRequestFilter {
         }
 
         final String jwt = authHeader.substring(7);
-        final String userEmail = jwtService.extractEmail(jwt);
+        String userEmail = null;
+        try {
+            userEmail = jwtService.extractEmail(jwt);
+        } catch (io.jsonwebtoken.JwtException | IllegalArgumentException e) {
+            // Se o token for inválido, expirado ou malformado, simplesmente não autentica o contexto
+            logger.debug("Falha na validação do JWT: " + e.getMessage());
+        }
 
         // Só autentica se extraiu o email e o usuário ainda não está autenticado
         if (userEmail != null && SecurityContextHolder.getContext().getAuthentication() == null) {
