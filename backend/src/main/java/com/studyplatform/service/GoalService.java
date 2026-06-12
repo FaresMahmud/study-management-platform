@@ -68,6 +68,7 @@ public class GoalService {
                 .stream()
                 .map(goalMapper::toResponseDTO)
                 .collect(Collectors.toList());
+                .toList();
     }
 
     @Transactional(readOnly = true)
