@@ -72,7 +72,7 @@ public class SecurityConfig {
     }
 
     // Configuração de CORS para permitir que o frontend React acesse a API
-    @@Bean
+    @Bean
     public CorsConfigurationSource corsConfigurationSource() {
         CorsConfiguration configuration = new CorsConfiguration();
         if (allowedOrigins != null && !allowedOrigins.isBlank()) {
