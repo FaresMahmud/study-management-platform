@@ -466,8 +466,8 @@ export default function Dashboard() {
   }
 
   return (
-    <div>
-      <div className="title-section" style={{ marginBottom: '2rem' }}>
+    <div className="dashboard-root">
+      <div className="title-section">
         <div>
           <h1>Meu Painel de Estudos</h1>
           <p className="subtitle">Visão geral do seu foco, metas e evolução</p>
@@ -528,7 +528,7 @@ export default function Dashboard() {
       </div>
 
       {/* ── Card: Timer de Sessão Ativa ── */}
-      <div className="card" style={{ marginTop: '2rem' }}>
+      <div className="card">
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1rem' }}>
           <Timer size={18} style={{ color: 'var(--primary)', flexShrink: 0 }} />
           <h2 className="card-title" style={{ margin: 0 }}>Sessão Ativa</h2>
@@ -621,7 +621,7 @@ export default function Dashboard() {
 
       {/* ── Estado vazio ── */}
       {sessions.length === 0 ? (
-        <div className="card empty-state" style={{ marginTop: '2rem' }}>
+        <div className="card empty-state">
           <Calendar size={56} style={{ marginBottom: '1.25rem', color: 'var(--text-muted)' }} />
           <h2>Bem-vindo ao seu painel!</h2>
           <p style={{ maxWidth: '560px', margin: '0.5rem auto 1.75rem', color: 'var(--text-secondary)' }}>
@@ -634,10 +634,10 @@ export default function Dashboard() {
           </div>
         </div>
       ) : (
-        <div className="dashboard-grid" style={{ marginTop: '2rem' }}>
+        <div className="dashboard-grid">
 
           {/* Coluna Esquerda: Gráfico + Sessões Recentes */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="dashboard-coluna-esquerda">
 
             <div className="card">
               <h2 className="card-title" style={{ marginBottom: '1.25rem' }}>
@@ -712,16 +712,7 @@ export default function Dashboard() {
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '0.625rem' }}>
                   {recentSessions.map(session => (
-                    <div
-                      key={session.id}
-                      className="flex-between"
-                      style={{
-                        padding: '0.75rem 1rem',
-                        backgroundColor: 'var(--bg-tertiary)',
-                        border: '1px solid var(--border-color)',
-                        borderRadius: 'var(--radius-md)',
-                      }}
-                    >
+                    <div key={session.id} className="sessao-recente-item">
                       <div style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
                         <span className="color-dot" style={{ backgroundColor: session.subject?.color, margin: 0, flexShrink: 0 }} />
                         <div>
@@ -741,7 +732,7 @@ export default function Dashboard() {
           </div>
 
           {/* Coluna Direita: Heatmap + Metas Ativas */}
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
+          <div className="dashboard-coluna-direita">
 
             {/* ── Heatmap de Calendário Mensal ── */}
             <div className="card heatmap-card">
