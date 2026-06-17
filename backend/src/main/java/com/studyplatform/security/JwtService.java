@@ -1,18 +1,20 @@
 package com.studyplatform.security;
 
-import io.jsonwebtoken.Claims;
-import io.jsonwebtoken.Jwts;
-import io.jsonwebtoken.io.Decoders;
-import io.jsonwebtoken.security.Keys;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.security.core.userdetails.UserDetails;
-import org.springframework.stereotype.Service;
-
-import javax.crypto.SecretKey;
 import java.util.Date;
 import java.util.HashMap;
 import java.util.Map;
 import java.util.function.Function;
+
+import javax.crypto.SecretKey;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.security.core.userdetails.UserDetails;
+import org.springframework.stereotype.Service;
+
+import io.jsonwebtoken.Claims;
+import io.jsonwebtoken.Jwts;
+import io.jsonwebtoken.io.Decoders;
+import io.jsonwebtoken.security.Keys;
 
 // Cuida de tudo relacionado a JWT: gerar, validar e extrair informações dos tokens.
 // Usa a API do JJWT 0.12.x — métodos antigos como parserBuilder() e getBody()
@@ -81,8 +83,47 @@ public class JwtService {
     }
 
     // Converte o secret (String) em uma SecretKey usável pelo JJWT.
+    //
+    // Segurança/robustez:
+    // - Seu JWT_SECRET pode vir como HEX (muito comum em .env) ou como string texto.
+    // - HMAC-SHA exige uma chave binária; usar getBytes() diretamente (texto) pode gerar
+    //   tamanho/bytes incorretos e quebrar assinatura (causando 500 ao gerar token).
+    // - Aqui aceitamos HEX quando o valor parece hex (somente [0-9a-fA-F] e tamanho par).
+    //
+    // Regra:
+    // - Se for HEX -> decodifica
+    // - Caso contrário -> usa UTF-8 como fallback
     private SecretKey getSigningKey() {
-        byte[] keyBytes = secretKey.getBytes();
+        String trimmed = secretKey == null ? "" : secretKey.trim();
+        if (trimmed.isBlank()) {
+            throw new IllegalStateException("JWT_SECRET não configurado (vazio). Configure no ambiente.");
+        }
+
+        byte[] keyBytes;
+        if (looksLikeHex(trimmed)) {
+            // JwtSecret em HEX -> bytes reais
+            keyBytes = Decoders.BASE64.decode(trimmed);
+
+        } else {
+            // Compatibilidade: secret como texto
+            keyBytes = trimmed.getBytes(java.nio.charset.StandardCharsets.UTF_8);
+        }
+
+        // Keys.hmacShaKeyFor valida tamanho mínimo apropriado para HS256/HS512.
         return Keys.hmacShaKeyFor(keyBytes);
     }
+
+    private boolean looksLikeHex(String value) {
+        // HEX válido normalmente tem tamanho par e só caracteres hex
+        if (value.length() % 2 != 0) return false;
+        for (int i = 0; i < value.length(); i++) {
+            char c = value.charAt(i);
+            boolean isDigit = (c >= '0' && c <= '9');
+            boolean isLowerHex = (c >= 'a' && c <= 'f');
+            boolean isUpperHex = (c >= 'A' && c <= 'F');
+            if (!(isDigit || isLowerHex || isUpperHex)) return false;
+        }
+        return true;
+    }
+
 }
