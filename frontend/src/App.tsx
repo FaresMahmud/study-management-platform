@@ -11,6 +11,7 @@ import Goals from './pages/Goals';
 import Summaries from './pages/Summaries';
 import Analytics from './pages/Analytics';
 import Flashcards from './pages/Flashcards';
+import StudyWorkspace from './pages/StudyWorkspace';
 
 // QueryClient para gerenciamento de estado das rotas protegidas e públicas
 const queryClient = new QueryClient({
@@ -69,6 +70,7 @@ export default function App() {
             <Route path="/summaries" element={<Summaries />} />
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/flashcards" element={<Flashcards />} />
+            <Route path="/workspace" element={<StudyWorkspace />} />
           </Route>
 
           {/* Redirecionamento de rotas desconhecidas */}

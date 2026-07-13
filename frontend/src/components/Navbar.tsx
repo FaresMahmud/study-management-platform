@@ -47,6 +47,10 @@ export default function Navbar() {
             <LayoutDashboard size={18} />
             <span>Dashboard</span>
           </Link>
+          <Link to="/workspace" className={`navbar-link ${isActive('/workspace')}`}>
+            <BookOpen size={18} />
+            <span>Workspace</span>
+          </Link>
           <Link to="/summaries" className={`navbar-link ${isActive('/summaries')}`}>
             <FileText size={18} />
             <span>Resumos</span>

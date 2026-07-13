@@ -1629,3 +1629,77 @@ body.zen-mode-active .main-content {
   -webkit-backface-visibility: hidden;
 }
 
+/* PDF Sticky Notes Overlay Styles */
+.pdf-sticky-bubble {
+  position: relative;
+  cursor: pointer;
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  width: 28px;
+  height: 28px;
+  background-color: var(--bg-secondary);
+  border: 2px solid var(--primary);
+  border-radius: 50%;
+  box-shadow: var(--shadow-md);
+  transition: transform 0.2s, background-color 0.2s;
+}
+
+.pdf-sticky-bubble:hover {
+  transform: scale(1.15);
+  background-color: var(--primary-glow);
+}
+
+.pdf-sticky-tooltip {
+  visibility: hidden;
+  opacity: 0;
+  position: absolute;
+  bottom: 34px;
+  left: 50%;
+  transform: translateX(-50%);
+  width: 220px;
+  background-color: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-md);
+  padding: 10px;
+  box-shadow: var(--shadow-lg);
+  font-size: 0.8rem;
+  color: var(--text-primary);
+  z-index: 1000;
+  transition: opacity 0.2s, visibility 0.2s;
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.pdf-sticky-tooltip::after {
+  content: '';
+  position: absolute;
+  top: 100%;
+  left: 50%;
+  transform: translateX(-50%);
+  border-width: 6px;
+  border-style: solid;
+  border-color: var(--bg-secondary) transparent transparent transparent;
+}
+
+.pdf-sticky-bubble:hover .pdf-sticky-tooltip,
+.pdf-sticky-tooltip:hover {
+  visibility: visible;
+  opacity: 1;
+}
+
+.pdf-sticky-tooltip button {
+  align-self: flex-end;
+  background: none;
+  border: none;
+  cursor: pointer;
+  padding: 2px;
+  opacity: 0.7;
+  transition: opacity 0.2s;
+}
+
+.pdf-sticky-tooltip button:hover {
+  opacity: 1;
+}
+
