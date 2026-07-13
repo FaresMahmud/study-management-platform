@@ -25,12 +25,12 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar erros de autenticação (401) globalmente
+// Interceptor para tratar erros de autenticação (401 ou 403) globalmente
 apiClient.interceptors.response.use(
   (response) => response,
   (error) => {
-    if (error.response && error.response.status === 401) {
-      // Se receber 401, desloga o usuário
+    if (error.response && (error.response.status === 401 || error.response.status === 403)) {
+      // Se receber 401 ou 403, a sessão está expirada/inválida, desloga o usuário
       useAuthStore.getState().logout();
     }
     return Promise.reject(error);
