@@ -14,7 +14,8 @@ import {
   FileText,
   Flame,
   TrendingUp,
-  Brain
+  Brain,
+  HelpCircle
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -84,6 +85,27 @@ export default function Navbar() {
               <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
             </div>
           )}
+
+          <button 
+            onClick={() => window.dispatchEvent(new CustomEvent('open-onboarding'))}
+            style={{ 
+              display: 'inline-flex', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              padding: '6px', 
+              border: 'none', 
+              background: 'transparent', 
+              cursor: 'pointer', 
+              color: 'var(--text-secondary)',
+              borderRadius: '50%',
+              transition: 'background-color 0.2s'
+            }}
+            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+            title="Ver Tutorial de Onboarding"
+          >
+            <HelpCircle size={18} />
+          </button>
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
             <User size={18} />
