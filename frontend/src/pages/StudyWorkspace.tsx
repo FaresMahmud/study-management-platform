@@ -369,6 +369,39 @@ export default function StudyWorkspace() {
     uploadMutation.mutate(formData);
   };
 
+  const handleCiteInSummary = () => {
+    if (!activeFileId || !activeSummaryId) {
+      alert('Certifique-se de selecionar um PDF e abrir um resumo antes de realizar a citação.');
+      return;
+    }
+
+    const selection = window.getSelection();
+    const selectedText = selection ? selection.toString().trim() : '';
+
+    if (!selectedText) {
+      alert('Selecione algum texto na página do PDF para citar no seu resumo!');
+      return;
+    }
+
+    const activeFile = pdfFiles.find(f => f.id === activeFileId);
+    const fileName = activeFile ? activeFile.fileName : 'PDF';
+    
+    const citationHtml = `<blockquote style="border-left: 4px solid var(--primary); padding-left: 12px; margin: 12px 0; color: var(--text-secondary); font-style: italic;">
+      "${selectedText}" 
+      <span style="display: block; font-size: 0.75rem; color: var(--text-muted); margin-top: 4px; font-style: normal; font-weight: 600;">
+        — (${fileName}, pág. ${pageNum})
+      </span>
+    </blockquote><p><br></p>`;
+
+    if (editorRef.current) {
+      editorRef.current.innerHTML += citationHtml;
+      editorRef.current.focus();
+      editorRef.current.scrollTop = editorRef.current.scrollHeight;
+      handleEditorInput();
+      triggerConfetti();
+    }
+  };
+
   // Create empty summary handler
   const handleCreateSummary = () => {
     if (!selectedSubjectId) return;
@@ -609,6 +642,34 @@ export default function StudyWorkspace() {
               <Plus size={14} />
               Resumo
             </button>
+
+            {/* Split layout toggle buttons */}
+            <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '12px', marginLeft: '12px' }}>
+              <button 
+                className={`btn btn-sm ${splitRatio === 100 ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '6px', minWidth: '40px' }}
+                onClick={() => setSplitRatio(100)}
+                title="Apenas PDF"
+              >
+                PDF
+              </button>
+              <button 
+                className={`btn btn-sm ${splitRatio === 55 ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '6px', minWidth: '40px' }}
+                onClick={() => setSplitRatio(55)}
+                title="Dividido (Fibonacci)"
+              >
+                Dividido
+              </button>
+              <button 
+                className={`btn btn-sm ${splitRatio === 0 ? 'btn-primary' : 'btn-secondary'}`}
+                style={{ padding: '6px', minWidth: '40px' }}
+                onClick={() => setSplitRatio(0)}
+                title="Apenas Resumos (Zen)"
+              >
+                Zen
+              </button>
+            </div>
           </div>
         )}
       </div>
@@ -677,6 +738,16 @@ export default function StudyWorkspace() {
                       <MessageSquare size={14} />
                       Nota
                     </button>
+                    {activeSummaryId && (
+                      <button 
+                        className="btn btn-secondary btn-sm"
+                        onClick={handleCiteInSummary}
+                        title="Citar o texto selecionado no resumo"
+                      >
+                        <ArrowRight size={14} />
+                        Citar
+                      </button>
+                    )}
                   </div>
 
                   {/* Zoom controls */}
