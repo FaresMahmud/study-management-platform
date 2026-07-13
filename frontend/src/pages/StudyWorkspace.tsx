@@ -293,6 +293,42 @@ export default function StudyWorkspace() {
     }
   });
 
+  const generateAiMutation = useMutation({
+    mutationFn: async (payload: { text: string; subjectId: number }) => {
+      return (await apiClient.post('/api/ai/generate-flashcards', payload)).data;
+    },
+    onSuccess: (data: any) => {
+      triggerConfetti();
+      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
+      alert(`Copiloto IA: Gerados com sucesso ${data.length} flashcards na sua pilha de revisões! 🧠✨`);
+    },
+    onError: () => {
+      alert('Erro ao gerar flashcards via inteligência artificial.');
+    }
+  });
+
+  const handleGenerateAiFlashcards = () => {
+    if (!selectedSubjectId) return;
+    
+    const selection = window.getSelection();
+    let text = selection ? selection.toString().trim() : '';
+
+    if (!text && editorRef.current) {
+      text = editorRef.current.innerText.trim();
+    }
+
+    if (!text || text.length < 30) {
+      alert('Escreva um resumo mais detalhado (mínimo 30 caracteres) ou selecione um trecho de texto no resumo para a IA ler.');
+      return;
+    }
+
+    generateAiMutation.mutate({
+      text: text,
+      subjectId: Number(selectedSubjectId)
+    });
+  };
+
   // Upload handler
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !selectedSubjectId) return;
@@ -720,10 +756,32 @@ export default function StudyWorkspace() {
                     </span>
                   </div>
 
-                  <button className="btn btn-secondary btn-sm" onClick={handleCreateFlashcardFromSelection} title="Criar Flashcard">
-                    <Brain size={14} />
-                    <span>+ Flashcard</span>
-                  </button>
+                  <div style={{ display: 'flex', gap: '8px' }}>
+                    <button 
+                      className="btn btn-secondary btn-sm" 
+                      onClick={handleCreateFlashcardFromSelection} 
+                      title="Criar Flashcard Manual"
+                    >
+                      <Brain size={14} />
+                      <span>+ Manual</span>
+                    </button>
+                    <button 
+                      className="btn btn-primary btn-sm" 
+                      style={{ 
+                        background: 'linear-gradient(to right, var(--primary), var(--secondary))',
+                        border: 'none',
+                        color: 'white',
+                        fontWeight: 'bold',
+                        boxShadow: '0 0 10px rgba(99,102,241,0.3)'
+                      }}
+                      onClick={handleGenerateAiFlashcards} 
+                      disabled={generateAiMutation.isPending}
+                      title="Gerar Flashcards automaticamente com Inteligência Artificial"
+                    >
+                      <Sparkles size={14} className={generateAiMutation.isPending ? "animate-spin" : ""} />
+                      <span>{generateAiMutation.isPending ? "Gerando..." : "Gerar com IA"}</span>
+                    </button>
+                  </div>
                 </div>
 
                 {/* Editor Toolbar */}
