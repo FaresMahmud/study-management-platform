@@ -9,6 +9,8 @@ O repositório está organizado da seguinte forma:
 - `/backend`: API REST desenvolvida em Spring Boot.
 - `/frontend`: Aplicação Single Page (SPA) desenvolvida em React + TypeScript + Vite.
 
+Para mais informações sobre a estrutura do projeto, consulte [docs/estrutura.md](docs/estrutura.md).
+
 ## Stack
 
 ### Backend

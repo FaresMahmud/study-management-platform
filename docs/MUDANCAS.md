@@ -137,35 +137,19 @@ Cada seção descreve o que foi alterado, os arquivos afetados e o motivo da mud
 - **Motivo:** Garantir usabilidade em telas de tablet/mobile sem quebrar o layout.
 
 ### 5.5 Este arquivo de changelog
-- **O que foi feito:** Criação do `MUDANCAS.md` na raiz do projeto documentando todas as sessões de desenvolvimento. Organizado do mais antigo ao mais recente, com seção, descrição do que foi feito, arquivos afetados e motivação para cada alteração.
+- **O que foi feito:** Criação do `MUDANCAS.md` documentando todas as sessões de desenvolvimento. Organizado do mais antigo ao mais recente, com seção, descrição do que foi feito, arquivos afetados e motivação para cada alteração.
 - **Arquivos afetados:**
   - `MUDANCAS.md` *(este arquivo)*
 - **Motivo:** Facilitar a orientação de colaboradores que precisem entender rapidamente o que foi alterado e onde encontrar cada funcionalidade no código.
 
 ---
 
-## Estrutura rápida do projeto
+## Sessão 6 — Documentação: Estrutura atual do projeto
 
-```
-study-management-platform/
-├── backend/                         Spring Boot 3.2 + Java 21
-│   └── src/main/java/com/studyplatform/
-│       ├── controller/              Endpoints REST (auth, subjects, sessions, goals)
-│       ├── service/                 Lógica de negócio + recálculo automático
-│       ├── repository/              Spring Data JPA + queries JPQL customizadas
-│       ├── dto/                     DTOs de request e response
-│       ├── mapper/                  Conversão entidade ↔ DTO
-│       ├── entity/                  Entidades JPA (User, Subject, StudySession, Goal)
-│       ├── exception/               GlobalExceptionHandler + exceptions customizadas
-│       └── security/                JWT filter + configuração Spring Security
-│
-├── frontend/                        React 18 + Vite + TypeScript
-│   └── src/
-│       ├── pages/                   Dashboard, Goals, StudySessions, Subjects, Login, Register
-│       ├── api/client.ts            Axios com interceptors de auth e log de erros
-│       ├── store/authStore.ts       Zustand — estado de autenticação
-│       ├── types/index.ts           Interfaces TypeScript (StudySession, Subject, Goal, User)
-│       └── index.css                Sistema de design com variáveis CSS
-│
-└── docker-compose.yml               MySQL + backend em containers
-```
+### 6.1 Revisão/atualização do diagrama da estrutura
+- **O que foi feito:** Atualizado/revisado o desenho da estrutura do projeto em `docs/estrutura.md` para refletir com mais fidelidade a organização real do backend (incluindo `config/` e `dto/request` + `dto/response`) e do frontend (incluindo `App.tsx`, `main.tsx`, `assets/`, `utils/`).
+- **Arquivos afetados:**
+  - `docs/estrutura.md`
+- **Motivo:** Garantir que a documentação visual do layout do repositório esteja alinhada com o código existente, facilitando onboarding e manutenção.
+
+

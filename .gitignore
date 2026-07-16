@@ -17,6 +17,10 @@ backend/!**/src/main/**/target/
 backend/!**/src/test/**/target/
 backend/.env
 backend/.env.local
+backend/uploads/
+backend/uploads/**
+backend/uploads/**/*
+backend/logs/
 
 # Frontend (Node/React/Vite)
 frontend/node_modules/
