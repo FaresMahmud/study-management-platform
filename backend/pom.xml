@@ -113,6 +113,20 @@
             <scope>test</scope>
         </dependency>
 
+            <!-- Jsoup: sanitização de HTML contra ataques XSS -->
+        <dependency>
+            <groupId>org.jsoup</groupId>
+            <artifactId>jsoup</artifactId>
+            <version>1.17.2</version>
+        </dependency>
+
+            <!-- H2 Database: Banco in-memory para testes isolados e rápidos -->
+        <dependency>
+            <groupId>com.h2database</groupId>
+            <artifactId>h2</artifactId>
+            <scope>test</scope>
+        </dependency>
+
     </dependencies>
 
     <build>

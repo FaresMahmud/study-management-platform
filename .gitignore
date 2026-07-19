@@ -43,3 +43,6 @@ Thumbs.db
 # Infrastructure and Secrets
 .env
 docker-compose.yml
+
+# Uploads directory
+backend/uploads/

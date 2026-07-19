@@ -11,9 +11,13 @@ export const apiClient = axios.create({
   },
 });
 
-// Interceptor para injetar o token JWT em todas as requisições
+// Interceptor para injetar o token JWT e mapear para a API versionada (/api/v1)
 apiClient.interceptors.request.use(
   (config) => {
+    // Reescreve rotas de /api/... para /api/v1/... caso necessário
+    if (config.url && config.url.startsWith('/api/') && !config.url.startsWith('/api/v1/')) {
+      config.url = config.url.replace('/api/', '/api/v1/');
+    }
     const token = useAuthStore.getState().token;
     if (token) {
       config.headers.Authorization = `Bearer ${token}`;
