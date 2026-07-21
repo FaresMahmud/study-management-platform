@@ -1,26 +1,26 @@
 @import url('https://fonts.googleapis.com/css2?family=Outfit:wght@300;400;500;600;700&display=swap');
 
 :root {
-  --bg-primary: #0a0b0d;
-  --bg-secondary: #12141c;
-  --bg-tertiary: #191c28;
-  --border-color: #242938;
-  --border-focus: #4f46e5;
+  --bg-primary: hsl(222, 28%, 8%);
+  --bg-secondary: hsl(222, 24%, 12%);
+  --bg-tertiary: hsl(222, 20%, 15%);
+  --border-color: hsl(222, 16%, 22%);
+  --border-focus: hsl(217, 91%, 60%);
   
-  --text-primary: #f8fafc;
-  --text-secondary: #94a3b8;
-  --text-muted: #64748b;
+  --text-primary: hsl(210, 40%, 98%);
+  --text-secondary: hsl(215, 20%, 75%);
+  --text-muted: hsl(215, 12%, 55%);
   
-  --primary: #6366f1;
-  --primary-hover: #4f46e5;
-  --primary-glow: rgba(99, 102, 241, 0.15);
+  --primary: hsl(217, 91%, 60%);
+  --primary-hover: hsl(217, 91%, 50%);
+  --primary-glow: hsla(217, 91%, 60%, 0.15);
   
-  --success: #10b981;
-  --success-glow: rgba(16, 185, 129, 0.15);
-  --danger: #ef4444;
-  --danger-glow: rgba(239, 68, 68, 0.15);
-  --warning: #f59e0b;
-  --warning-glow: rgba(245, 158, 11, 0.15);
+  --success: hsl(142, 72%, 45%);
+  --success-glow: hsla(142, 72%, 45%, 0.15);
+  --danger: hsl(354, 70%, 54%);
+  --danger-glow: hsla(354, 70%, 54%, 0.15);
+  --warning: hsl(38, 92%, 50%);
+  --warning-glow: hsla(38, 92%, 50%, 0.15);
   
   --sans: 'Outfit', system-ui, -apple-system, sans-serif;
   --radius-sm: 6px;

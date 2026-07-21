@@ -35,10 +35,10 @@ class GoalMapperTest {
                 .id(1L).subjectName("Matemática").user(user).build();
     }
 
-    private Goal buildGoal(Double progress, Double objective, Subject sub) {
+    private Goal buildGoal(Integer progress, Integer objective, Subject sub) {
         return Goal.builder()
                 .id(1L).title("Meta Teste")
-                .progress(progress).objectiveHours(objective)
+                .currentMastery(progress).targetMastery(objective)
                 .startDateGoal(LocalDate.now())
                 .endDateGoal(LocalDate.now().plusMonths(1))
                 .user(user).subject(sub)
@@ -49,7 +49,7 @@ class GoalMapperTest {
     @DisplayName("toResponseDTO → calcula 50% quando progress é metade do objetivo")
     void toResponseDTO_halfProgress_returns50Percent() {
         // ARRANGE
-        Goal goal = buildGoal(25.0, 50.0, subject);
+        Goal goal = buildGoal(25, 50, subject);
 
         // ACT
         GoalResponseDTO dto = goalMapper.toResponseDTO(goal);
@@ -61,7 +61,7 @@ class GoalMapperTest {
     @Test
     @DisplayName("toResponseDTO → calcula 100% quando progress iguala o objetivo")
     void toResponseDTO_fullProgress_returns100Percent() {
-        Goal goal = buildGoal(50.0, 50.0, subject);
+        Goal goal = buildGoal(50, 50, subject);
         GoalResponseDTO dto = goalMapper.toResponseDTO(goal);
         assertThat(dto.getCompletionPercentage()).isEqualTo(100.0);
     }
@@ -70,7 +70,7 @@ class GoalMapperTest {
     @DisplayName("toResponseDTO → limita a 100% mesmo quando progress ultrapassa objetivo")
     void toResponseDTO_progressExceedsObjective_capsAt100Percent() {
         // ARRANGE — progresso maior que o objetivo (possível em atualizações)
-        Goal goal = buildGoal(60.0, 50.0, subject);
+        Goal goal = buildGoal(60, 50, subject);
 
         // ACT
         GoalResponseDTO dto = goalMapper.toResponseDTO(goal);
@@ -82,7 +82,7 @@ class GoalMapperTest {
     @Test
     @DisplayName("toResponseDTO → retorna 0% quando progress é zero")
     void toResponseDTO_zeroProgress_returns0Percent() {
-        Goal goal = buildGoal(0.0, 50.0, subject);
+        Goal goal = buildGoal(0, 50, subject);
         GoalResponseDTO dto = goalMapper.toResponseDTO(goal);
         assertThat(dto.getCompletionPercentage()).isEqualTo(0.0);
     }
@@ -91,7 +91,7 @@ class GoalMapperTest {
     @DisplayName("toResponseDTO → subject é null quando subject é null")
     void toResponseDTO_nullSubject_returnsNullSubjectFields() {
         // ARRANGE — meta geral sem subject
-        Goal goal = buildGoal(10.0, 50.0, null);
+        Goal goal = buildGoal(10, 50, null);
 
         // ACT
         GoalResponseDTO dto = goalMapper.toResponseDTO(goal);
@@ -103,7 +103,7 @@ class GoalMapperTest {
     @Test
     @DisplayName("toResponseDTO → inclui dados do subject quando subject não é null")
     void toResponseDTO_withSubject_returnsSubjectData() {
-        Goal goal = buildGoal(10.0, 50.0, subject);
+        Goal goal = buildGoal(10, 50, subject);
         GoalResponseDTO dto = goalMapper.toResponseDTO(goal);
 
         assertThat(dto.getSubject()).isNotNull();

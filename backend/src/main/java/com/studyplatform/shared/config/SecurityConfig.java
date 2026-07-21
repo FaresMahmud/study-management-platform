@@ -51,6 +51,7 @@ public class SecurityConfig {
                 // Rotas públicas: auth e documentação Swagger
                 .requestMatchers(
                     "/api/v1/auth/**",
+                    "/api/v1/exam-preps/public/share/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
                     "/swagger-ui.html"

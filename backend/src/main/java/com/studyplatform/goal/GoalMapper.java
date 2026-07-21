@@ -17,8 +17,8 @@ public class GoalMapper {
     public Goal toEntity(GoalRequestDTO dto, User user, Subject subject) {
         return Goal.builder()
                 .title(dto.getTitle())
-                .progress(dto.getProgress() != null ? dto.getProgress() : 0.0)
-                .objectiveHours(dto.getObjectiveHours())
+                .currentMastery(dto.getCurrentMastery() != null ? dto.getCurrentMastery() : 0)
+                .targetMastery(dto.getTargetMastery())
                 .startDateGoal(dto.getStartDateGoal())
                 .endDateGoal(dto.getEndDateGoal())
                 .user(user)
@@ -30,23 +30,25 @@ public class GoalMapper {
         return GoalResponseDTO.builder()
                 .id(goal.getId())
                 .title(goal.getTitle())
-                .progress(goal.getProgress())
-                .objectiveHours(goal.getObjectiveHours())
+                .currentMastery(goal.getCurrentMastery())
+                .targetMastery(goal.getTargetMastery())
                 .startDateGoal(goal.getStartDateGoal())
                 .endDateGoal(goal.getEndDateGoal())
                 .completionPercentage(goal.getCompletionPercentage())
                 .userId(goal.getUser().getId())
                 .userName(goal.getUser().getNameUser())
                 .subject(goal.getSubject() != null ? subjectMapper.toResponseDTO(goal.getSubject()) : null)
+                .examPrepId(goal.getExamPrep() != null ? goal.getExamPrep().getId() : null)
+                .examPrepTitle(goal.getExamPrep() != null ? goal.getExamPrep().getTitle() : null)
                 .build();
     }
 
     public void updateEntityFromDTO(Goal goal, GoalRequestDTO dto, Subject newSubject) {
         goal.setTitle(dto.getTitle());
-        if (dto.getProgress() != null) {
-            goal.setProgress(dto.getProgress());
+        if (dto.getCurrentMastery() != null) {
+            goal.setCurrentMastery(dto.getCurrentMastery());
         }
-        goal.setObjectiveHours(dto.getObjectiveHours());
+        goal.setTargetMastery(dto.getTargetMastery());
         goal.setStartDateGoal(dto.getStartDateGoal());
         goal.setEndDateGoal(dto.getEndDateGoal());
         goal.setSubject(newSubject);

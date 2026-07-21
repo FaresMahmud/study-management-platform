@@ -29,32 +29,25 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
 
   const slides = [
     {
-      title: "Bem-vindo ao StudyFlow! 🚀",
-      description: "O copiloto definitivo para sua aprovação. Unimos cronômetros científicos, resumos inteligentes e revisões ativas em uma única plataforma integrada.",
+      title: "1. Sua Preparação (Exam Prep) 🎯",
+      description: "Defina seu objetivo! Configure o nome do seu exame (ex: Vestibular, Concurso, Certificação), a data da prova e a nota alvo. O StudyFlow calcula automaticamente a contagem regressiva e o ritmo de estudos ideal.",
       icon: <Sparkles size={48} className="text-primary animate-pulse" />,
       color: "var(--primary-glow)",
-      badge: "Estudo Inteligente"
+      badge: "Passo 1: O Foco"
     },
     {
-      title: "Split Workspace Lado a Lado 📖",
-      description: "Chega de alternar entre 10 abas. Abra os slides PDF das aulas à esquerda e faça resumos Notion-style à direita, gerando citações com referências de página com 1 clique.",
+      title: "2. Mapeamento de Assuntos 📚",
+      description: "Divida o edital! Adicione matérias e defina metas baseadas em Maestria (%). Nosso algoritmo avalia seu domínio de 0 a 100% de forma ponderada através de Quizzes (40%), Simulados (40%) e Flashcards (20%).",
       icon: <BookOpen size={48} className="text-primary" />,
-      color: "rgba(59, 130, 246, 0.15)",
-      badge: "Foco Unificado"
+      color: "rgba(20, 184, 166, 0.15)",
+      badge: "Passo 2: Domínio"
     },
     {
-      title: "Copiloto IA & Flashcards Leitner 🧠",
-      description: "Selecione trechos importantes e crie Flashcards manuais ou clique em 'Gerar com IA' (Gemini) para alimentar sua pilha de revisões programadas de forma automática.",
+      title: "3. Upload de Materiais e IA 🧠",
+      description: "Envie seus PDFs e apostilas! Nossa IA segmenta seus materiais e gera automaticamente Flashcards Leitner de revisão, Resumos estruturados e até Roteiros de Podcast em áudio para fixar o aprendizado.",
       icon: <Brain size={48} className="text-primary" />,
       color: "rgba(139, 92, 246, 0.15)",
-      badge: "Retenção Ativa"
-    },
-    {
-      title: "Streaks 🔥 & Meta Semanal",
-      description: "Crie hábitos de estudo indestrutíveis! Acompanhe seu Streak de dias consecutivos de foco e comemore com explosões de confete ao atingir seu objetivo semanal.",
-      icon: <Flame size={48} className="text-primary animate-bounce" />,
-      color: "rgba(249, 115, 22, 0.15)",
-      badge: "Consistência"
+      badge: "Passo 3: IA Multi-modal"
     }
   ];
 

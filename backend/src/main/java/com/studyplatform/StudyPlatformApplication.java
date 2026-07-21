@@ -1,11 +1,12 @@
 package com.studyplatform;
 import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
+import org.springframework.data.jpa.repository.config.EnableJpaAuditing;
+import org.springframework.scheduling.annotation.EnableAsync;
 
 // Ponto de entrada da aplicação.
-// @SpringBootApplication já ativa escaneamento de componentes,
-// autoconfiguração e definição de beans nesta classe.
 @SpringBootApplication
+@EnableAsync
 public class StudyPlatformApplication {
 
     public static void main(String[] args) {

@@ -24,15 +24,14 @@ public class GoalResponseDTO {
 
     private Long id;
     private String title;
-    private Double progress;
-    private Double objectiveHours;
+    private Integer currentMastery;
+    private Integer targetMastery;
     private LocalDate startDateGoal;
     private LocalDate endDateGoal;
 
     /**
      * Percentual de conclusão calculado pelo Mapper.
-     * Ex: progress=25, objectiveHours=50 → completionPercentage=50.0
-     * Facilita a exibição de barras de progresso no frontend.
+     * Ex: currentMastery=30, targetMastery=60 → completionPercentage=50.0
      */
     private Double completionPercentage;
 
@@ -42,4 +41,8 @@ public class GoalResponseDTO {
 
     // Dados do Subject associado — null se a meta for geral
     private SubjectResponseDTO subject;
+
+    // Dados da preparação para prova associada (ExamPrep)
+    private Long examPrepId;
+    private String examPrepTitle;
 }

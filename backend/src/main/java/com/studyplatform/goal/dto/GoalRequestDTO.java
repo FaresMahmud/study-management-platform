@@ -23,18 +23,19 @@ public class GoalRequestDTO {
     private String title;
 
     /**
-     * Progresso inicial — normalmente 0 ao criar.
-     * Não pode ser negativo.
+     * Progresso inicial de domínio (0-100%).
      */
-    @DecimalMin(value = "0.0", message = "O progresso não pode ser negativo")
-    private Double progress;
+    @Min(value = 0, message = "O domínio mínimo é 0%")
+    @Max(value = 100, message = "O domínio máximo é 100%")
+    private Integer currentMastery;
 
     /**
-     * Total de horas objetivo. Mínimo de 0.5 (30 minutos).
+     * Meta de domínio desejada (1-100%).
      */
-    @NotNull(message = "O objetivo em horas é obrigatório")
-    @DecimalMin(value = "0.5", message = "O objetivo mínimo é de 0.5 horas (30 minutos)")
-    private Double objectiveHours;
+    @NotNull(message = "A meta de domínio é obrigatória")
+    @Min(value = 1, message = "A meta mínima de domínio é 1%")
+    @Max(value = 100, message = "A meta máxima de domínio é 100%")
+    private Integer targetMastery;
 
     @NotNull(message = "A data de início é obrigatória")
     private LocalDate startDateGoal;
@@ -44,7 +45,11 @@ public class GoalRequestDTO {
 
     /**
      * Id da matéria associada — OPCIONAL.
-     * Se informado, o Service valida que pertence ao usuário autenticado.
      */
     private Long subjectId;
+
+    /**
+     * Id da preparação para prova associada — OPCIONAL.
+     */
+    private Long examPrepId;
 }

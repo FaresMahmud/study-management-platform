@@ -23,11 +23,16 @@ export interface StudySession {
 export interface Goal {
   id: number;
   title: string;
-  progress: number; // in hours
-  objectiveHours: number; // in hours
+  progress?: number; // legacy
+  objectiveHours?: number; // legacy
+  currentMastery: number; // 0-100%
+  targetMastery: number; // 1-100%
   startDateGoal: string; // YYYY-MM-DD
   endDateGoal: string; // YYYY-MM-DD
+  completionPercentage: number;
   subject?: Subject;
+  examPrepId?: number;
+  examPrepTitle?: string;
 }
 
 export interface AuthResponse {

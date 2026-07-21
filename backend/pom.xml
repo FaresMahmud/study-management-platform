@@ -120,6 +120,18 @@
             <version>1.17.2</version>
         </dependency>
 
+        <!-- Apache Tika: Extração de conteúdo de PDFs -->
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-core</artifactId>
+            <version>2.9.1</version>
+        </dependency>
+        <dependency>
+            <groupId>org.apache.tika</groupId>
+            <artifactId>tika-parsers-standard-package</artifactId>
+            <version>2.9.1</version>
+        </dependency>
+
             <!-- H2 Database: Banco in-memory para testes isolados e rápidos -->
         <dependency>
             <groupId>com.h2database</groupId>

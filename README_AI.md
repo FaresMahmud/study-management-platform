@@ -1,15 +1,15 @@
-# 🧠 Contexto de Arquitetura e Engenharia do Projeto (Estudo/SaaS)
+# 🧠 Contexto de Arquitetura, Regras de Design e Engenharia (SaaS StudyFlow)
 > **Este arquivo foi criado especificamente para alimentar assistentes de Inteligência Artificial (LLMs)**, provendo um entendimento completo sobre as regras de negócio, stack técnica, decisões de design, requisitos funcionais, não funcionais e caminhos para evolução do projeto.
 
 ---
 
 ## 1. Visão Geral do Sistema
 O **Study Management Platform (StudyFlow)** é uma plataforma SaaS de alta performance voltada para a gestão de estudos, produtividade e aprendizagem ativa baseada em evidências. Seus principais pilares de experiência de usuário são:
-1. **Planejamento e Metas**: Definição de objetivos de carga horária por matéria.
-2. **Ciclo de Estudo**: Registro e acompanhamento de sessões de estudo ativas.
-3. **Memorização Espaçada**: Criação de Flashcards baseados no *Leitner System* com agendamento inteligente.
-4. **Centralização de Materiais**: Upload de PDFs de aula com leitor embutido e anotações por página.
-5. **Editor Notion-style**: Criação de resumos de estudo ricos e limpos.
+1. **Preparação Orientada (Exam Prep)**: Criação de cronogramas focados em exames específicos com metas de maestria (%) e contagem regressiva de dias.
+2. **Memorização Ativa**: Sistema de **Flashcards** baseados no *Leitner System* com agendamento inteligente.
+3. **Ingestão e OCR**: Upload de PDFs com extração assíncrona de texto via Apache Tika e segmentação semântica (chunks).
+4. **Tutor Virtual RAG**: Chatbot inteligente integrado à API do Gemini para tirar dúvidas baseando-se unicamente nos PDFs do aluno.
+5. **Modo Foco (Pomodoro)**: Temporizador científico integrado para cronometrar blocos de estudo e monitorar a produtividade.
 
 ---
 
@@ -17,112 +17,112 @@ O **Study Management Platform (StudyFlow)** é uma plataforma SaaS de alta perfo
 
 ### Backend (Java)
 *   **Core**: Java 21 + Spring Boot 3.2.4.
-*   **Segurança**: Spring Security + JWT (JSON Web Tokens).
+*   **Segurança**: Spring Security + JWT.
 *   **Persistência**: Spring Data JPA + Hibernate.
-*   **Banco de Dados**: MySQL (Produção/Desenvolvimento local) + Flyway para migrações de esquema.
-*   **Testes**: JUnit 5 + Mockito + Banco H2 *in-memory* (configurado em modo de compatibilidade PostgreSQL).
-*   **Auxiliares**: Lombok (Gerações boilerplates com segurança), Jsoup (Sanitizador de HTML).
+*   **Banco de Dados**: MySQL (Local/Prod) + Flyway para migrações de esquema.
+*   **Testes**: JUnit 5 + Mockito + Banco H2 *in-memory* (modo PostgreSQL).
+*   **Auxiliares**: Lombok (Getter/Setter e Equals/ToString customizados), Jsoup (Sanitizador HTML).
 
 ### Frontend (React)
 *   **Core**: React 19 + TypeScript + Vite.
 *   **Roteamento**: React Router DOM v7.
-*   **Gerenciamento de Estado**: Zustand (Estado global leve e reativo).
-*   **Comunicação API**: Axios (Cliente HTTP customizado).
-*   **Visualização de Dados**: Recharts (Gráficos interativos de evolução semanal/foco).
-*   **Estilização**: Tailwind CSS.
+*   **Gerenciamento de Estado**: Zustand.
+*   **Comunicação API**: Axios (com interceptor de desempacotamento de páginas do Spring).
+*   **Visualização de Dados**: Recharts.
+*   **Estilização**: CSS Vanilla com Tokens Baseados em HSL e Fibonacci.
 
 ---
 
 ## 3. Arquitetura de Software (Modular Monolith)
-O backend foi reestruturado de uma arquitetura baseada em camadas técnicas (`controller/service/repository`) para uma **Arquitetura Baseada em Recursos/Funcionalidades (Modular Monolith / Package-by-Feature)**. 
+O backend utiliza uma **Arquitetura Baseada em Recursos/Funcionalidades (Modular Monolith / Package-by-Feature)**. Cada pasta funcional encapsula suas próprias Controllers, Services, Repositories, Mappers, DTOs e Classes de Domínio:
 
-### Estrutura de Pacotes (`src/main/java/com/studyplatform`)
-Cada pasta funcional encapsula suas próprias Controllers, Services, Repositories, Mappers, DTOs e Classes de Domínio:
-*   `com.studyplatform.auth`: Fluxos de cadastro, login e DTOs de segurança.
-*   `com.studyplatform.user`: Perfil do usuário e persistência correspondente.
-*   `com.studyplatform.subject`: Gestão de matérias (Subject) e Value Objects de visualização.
-*   `com.studyplatform.goal`: Definição de metas de horas e recalculadores automáticos de progresso.
-*   `com.studyplatform.session`: Registro de sessões de estudo ativas.
-*   `com.studyplatform.summary`: Editor de resumos com higienizador HTML embutido.
-*   `com.studyplatform.flashcard`: Algoritmo Leitner de repetição espaçada e revisões.
-*   `com.studyplatform.file`: Upload físico de arquivos PDF e anotações associadas às páginas.
-*   `com.studyplatform.ai`: Gerador inteligente de flashcards (via Gemini API / mock fallback).
-*   `com.studyplatform.shared`: Pacote transversal contendo configurações globais, filtros de segurança (`JwtAuthenticationFilter`), tratamento global de exceções e filtros transversais (`RateLimitingFilter`).
+*   `com.studyplatform.auth`: Cadastro, login e segurança.
+*   `com.studyplatform.examprep`: Entidade central `ExamPrep` (preparação de exames), APIs de CRUD, DTOs de mapeamento e listeners de eventos assíncronos.
+*   `com.studyplatform.subject`: Matérias associadas aos exames.
+*   `com.studyplatform.goal`: Metas de maestria por disciplina e recálculo ponderado de domínio.
+*   `com.studyplatform.session`: Registro de sessões de estudo comuns.
+*   `com.studyplatform.summary`: Resumos de estudo com editor Notion-style.
+*   `com.studyplatform.flashcard`: Pilhas de flashcards e algoritmo Leitner.
+*   `com.studyplatform.file`: Upload físico de arquivos e anotações.
+*   `com.studyplatform.ai` / `com.studyplatform.ai.vector`: Geração de resumos e perguntas, geração de embeddings do Gemini (`text-embedding-004`) e cálculo de similaridade de cosseno em memória Java.
+*   `com.studyplatform.shared`: Configurações transversais (segurança JWT, JpaConfig Auditing, RateLimiting).
 
 ---
 
-## 4. Requisitos Funcionais (RF) e Regras de Negócio
+## 4. Nova Arquitetura de Preparação para Provas (Exam Prep)
 
-### RF01: Gestão de Matérias (Subject)
-*   Cada matéria possui um nome, descrição opcional e um **Value Object `Color`** que valida o formato hexadecimal (ex: `#FF5733`).
-*   Um usuário não pode possuir duas matérias com o mesmo nome.
+### 4.1 Entidade Central `ExamPrep`
+Representa a preparação ativa do aluno para um exame (ex: "ENEM 2026", "Concurso Público").
+*   Mede o sucesso baseado em **Domínio (%)** ao invés de horas brutas estudadas.
+*   **Colunas:** `id` (Long, PK), `title` (String), `exam_date` (LocalDate), `target_score` (Integer, meta de 0 a 100), `status` (Enum: `ACTIVE`, `COMPLETED`, `ARCHIVED`), `share_token` (String, UUID público), `is_public` (Boolean).
 
-### RF02: Metas de Estudo (Goal)
-*   Permite definir horas de estudo desejadas para uma matéria (ou meta geral) em um período de tempo (`startDate` a `endDate`).
-*   O progresso da meta é calculado em horas decimais de forma assíncrona/dinâmica a partir do tempo acumulado nas sessões de estudo pertencentes àquele intervalo.
-*   A entidade expõe a lógica de conclusão através de `getCompletionPercentage()`.
+### 4.2 Pipeline OCR & Chunking
+*   **Apache Tika:** Realiza extração e OCR de PDFs upados.
+*   **Asynchronous Processing:** Executado via `@Async` no `PdfProcessingService` para não bloquear a Thread HTTP de upload do arquivo.
+*   **PdfChunk:** Salva os fragmentos no banco MySQL (tabela `pdf_chunks`) contendo 500 a 1000 tokens cada.
 
-### RF03: Sessões de Estudo (StudySession)
-*   Registra a data da sessão, descrição e duração em minutos.
-*   Sempre que uma sessão é criada, editada ou removida, as metas de estudo correspondentes àquele período são automaticamente recalculadas no banco de dados.
+### 4.3 Tutor Virtual RAG (Retrieval-Augmented Generation)
+*   **Embeddings:** A API do Gemini (`text-embedding-004`) gera vetores de 768 dimensões para chunks e perguntas.
+*   **Busca por Cosseno:** O `VectorStoreService` calcula em memória Java a distância cosseno para obter os top 5 chunks mais semelhantes à dúvida do aluno, garantindo isolamento estrito (nunca mistura arquivos de exames diferentes).
+*   **Prompt RAG:** Contextualiza o Gemini: *"Contexto: [chunks]. Com base apenas no contexto, responda: [pergunta]"*. Exposto em `POST /api/v1/chat/ask`.
 
-### RF04: Resumos Notion-style (Summary)
-*   Editor rico que aceita elementos de marcação rica.
-*   O conteúdo salvo é obrigatoriamente higienizado no backend contra XSS.
-
-### RF05: Flashcards (Leitner System)
-*   Algoritmo de memorização ativa. Cada cartão avança ou retrocede entre 5 caixas (`LeitnerBox`):
-    *   **Acerto Fácil/Bom**: Avança 1 nível de caixa (máximo 5).
-    *   **Erro**: Reinicia para a Caixa 1.
-*   O intervalo para próxima revisão é calculado pelo Value Object `LeitnerBox`:
-    *   *Caixa 1*: Próxima revisão em 1 dia.
-    *   *Caixa 2*: Próxima revisão em 3 dias.
-    *   *Caixa 3*: Próxima revisão em 7 dias.
-    *   *Caixa 4*: Próxima revisão em 14 dias.
-    *   *Caixa 5*: Próxima revisão em 30 dias.
-
-### RF06: Central de PDFs e Anotações
-*   Upload físico de PDFs limitado e estruturado na pasta `uploads` do servidor.
-*   Usuários podem salvar anotações de texto livre indexadas por número de página e arquivo.
+### 4.4 Event-Driven Decoupling
+*   Para evitar transações de banco lentas, o recálculo ponderado de maestria da meta (`Goal`) foi desacoplado usando o barramento de eventos do Spring Boot.
+*   A criação de Quizzes e Simulados publica um `ExamPrepActivityEvent` que é interceptado pelo listener assíncrono `@Async` `ExamPrepActivityListener` em background para atualizar a proficiência da meta.
 
 ---
 
-## 5. Requisitos Não Funcionais (RNF)
+## 5. Regras e Design System do Frontend (UI/UX Científica)
 
-### RNF01: Isolamento de Dados por Tenant
-*   Todas as consultas SQL filtram os dados com base no usuário autenticado no contexto de segurança. Nenhum usuário pode visualizar, alterar ou deletar registros de outros.
+Para manter a aplicação limpa, objetiva e confortável, todo desenvolvedor (e IA) deve seguir as seguintes regras visuais estritas:
 
-### RNF02: Proteção contra Brute Force e Flood (Rate Limiting)
-*   Filtro `RateLimitingFilter` com algoritmo *Token Bucket* em memória:
-    *   **Rotas Sensíveis** (Login, Cadastro, Geração de IA): Limite restrito a **20 requisições/minuto por IP**.
-    *   **Rotas Gerais**: Limite de **200 requisições/minuto por IP**.
-    *   Retorno HTTP **429 Too Many Requests** se violado.
+### 5.1 Carga Cognitiva Controlada (John Sweller & Hick's Law)
+*   **Nomenclatura Literal:** Mantenha os termos óbvios e autoexplicativos. Nunca utilize termos ambíguos ou mistos.
+    *   Sempre use o nome **"Flashcards"** para cartões de memorização.
+    *   Use **"Matérias & PDFs"** para o antigo Workspace.
+    *   Use **"Metas de Maestria"** para Goals.
+    *   Use **"Simulados"** e **"Histórico"** (de estudo) nos menus.
+*   **Foco Visual:** O Dashboard deve ser simplificado. Exiba apenas informações vitais: status do Exame (countdown), ações rápidas (Quizzes, Flashcards, Simulados), progresso de Metas de Maestria e o Chat do Tutor Virtual.
 
-### RNF03: Segurança Contra XSS e Clickjacking
-*   Higienização HTML no backend via Jsoup (`Safelist.relaxed()`).
-*   Headers Nginx no frontend: `X-Frame-Options: DENY`, `X-Content-Type-Options: nosniff`, `Content-Security-Policy` restritivo.
+### 5.2 Espaçamento de Fibonacci (Grid Áureo)
+Utilize exclusivamente números da sequência de Fibonacci para paddings, margens, gaps e tamanhos de fonte:
+*   `gap: 8px` / `gap: 13px` / `gap: 21px` para distâncias internas e entre cards.
+*   `padding: 13px` / `padding: 21px` / `padding: 34px` para contêineres e bordas de páginas.
+*   **Escala Tipográfica Fibonacci (Base 16px):**
+    *   `13px` (Legendas, textos secundários e metadados)
+    *   `16px` (Texto principal do corpo de posts e botões)
+    *   `21px` (Títulos de cards e seções menores)
+    *   `34px` (Títulos das seções principais de páginas)
+    *   `55px` (Destaque principal/Contador de tempo)
 
-### RNF04: Segurança com Lombok e Hibernate
-*   Substituição de anotações `@Data` por `@Getter`/`@Setter` individuais com `@EqualsAndHashCode(onlyExplicitlyIncluded = true)` apontando exclusivamente para a chave primária (`@Id`).
-*   Relacionamentos Bidirecionais anotados com `@ToString.Exclude` nas chaves estrangeiras para mitigar estouros de pilha (`StackOverflowError`).
-
-### RNF05: Paginação da API
-*   Todos os endpoints de listagem de recursos utilizam paginação via `Pageable` e `PageRequest` com ordenação reversa por ID (`id DESC`), mitigando sobrecarga de memória na aplicação.
+### 5.3 Paleta de Cores Científica para Concentração
+Não utilize cores planas ou contrastes agressivos. Adote variáveis HSL que estimulem clareza mental e reduzam o cansaço ocular:
+*   `--bg-primary: hsl(222, 28%, 8%)` (Fundo Obsidian Dark)
+*   `--bg-secondary: hsl(222, 24%, 12%)` (Fundo Slate Dark para cards)
+*   `--bg-tertiary: hsl(222, 20%, 15%)` (Fundo escuro para inputs e blocos internos)
+*   `--border-color: hsl(222, 16%, 22%)` (Bordas de divisão sutis)
+*   `--primary: hsl(217, 91%, 60%)` (Foco Royal Blue para botões e links ativos)
+*   `--success: hsl(142, 72%, 45%)` (Verde esmeralda para progresso e maestria bem-sucedida)
+*   `--warning: hsl(38, 92%, 50%)` (Âmbar para contagem de dias/alertas)
 
 ---
 
-## 6. Esquema do Banco de Dados e Migrações (Flyway)
-*   `V1__create_tables.sql`: Define a criação estrutural de todas as tabelas (utilizando sintaxe compatível ANSI/PostgreSQL).
-*   `V2__add_indexes.sql`: Adiciona índices de performance nas tabelas:
-    *   Índices nas chaves estrangeiras (`user_id`, `subject_id`, `file_id`).
-    *   Índices compostos para consultas frequentes de listas ordenadas (ex: `idx_flashcards_user_next_review` indexando `user_id` e `next_review_date`).
+## 6. Divisão de Trabalho e Convenção de Mesclagem (Merge Git)
 
----
+Se dois desenvolvedores (ou duas IAs) estiverem codificando em paralelo, a distribuição deve seguir as trilhas abaixo para evitar conflitos de mesclagem de arquivos:
 
-## 7. Áreas para Evolução e Sugestões de Melhorias (Para IA Analisar)
-Quando estiver sugerindo melhorias, compare as seguintes abordagens:
-1.  **Cache L1/L2**: Substituição de buscas repetitivas em sessões ativas e matérias por uma camada de cache (ex: Redis ou Caffeine Cache).
-2.  **Mensageria**: Mudar o recalculador de metas em `StudySessionService` para um padrão orientado a eventos (Event-Driven) usando Spring ApplicationEvents (síncrono/assíncrono) ou RabbitMQ.
-3.  **Auditoria JPA**: Substituição das anotações manuais de datas por `@CreatedDate` e `@LastModifiedDate` usando Auditing do Spring Data JPA.
-4.  **Autenticação**: Suporte a OAuth2/Social Login (Google/GitHub) integrado ao Spring Security atual.
-5.  **Testes de Integração**: Adicionar Testcontainers para validar migrações Flyway e consultas MySQL contra uma instância Docker real de banco de dados nos testes.
+### Trilha A (Desenvolvedor A) — Core, OCR & Eventos
+*   **Foco:** Ingestão de arquivos, modelagem JPA central, listeners de eventos, autenticação social e contêineres de testes.
+*   **Arquivos de Trabalho:**
+    *   `com.studyplatform.examprep` (Entidades bases e listeners)
+    *   `com.studyplatform.shared.config` (JpaConfig e JPA Auditing)
+    *   `com.studyplatform.entity` (Ajustes de relacionamentos e JPA)
+*   **Migrações Flyway SQL Reservadas:** `V3`, `V4` e `V11`.
+
+### Trilha B (Desenvolvedor B) — IA (RAG), Gamificação e Funcionalidades
+*   **Foco:** IA do Gemini, cálculo de cosseno, quizzes, simulados cronometrados, Pomodoro, compartilhamento social e cache com Redis.
+*   **Arquivos de Trabalho:**
+    *   `com.studyplatform.ai` / `com.studyplatform.ai.vector` (Tutor IA e Busca Vetorial)
+    *   `com.studyplatform.analytics` (Zona de Aprendizado)
+    *   `com.studyplatform.session` (Foco e Pomodoro)
+*   **Migrações Flyway SQL Reservadas:** `V5`, `V6`, `V7`, `V8`, `V9` e `V10`.

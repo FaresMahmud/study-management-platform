@@ -14,6 +14,10 @@ import Summaries from './pages/Summaries';
 import Analytics from './pages/Analytics';
 import Flashcards from './pages/Flashcards';
 import StudyWorkspace from './pages/StudyWorkspace';
+import Quiz from './pages/Quiz';
+import Simulation from './pages/Simulation';
+
+
 
 // QueryClient para gerenciamento de estado das rotas protegidas e públicas
 const queryClient = new QueryClient({
@@ -86,7 +90,11 @@ export default function App() {
             <Route path="/analytics" element={<Analytics />} />
             <Route path="/flashcards" element={<Flashcards />} />
             <Route path="/workspace" element={<StudyWorkspace />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/simulation" element={<Simulation />} />
           </Route>
+
+
 
           {/* Redirecionamento de rotas desconhecidas */}
           <Route path="*" element={<Navigate to="/" replace />} />

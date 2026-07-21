@@ -26,6 +26,7 @@ public class SubjectMapper {
                 .color(subject.getColor() != null ? subject.getColor().value() : null)
                 .userId(subject.getUser().getId())
                 .userName(subject.getUser().getNameUser())
+                .examPrepId(subject.getExamPrep() != null ? subject.getExamPrep().getId() : null)
                 .build();
     }
 

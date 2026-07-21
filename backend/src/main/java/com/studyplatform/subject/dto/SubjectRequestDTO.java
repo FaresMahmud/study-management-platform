@@ -37,4 +37,6 @@ public class SubjectRequestDTO {
         message = "A cor deve estar no formato hexadecimal (ex: #FF5733)"
     )
     private String color;
+
+    private Long examPrepId;
 }

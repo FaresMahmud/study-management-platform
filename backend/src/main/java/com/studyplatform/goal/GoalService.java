@@ -31,6 +31,9 @@ public class GoalService {
     private final UserRepository userRepository;
     private final GoalMapper goalMapper;
     private final StudySessionRepository studySessionRepository;
+    private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
+    private final com.studyplatform.examprep.QuizAttemptRepository quizAttemptRepository;
+    private final com.studyplatform.examprep.ExamSimulationRepository examSimulationRepository;
 
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext()
@@ -58,7 +61,7 @@ public class GoalService {
         }
     }
 
-    private double obterProgressoCalculado(Long userId, Long subjectId, java.time.LocalDate start, java.time.LocalDate end) {
+    private int obterProgressoCalculado(Long userId, Long subjectId, java.time.LocalDate start, java.time.LocalDate end) {
         Integer totalMins;
         if (subjectId != null) {
             totalMins = studySessionRepository.sumDurationBySubjectAndPeriod(userId, subjectId, start, end);
@@ -66,7 +69,8 @@ public class GoalService {
             totalMins = studySessionRepository.sumDurationByUserAndPeriod(userId, start, end);
         }
         double progressHours = totalMins / 60.0;
-        return Math.round(progressHours * 100.0) / 100.0;
+        double mastery = progressHours * 10.0; // 1 hora de estudo = 10% de domínio
+        return (int) Math.min(100.0, Math.max(0.0, mastery));
     }
 
     @Transactional
@@ -77,13 +81,17 @@ public class GoalService {
                 .toList();
 
         for (Goal goal : metasAfetadas) {
-            double progresso = obterProgressoCalculado(
+            if (goal.getExamPrep() != null) {
+                // Metas associadas a ExamPrep calculam progresso por maestria (quizzes/simulações), não por horas de estudo
+                continue;
+            }
+            int progresso = obterProgressoCalculado(
                     userId,
                     goal.getSubject() != null ? goal.getSubject().getId() : null,
                     goal.getStartDateGoal(),
                     goal.getEndDateGoal()
             );
-            goal.setProgress(progresso);
+            goal.setCurrentMastery(progresso);
             goalRepository.save(goal);
         }
     }
@@ -116,12 +124,18 @@ public class GoalService {
 
         Subject subject = resolveSubject(request.getSubjectId(), user.getId());
         Goal goal = goalMapper.toEntity(request, user, subject);
-        
-        double progresso = obterProgressoCalculado(user.getId(), subject != null ? subject.getId() : null, request.getStartDateGoal(), request.getEndDateGoal());
-        goal.setProgress(progresso);
+
+        if (request.getExamPrepId() != null) {
+            goal.setExamPrep(examPrepRepository.findByIdAndUserId(request.getExamPrepId(), user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Preparação para prova não encontrada")));
+            int progresso = obterMaestriaCalculadaParaExamPrep(request.getExamPrepId());
+            goal.setCurrentMastery(progresso);
+        } else {
+            int progresso = obterProgressoCalculado(user.getId(), subject != null ? subject.getId() : null, request.getStartDateGoal(), request.getEndDateGoal());
+            goal.setCurrentMastery(progresso);
+        }
         
         Goal savedGoal = goalRepository.save(goal);
-
         return goalMapper.toResponseDTO(savedGoal);
     }
 
@@ -137,12 +151,19 @@ public class GoalService {
 
         Subject subject = resolveSubject(request.getSubjectId(), user.getId());
         goalMapper.updateEntityFromDTO(goal, request, subject);
-        
-        double progresso = obterProgressoCalculado(user.getId(), subject != null ? subject.getId() : null, request.getStartDateGoal(), request.getEndDateGoal());
-        goal.setProgress(progresso);
+
+        if (request.getExamPrepId() != null) {
+            goal.setExamPrep(examPrepRepository.findByIdAndUserId(request.getExamPrepId(), user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Preparação para prova não encontrada")));
+            int progresso = obterMaestriaCalculadaParaExamPrep(request.getExamPrepId());
+            goal.setCurrentMastery(progresso);
+        } else {
+            goal.setExamPrep(null);
+            int progresso = obterProgressoCalculado(user.getId(), subject != null ? subject.getId() : null, request.getStartDateGoal(), request.getEndDateGoal());
+            goal.setCurrentMastery(progresso);
+        }
         
         Goal updatedGoal = goalRepository.save(goal);
-
         return goalMapper.toResponseDTO(updatedGoal);
     }
 
@@ -155,5 +176,25 @@ public class GoalService {
                         "Meta não encontrada com o id: " + id));
 
         goalRepository.delete(goal);
+    }
+
+    private int obterMaestriaCalculadaParaExamPrep(Long examPrepId) {
+        List<com.studyplatform.examprep.ExamSimulation> completedSimulations = examSimulationRepository.findByExamPrepId(examPrepId).stream()
+                .filter(s -> s.getStatus() == com.studyplatform.examprep.SimulationStatus.COMPLETED || s.getStatus() == com.studyplatform.examprep.SimulationStatus.TIMED_OUT)
+                .toList();
+        List<com.studyplatform.examprep.QuizAttempt> quizAttempts = quizAttemptRepository.findByExamPrepId(examPrepId);
+
+        int totalCount = completedSimulations.size() + quizAttempts.size();
+        if (totalCount == 0) return 0;
+
+        double sum = 0.0;
+        for (com.studyplatform.examprep.ExamSimulation sim : completedSimulations) {
+            sum += sim.getScore() != null ? sim.getScore() : 0.0;
+        }
+        for (com.studyplatform.examprep.QuizAttempt qa : quizAttempts) {
+            sum += qa.getScore() != null ? qa.getScore() : 0.0;
+        }
+
+        return (int) Math.round(sum / totalCount);
     }
 }

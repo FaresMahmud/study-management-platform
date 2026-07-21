@@ -29,4 +29,5 @@ public class SubjectResponseDTO {
     // Dados mínimos do dono — sem expor objeto User inteiro
     private Long userId;
     private String userName;
+    private Long examPrepId;
 }

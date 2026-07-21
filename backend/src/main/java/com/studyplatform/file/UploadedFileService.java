@@ -28,6 +28,7 @@ import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
 import org.springframework.web.multipart.MultipartFile;
 
+@lombok.extern.slf4j.Slf4j
 @Service
 @RequiredArgsConstructor
 public class UploadedFileService {
@@ -36,6 +37,7 @@ public class UploadedFileService {
     private final FileAnnotationRepository fileAnnotationRepository;
     private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
+    private final PdfProcessingService pdfProcessingService;
 
     private final Path fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
 
@@ -73,6 +75,14 @@ public class UploadedFileService {
                     .build();
 
             UploadedFile saved = uploadedFileRepository.save(uploadedFile);
+
+            // Dispara extração de texto assíncrona baseada no arquivo salvo em disco
+            try {
+                java.io.InputStream diskStream = Files.newInputStream(targetLocation);
+                pdfProcessingService.processFileAsync(saved, diskStream);
+            } catch (Exception ex) {
+                log.error("Erro ao enfileirar processamento assíncrono de OCR para o arquivo ID: {}", saved.getId(), ex);
+            }
 
             return mapToResponseDTO(saved);
         } catch (IOException ex) {

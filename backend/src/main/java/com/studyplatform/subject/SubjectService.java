@@ -27,6 +27,7 @@ public class SubjectService {
     private final SubjectRepository subjectRepository;
     private final UserRepository userRepository;
     private final SubjectMapper subjectMapper;
+    private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
 
     private User getAuthenticatedUser() {
         String email = SecurityContextHolder.getContext()
@@ -67,8 +68,12 @@ public class SubjectService {
         }
 
         Subject subject = subjectMapper.toEntity(request, user);
-        Subject savedSubject = subjectRepository.save(subject);
+        if (request.getExamPrepId() != null) {
+            subject.setExamPrep(examPrepRepository.findByIdAndUserId(request.getExamPrepId(), user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Preparação para prova não encontrada")));
+        }
 
+        Subject savedSubject = subjectRepository.save(subject);
         return subjectMapper.toResponseDTO(savedSubject);
     }
 
@@ -87,8 +92,14 @@ public class SubjectService {
         }
 
         subjectMapper.updateEntityFromDTO(subject, request);
-        Subject updatedSubject = subjectRepository.save(subject);
+        if (request.getExamPrepId() != null) {
+            subject.setExamPrep(examPrepRepository.findByIdAndUserId(request.getExamPrepId(), user.getId())
+                    .orElseThrow(() -> new ResourceNotFoundException("Preparação para prova não encontrada")));
+        } else {
+            subject.setExamPrep(null);
+        }
 
+        Subject updatedSubject = subjectRepository.save(subject);
         return subjectMapper.toResponseDTO(updatedSubject);
     }
 

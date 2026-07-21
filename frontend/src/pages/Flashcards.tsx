@@ -11,9 +11,7 @@ import {
   Plus, 
   Check, 
   RotateCcw, 
-  AlertCircle, 
-  ArrowRight,
-  BookOpen
+  ArrowRight
 } from 'lucide-react';
 
 export default function Flashcards() {
@@ -158,56 +156,56 @@ export default function Flashcards() {
 
   const getQualityText = (box: number) => {
     switch (box) {
-      case 1: return 'Caixa 1 (A cada 1 dia)';
-      case 2: return 'Caixa 2 (A cada 3 dias)';
-      case 3: return 'Caixa 3 (A cada 7 dias)';
-      case 4: return 'Caixa 4 (A cada 14 dias)';
-      case 5: return 'Caixa 5 (A cada 30 dias)';
+      case 1: return 'Caixa 1 (1 dia)';
+      case 2: return 'Caixa 2 (3 dias)';
+      case 3: return 'Caixa 3 (7 dias)';
+      case 4: return 'Caixa 4 (14 dias)';
+      case 5: return 'Caixa 5 (30 dias)';
       default: return `Caixa ${box}`;
     }
   };
 
   return (
-    <div className="dashboard-root" style={{ animation: 'fadeIn 0.3s ease-out' }}>
-      <div className="title-section">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', animation: 'fadeIn 0.3s ease-out' }}>
+      <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '0.625rem' }}>
-            <Brain size={28} className="text-primary" />
-            Revisão Espaçada (Flashcards)
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--space-lg)', fontWeight: 700 }}>
+            <Brain size={28} style={{ color: 'var(--primary)' }} />
+            Flashcards
           </h1>
-          <p className="subtitle">Lembre de tudo usando o Leitner System e repetição ativa</p>
+          <p className="subtitle" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Memorização ativa e repetição espaçada usando o Leitner System</p>
         </div>
         
         <div style={{ display: 'flex', gap: '8px' }}>
           <button 
-            className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
             onClick={() => setActiveTab('review')}
           >
             <Layers size={16} />
-            Revisar ({dueCards.length - currentIndex > 0 ? dueCards.length - currentIndex : 0})
+            Revisar Pendentes ({dueCards.length - currentIndex > 0 ? dueCards.length - currentIndex : 0})
           </button>
           <button 
-            className={`btn ${activeTab === 'manage' ? 'btn-primary' : 'btn-secondary'}`}
+            className={`btn ${activeTab === 'manage' ? 'btn-primary' : 'btn-secondary'} btn-sm`}
             onClick={() => setActiveTab('manage')}
           >
             <HelpCircle size={16} />
-            Gerenciar ({allCards.length})
+            Gerenciar Todos ({allCards.length})
           </button>
         </div>
       </div>
 
       {activeTab === 'review' ? (
         /* ================= TELA DE REVISÃO DIÁRIA ================= */
-        <div style={{ maxWidth: '640px', margin: '0 auto var(--space-xl)', padding: '0 var(--space-xs)' }}>
+        <div style={{ maxWidth: '640px', width: '100%', margin: '0 auto', padding: '0 var(--space-xs)' }}>
           {loadingDue ? (
             <div className="flex-center" style={{ height: '300px', color: 'var(--text-secondary)' }}>
               Carregando cartões agendados...
             </div>
           ) : dueCards.length === 0 ? (
-            <div className="card empty-state" style={{ padding: 'var(--space-xl)' }}>
-              <Check size={56} style={{ color: 'var(--success)', marginBottom: '1.25rem' }} />
-              <h2>Nada para revisar hoje!</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem', maxWidth: '400px' }}>
+            <div className="card empty-state" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>
+              <Check size={56} style={{ color: 'var(--success)', marginBottom: '8px' }} />
+              <h2 style={{ fontSize: '21px', fontWeight: 700 }}>Nada para revisar hoje!</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '13px', fontSize: '13px', maxWidth: '400px', margin: '8px auto' }}>
                 Parabéns! Suas revisões estão em dia. Que tal criar novos flashcards a partir dos seus resumos?
               </p>
               <button className="btn btn-secondary" onClick={() => setActiveTab('manage')}>
@@ -215,13 +213,13 @@ export default function Flashcards() {
               </button>
             </div>
           ) : currentIndex >= dueCards.length ? (
-            <div className="card empty-state" style={{ padding: 'var(--space-xl)' }}>
-              <Check size={56} style={{ color: 'var(--success)', marginBottom: '1.25rem' }} />
-              <h2>Sessão Concluída! 🎉</h2>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.5rem' }}>
+            <div className="card empty-state" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>
+              <Check size={56} style={{ color: 'var(--success)', marginBottom: '8px' }} />
+              <h2 style={{ fontSize: '21px', fontWeight: 700 }}>Sessão Concluída! 🎉</h2>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '13px', fontSize: '13px' }}>
                 Você revisou <strong style={{ color: 'var(--primary)' }}>{reviewedCount}</strong> cartões nesta sessão. Continue mantendo seus hábitos!
               </p>
-              <div style={{ display: 'flex', gap: '0.75rem', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: '8px', justifyContent: 'center' }}>
                 <button className="btn btn-primary" onClick={reiniciarRevisoes}>
                   <RotateCcw size={16} />
                   Revisar Novamente
@@ -234,12 +232,12 @@ export default function Flashcards() {
           ) : (
             <div>
               {/* Progresso da revisão */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '12px', fontSize: '0.8rem', color: 'var(--text-secondary)' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px', color: 'var(--text-secondary)' }}>
                 <span>Revisando: <strong>{currentIndex + 1}</strong> de {dueCards.length}</span>
                 <span>Restante: {dueCards.length - currentIndex}</span>
               </div>
               
-              <div className="progress-bar-container" style={{ height: '5px', marginBottom: '24px' }}>
+              <div className="progress-bar-container" style={{ height: '6px', marginBottom: '21px', borderRadius: '3px' }}>
                 <div 
                   className="progress-bar-fill" 
                   style={{ 
@@ -251,7 +249,7 @@ export default function Flashcards() {
               </div>
 
               {/* Cartão 3D Flip */}
-              <div className="flashcard-container" style={{ perspective: '1000px', width: '100%', minHeight: '320px', marginBottom: '24px' }}>
+              <div className="flashcard-container" style={{ perspective: '1000px', width: '100%', minHeight: '320px', marginBottom: '21px' }}>
                 <div 
                   className={`flashcard-inner ${showAnswer ? 'flipped' : ''}`}
                   style={{
@@ -278,23 +276,23 @@ export default function Flashcards() {
                       flexDirection: 'column',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      padding: 'var(--space-lg)',
+                      padding: 'var(--space-md)',
                       border: '1px solid var(--border-color)',
                       boxShadow: 'var(--shadow-lg)'
                     }}
                   >
-                    <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ position: 'absolute', top: '13px', left: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className="color-dot" style={{ backgroundColor: dueCards[currentIndex].subject.color }} />
-                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>
                         {dueCards[currentIndex].subject.subjectName}
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '1.25rem', fontWeight: 500, color: 'var(--text-primary)', padding: '0 12px', wordBreak: 'break-word' }}>
+                    <div style={{ fontSize: '21px', fontWeight: 500, color: 'var(--text-primary)', padding: '0 13px', wordBreak: 'break-word' }}>
                       {dueCards[currentIndex].front}
                     </div>
 
-                    <div style={{ position: 'absolute', bottom: '16px', fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+                    <div style={{ position: 'absolute', bottom: '13px', fontSize: '13px', color: 'var(--text-muted)' }}>
                       Clique no cartão para revelar a resposta
                     </div>
                   </div>
@@ -312,25 +310,25 @@ export default function Flashcards() {
                       flexDirection: 'column',
                       justifyContent: 'center',
                       alignItems: 'center',
-                      padding: 'var(--space-lg)',
-                      border: '1px solid var(--primary-hover)',
+                      padding: 'var(--space-md)',
+                      border: '1px solid var(--primary)',
                       boxShadow: 'var(--shadow-lg)',
-                      background: 'linear-gradient(to bottom, var(--bg-secondary) 0%, rgba(99,102,241,0.03) 100%)'
+                      background: 'linear-gradient(to bottom, var(--bg-secondary) 0%, hsla(217, 91%, 60%, 0.04) 100%)'
                     }}
                   >
-                    <div style={{ position: 'absolute', top: '16px', left: '16px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                    <div style={{ position: 'absolute', top: '13px', left: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
                       <span className="color-dot" style={{ backgroundColor: dueCards[currentIndex].subject.color }} />
-                      <span style={{ fontSize: '0.72rem', fontWeight: 600, color: 'var(--text-muted)' }}>
+                      <span style={{ fontSize: '11px', fontWeight: 600, color: 'var(--text-muted)' }}>
                         {dueCards[currentIndex].subject.subjectName} (Verso)
                       </span>
                     </div>
 
-                    <div style={{ fontSize: '1.2rem', fontWeight: 400, color: 'var(--text-primary)', padding: '0 12px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
+                    <div style={{ fontSize: '16px', fontWeight: 400, color: 'var(--text-primary)', padding: '0 13px', whiteSpace: 'pre-wrap', wordBreak: 'break-word' }}>
                       {dueCards[currentIndex].back}
                     </div>
 
                     {dueCards[currentIndex].summaryTitle && (
-                      <div style={{ position: 'absolute', bottom: '16px', fontSize: '0.7rem', color: 'var(--text-muted)' }}>
+                      <div style={{ position: 'absolute', bottom: '13px', fontSize: '11px', color: 'var(--text-muted)' }}>
                         Origem: <strong style={{ color: 'var(--primary)' }}>{dueCards[currentIndex].summaryTitle}</strong>
                       </div>
                     )}
@@ -369,7 +367,7 @@ export default function Flashcards() {
                     </button>
                     <button 
                       className="btn btn-success" 
-                      style={{ flex: 1, backgroundColor: 'var(--success)', color: 'white' }}
+                      style={{ flex: 1 }}
                       onClick={() => handleReview('easy')}
                       disabled={reviewMutation.isPending}
                     >
@@ -383,9 +381,9 @@ export default function Flashcards() {
         </div>
       ) : (
         /* ================= TELA DE GERENCIAMENTO DE FLASHCARDS ================= */
-        <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          <div className="flex-between" style={{ marginBottom: '1.25rem', flexWrap: 'wrap', gap: '1rem' }}>
-            <h2 style={{ fontSize: '1.25rem', fontWeight: 600, margin: 0 }}>Todos os Cartões Cadastrados</h2>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '13px' }}>
+          <div className="flex-between" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
+            <h2 style={{ fontSize: '16px', fontWeight: 600, margin: 0 }}>Ficha de Todos os Flashcards</h2>
             <button className="btn btn-primary btn-sm" onClick={abrirCriar}>
               <Plus size={16} />
               Criar Flashcard
@@ -397,23 +395,23 @@ export default function Flashcards() {
               Carregando lista de cartões...
             </div>
           ) : allCards.length === 0 ? (
-            <div className="card empty-state" style={{ padding: 'var(--space-lg)' }}>
-              <HelpCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-              <h3>Nenhum flashcard criado ainda</h3>
-              <p style={{ color: 'var(--text-secondary)', marginBottom: '1.25rem', fontSize: '0.875rem' }}>
+            <div className="card empty-state" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>
+              <HelpCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+              <h3 style={{ fontSize: '16px', fontWeight: 600 }}>Nenhum flashcard criado ainda</h3>
+              <p style={{ color: 'var(--text-secondary)', marginBottom: '13px', fontSize: '13px' }}>
                 Comece criando seu primeiro cartão de estudo para revisar os tópicos importantes.
               </p>
               <button className="btn btn-primary" onClick={abrirCriar}>
-                Criar Primeiro Cartão
+                Criar Primeiro Flashcard
               </button>
             </div>
           ) : (
-            <div className="table-responsive">
-              <table className="sessions-table">
+            <div className="table-container">
+              <table className="custom-table">
                 <thead>
                   <tr>
-                    <th>Frente / Pergunta</th>
-                    <th>Verso / Resposta</th>
+                    <th>Pergunta (Frente)</th>
+                    <th>Resposta (Verso)</th>
                     <th>Matéria</th>
                     <th>Estado de Revisão</th>
                     <th>Próxima Revisão</th>
@@ -426,37 +424,37 @@ export default function Flashcards() {
                     const isDue = nextDate.getTime() <= Date.now();
                     return (
                       <tr key={card.id}>
-                        <td style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={card.front}>
+                        <td style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }} title={card.front}>
                           {card.front}
                         </td>
-                        <td style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap' }} title={card.back}>
+                        <td style={{ maxWidth: '220px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }} title={card.back}>
                           {card.back}
                         </td>
                         <td>
-                          <span className="flex-center" style={{ justifyContent: 'flex-start', gap: '6px' }}>
+                          <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                             <span className="color-dot" style={{ backgroundColor: card.subject.color, margin: 0 }} />
                             {card.subject.subjectName}
                           </span>
                         </td>
                         <td>
-                          <span className={`badge ${card.box === 5 ? 'badge-success' : 'badge-primary'}`} style={{ fontSize: '0.72rem' }}>
+                          <span className={`badge ${card.box === 5 ? 'badge-success' : 'badge-primary'}`} style={{ fontSize: '10px' }}>
                             {getQualityText(card.box)}
                           </span>
                         </td>
                         <td>
                           {isDue ? (
-                            <span className="badge badge-warning" style={{ fontSize: '0.72rem' }}>Pendente</span>
+                            <span className="badge badge-warning" style={{ fontSize: '10px' }}>Pendente</span>
                           ) : (
-                            <span style={{ fontSize: '0.78rem', color: 'var(--text-secondary)' }}>
+                            <span style={{ fontSize: '11px', color: 'var(--text-secondary)' }}>
                               {nextDate.toLocaleDateString()} {nextDate.toLocaleTimeString([], { hour: '2-digit', minute: '2-digit' })}
                             </span>
                           )}
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <div style={{ display: 'inline-flex', gap: '0.35rem' }}>
+                          <div style={{ display: 'inline-flex', gap: '4px' }}>
                             <button 
                               className="btn btn-secondary btn-sm" 
-                              style={{ padding: '0.35rem', borderRadius: 'var(--radius-sm)' }} 
+                              style={{ padding: '6px', borderRadius: 'var(--radius-sm)' }} 
                               onClick={() => abrirEditar(card)}
                               title="Editar"
                             >
@@ -464,7 +462,7 @@ export default function Flashcards() {
                             </button>
                             <button 
                               className="btn btn-danger btn-sm" 
-                              style={{ padding: '0.35rem', borderRadius: 'var(--radius-sm)' }} 
+                              style={{ padding: '6px', borderRadius: 'var(--radius-sm)' }} 
                               onClick={() => { if (confirm('Tem certeza que deseja excluir este flashcard?')) deleteMutation.mutate(card.id); }}
                               title="Excluir"
                             >
@@ -485,23 +483,23 @@ export default function Flashcards() {
       {/* ================= MODAL: CRIAR / EDITAR FLASHCARD ================= */}
       {modalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content" style={{ maxWidth: '500px' }} role="dialog" aria-modal="true" aria-labelledby="modal-title">
+          <div className="modal-content" style={{ maxWidth: '500px', padding: 'var(--space-sm)' }} role="dialog" aria-modal="true" aria-labelledby="modal-title">
             <button className="modal-close" onClick={fecharModal} aria-label="Fechar">
-              <Trash2 size={18} style={{ transform: 'rotate(45deg)' }} />
+              <X size={20} />
             </button>
-            <h2 className="modal-title" id="modal-title">
+            <h2 className="modal-title" id="modal-title" style={{ fontSize: '21px', fontWeight: 700, marginBottom: '13px' }}>
               {editingCard ? 'Editar Flashcard' : 'Novo Flashcard'}
             </h2>
             
             {formError && (
-              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              <div style={{ padding: '8px 13px', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '13px', fontSize: '13px' }}>
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="card-subject">Matéria Associada</label>
+              <div className="form-group" style={{ marginBottom: '13px' }}>
+                <label className="form-label" htmlFor="card-subject" style={{ fontSize: '13px', marginBottom: '5px' }}>Matéria Associada</label>
                 <select 
                   id="card-subject" 
                   className="form-input" 
@@ -516,8 +514,8 @@ export default function Flashcards() {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="card-front">Frente / Pergunta</label>
+              <div className="form-group" style={{ marginBottom: '13px' }}>
+                <label className="form-label" htmlFor="card-front" style={{ fontSize: '13px', marginBottom: '5px' }}>Frente / Pergunta</label>
                 <textarea 
                   id="card-front" 
                   className="form-input" 
@@ -530,8 +528,8 @@ export default function Flashcards() {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="card-back">Verso / Resposta</label>
+              <div className="form-group" style={{ marginBottom: '13px' }}>
+                <label className="form-label" htmlFor="card-back" style={{ fontSize: '13px', marginBottom: '5px' }}>Verso / Resposta</label>
                 <textarea 
                   id="card-back" 
                   className="form-input" 
@@ -544,7 +542,7 @@ export default function Flashcards() {
                 />
               </div>
 
-              <div className="modal-actions">
+              <div className="modal-actions" style={{ marginTop: '21px', gap: '13px' }}>
                 <button type="button" className="btn btn-secondary" onClick={fecharModal}>Cancelar</button>
                 <button 
                   type="submit" 

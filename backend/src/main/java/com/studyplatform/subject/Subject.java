@@ -48,6 +48,12 @@ public class Subject {
     @ToString.Exclude
     private User user;
 
+    // Preparação para prova vinculada (ExamPrep)
+    @ManyToOne(fetch = FetchType.LAZY)
+    @JoinColumn(name = "exam_prep_id")
+    @ToString.Exclude
+    private com.studyplatform.examprep.ExamPrep examPrep;
+
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
     @ToString.Exclude

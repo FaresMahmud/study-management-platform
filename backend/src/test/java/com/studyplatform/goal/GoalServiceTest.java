@@ -37,6 +37,7 @@ class GoalServiceTest {
     @Mock private UserRepository userRepository;
     @Mock private GoalMapper goalMapper;
     @Mock private StudySessionRepository studySessionRepository;
+    @Mock private com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
     @Mock private SecurityContext securityContext;
     @Mock private Authentication authentication;
 
@@ -62,7 +63,7 @@ class GoalServiceTest {
 
         goal = Goal.builder()
                 .id(1L).title("Meta Matemática")
-                .progress(10.0).objectiveHours(50.0)
+                .currentMastery(10).targetMastery(50)
                 .startDateGoal(LocalDate.now())
                 .endDateGoal(LocalDate.now().plusMonths(1))
                 .user(authenticatedUser).subject(subject)
@@ -70,7 +71,7 @@ class GoalServiceTest {
 
         validRequest = GoalRequestDTO.builder()
                 .title("Meta Matemática")
-                .progress(10.0).objectiveHours(50.0)
+                .currentMastery(10).targetMastery(50)
                 .startDateGoal(LocalDate.now())
                 .endDateGoal(LocalDate.now().plusMonths(1))
                 .subjectId(1L)
@@ -109,7 +110,7 @@ class GoalServiceTest {
         // ARRANGE — request sem subjectId
         GoalRequestDTO requestWithoutSubject = GoalRequestDTO.builder()
                 .title("Meta Geral")
-                .progress(0.0).objectiveHours(100.0)
+                .currentMastery(0).targetMastery(100)
                 .startDateGoal(LocalDate.now())
                 .endDateGoal(LocalDate.now().plusMonths(3))
                 .subjectId(null) // meta geral
@@ -135,7 +136,7 @@ class GoalServiceTest {
         // ARRANGE — data de fim anterior à data de início
         GoalRequestDTO invalidRequest = GoalRequestDTO.builder()
                 .title("Meta Inválida")
-                .progress(0.0).objectiveHours(50.0)
+                .currentMastery(0).targetMastery(50)
                 .startDateGoal(LocalDate.now().plusDays(10))
                 .endDateGoal(LocalDate.now()) // fim antes do início
                 .build();

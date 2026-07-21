@@ -7,7 +7,8 @@ import { Plus, Edit2, Trash2, X, Target, Calendar } from 'lucide-react';
 
 interface GoalInput {
   title: string;
-  objectiveHours: number;
+  targetMastery: number;
+  currentMastery: number;
   startDateGoal: string;
   endDateGoal: string;
   subjectId: number | null;
@@ -20,7 +21,8 @@ export default function Goals() {
 
   // Form State
   const [title, setTitle] = useState('');
-  const [objectiveHours, setObjectiveHours] = useState<number>(10);
+  const [targetMastery, setTargetMastery] = useState<number>(80);
+  const [currentMastery, setCurrentMastery] = useState<number>(0);
   const [startDate, setStartDate] = useState<string>(
     new Date().toISOString().split('T')[0]
   );
@@ -74,7 +76,8 @@ export default function Goals() {
     mutationFn: async (updated: GoalInput & { id: number }) => {
       return apiClient.put(`/api/goals/${updated.id}`, {
         title: updated.title,
-        objectiveHours: updated.objectiveHours,
+        targetMastery: updated.targetMastery,
+        currentMastery: updated.currentMastery,
         startDateGoal: updated.startDateGoal,
         endDateGoal: updated.endDateGoal,
         subjectId: updated.subjectId,
@@ -111,7 +114,8 @@ export default function Goals() {
   const openCreateModal = () => {
     setEditingGoal(null);
     setTitle('');
-    setObjectiveHours(10);
+    setTargetMastery(80);
+    setCurrentMastery(0);
     setStartDate(new Date().toISOString().split('T')[0]);
     // Default end date: 30 days from now
     const futureDate = new Date();
@@ -125,7 +129,8 @@ export default function Goals() {
   const openEditModal = (goal: Goal) => {
     setEditingGoal(goal);
     setTitle(goal.title);
-    setObjectiveHours(goal.objectiveHours);
+    setTargetMastery(goal.targetMastery);
+    setCurrentMastery(goal.currentMastery);
     setStartDate(goal.startDateGoal);
     setEndDate(goal.endDateGoal);
     setSubjectId(goal.subject ? goal.subject.id : '');
@@ -147,8 +152,8 @@ export default function Goals() {
       return;
     }
 
-    if (objectiveHours <= 0) {
-      setFormError('O objetivo de horas deve ser maior que 0.');
+    if (targetMastery <= 0 || targetMastery > 100) {
+      setFormError('A meta de domínio deve ser entre 1% e 100%.');
       return;
     }
 
@@ -159,7 +164,8 @@ export default function Goals() {
 
     const payload = {
       title,
-      objectiveHours: Number(objectiveHours),
+      targetMastery: Number(targetMastery),
+      currentMastery: Number(currentMastery),
       startDateGoal: startDate,
       endDateGoal: endDate,
       subjectId: subjectId ? Number(subjectId) : null,
@@ -204,42 +210,42 @@ export default function Goals() {
   const isLoading = isLoadingGoals || isLoadingSubjects;
 
   return (
-    <div>
-      <div className="title-section">
+    <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
         <div>
-          <h1>Minhas Metas</h1>
-          <p className="subtitle">Defina e acompanhe objetivos de horas de estudo</p>
+          <h1 style={{ fontSize: 'var(--space-lg)', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Metas de Maestria</h1>
+          <p className="subtitle" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Defina e monitore objetivos de proficiência por disciplina de estudo</p>
         </div>
         <button className="btn btn-primary" onClick={openCreateModal}>
-          <Plus size={20} />
+          <Plus size={18} />
           <span>Nova Meta</span>
         </button>
       </div>
 
       {isLoading ? (
-        <div className="flex-center" style={{ minHeight: '200px' }}>Carregando metas...</div>
+        <div className="flex-center" style={{ minHeight: '200px', color: 'var(--text-secondary)' }}>Carregando metas...</div>
       ) : goals.length === 0 ? (
-        <div className="card empty-state">
-          <Target size={48} />
-          <h2>Nenhuma meta cadastrada</h2>
-          <p style={{ marginBottom: '1.5rem' }}>Que tal definir sua primeira meta de estudos para se manter motivado?</p>
+        <div className="card empty-state" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>
+          <Target size={48} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+          <h2 style={{ fontSize: '21px', fontWeight: 700 }}>Nenhuma meta cadastrada</h2>
+          <p style={{ marginBottom: '13px', fontSize: '13px', color: 'var(--text-secondary)' }}>Defina sua primeira meta de maestria para acompanhar sua evolução no painel.</p>
           <button className="btn btn-primary" onClick={openCreateModal}>
-            Criar primeira meta
+            Criar Primeira Meta de Maestria
           </button>
         </div>
       ) : (
-        <div className="grid-2">
+        <div className="grid-2" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fill, minmax(420px, 1fr))', gap: 'var(--space-xs)' }}>
           {goals.map((goal) => {
-            const percentage = Math.min(Math.round((goal.progress / goal.objectiveHours) * 100), 100);
-            const isCompleted = goal.progress >= goal.objectiveHours;
+            const percentage = Math.round(goal.completionPercentage || 0);
+            const isCompleted = percentage >= 100;
             const daysRemaining = calculateDaysRemaining(goal.endDateGoal);
             
             return (
-              <div key={goal.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '200px' }}>
+              <div key={goal.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '200px', padding: 'var(--space-sm)' }}>
                 <div>
-                  <div className="card-title">
-                    <span style={{ fontWeight: 700 }}>{goal.title}</span>
-                    <div style={{ display: 'flex', gap: '0.25rem' }}>
+                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+                    <span style={{ fontWeight: 700, fontSize: '16px' }}>{goal.title}</span>
+                    <div style={{ display: 'flex', gap: '4px' }}>
                       <button 
                         onClick={() => openEditModal(goal)}
                         style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
@@ -256,28 +262,28 @@ export default function Goals() {
                   </div>
 
                   {goal.subject ? (
-                    <div style={{ marginBottom: '1rem', display: 'flex', alignItems: 'center' }}>
-                      <span className="badge badge-primary" style={{ backgroundColor: `${goal.subject.color || 'var(--primary)'}22`, color: goal.subject.color || 'var(--primary)' }}>
+                    <div style={{ marginBottom: '13px', display: 'flex', alignItems: 'center' }}>
+                      <span className="badge badge-primary" style={{ backgroundColor: `${goal.subject.color || 'var(--primary)'}22`, color: goal.subject.color || 'var(--primary)', padding: '4px 10px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}>
                         <span className="color-dot" style={{ backgroundColor: goal.subject.color, margin: 0, marginRight: '6px' }} />
                         {goal.subject.subjectName}
                       </span>
                     </div>
                   ) : (
-                    <div style={{ marginBottom: '1rem' }}>
-                      <span className="badge badge-secondary" style={{ backgroundColor: 'var(--border-color)', color: 'var(--text-secondary)' }}>
+                    <div style={{ marginBottom: '13px' }}>
+                      <span className="badge badge-secondary" style={{ backgroundColor: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', color: 'var(--text-secondary)', padding: '4px 10px', fontSize: '11px', borderRadius: 'var(--radius-sm)' }}>
                         Meta Geral
                       </span>
                     </div>
                   )}
 
-                  <div className="flex-between" style={{ fontSize: '0.875rem', color: 'var(--text-secondary)', marginBottom: '0.25rem' }}>
-                    <span>Progresso: {goal.progress}h de {goal.objectiveHours}h</span>
+                  <div className="flex-between" style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '5px', display: 'flex', justifyContent: 'space-between' }}>
+                    <span>Progresso: {goal.currentMastery}% de {goal.targetMastery}% de maestria</span>
                     <span style={{ fontWeight: 600, color: isCompleted ? 'var(--success)' : 'var(--text-primary)' }}>
                       {percentage}%
                     </span>
                   </div>
 
-                  <div className="progress-bar-container">
+                  <div className="progress-bar-container" style={{ height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
                     <div 
                       className="progress-bar-fill" 
                       style={{ 
@@ -288,8 +294,8 @@ export default function Goals() {
                   </div>
                 </div>
 
-                <div className="flex-between" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '0.75rem', marginTop: '1rem', fontSize: '0.825rem', color: 'var(--text-muted)' }}>
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem' }}>
+                <div className="flex-between" style={{ borderTop: '1px solid var(--border-color)', paddingTop: '13px', marginTop: '13px', fontSize: '11px', color: 'var(--text-muted)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                  <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <Calendar size={12} />
                     {formatDate(goal.startDateGoal)} até {formatDate(goal.endDateGoal)}
                   </span>
@@ -309,28 +315,28 @@ export default function Goals() {
       {/* Modal Overlay */}
       {isModalOpen && (
         <div className="modal-overlay">
-          <div className="modal-content">
+          <div className="modal-content" style={{ padding: 'var(--space-sm)' }}>
             <button className="modal-close" onClick={closeModal}>
               <X size={20} />
             </button>
-            <h2 className="modal-title">
-              {editingGoal ? 'Editar Meta' : 'Criar Meta'}
+            <h2 className="modal-title" style={{ fontSize: '21px', fontWeight: 700, marginBottom: '13px' }}>
+              {editingGoal ? 'Editar Meta de Maestria' : 'Criar Meta de Maestria'}
             </h2>
 
             {formError && (
-              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              <div style={{ padding: '8px 13px', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '13px', fontSize: '13px' }}>
                 {formError}
               </div>
             )}
 
             <form onSubmit={handleSubmit}>
-              <div className="form-group">
-                <label className="form-label" htmlFor="goal-title">Título da Meta</label>
+              <div className="form-group" style={{ marginBottom: '13px' }}>
+                <label className="form-label" htmlFor="goal-title" style={{ fontSize: '13px', marginBottom: '5px' }}>Título da Meta</label>
                 <input
                   id="goal-title"
                   type="text"
                   className="form-input"
-                  placeholder="Ex: Estudar Banco de Dados para a Prova"
+                  placeholder="Ex: Dominar Banco de Dados Relacional"
                   value={title}
                   onChange={(e) => setTitle(e.target.value)}
                   maxLength={100}
@@ -338,8 +344,8 @@ export default function Goals() {
                 />
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="goal-subject">Matéria Relacionada (Opcional)</label>
+              <div className="form-group" style={{ marginBottom: '13px' }}>
+                <label className="form-label" htmlFor="goal-subject" style={{ fontSize: '13px', marginBottom: '5px' }}>Matéria Relacionada (Opcional)</label>
                 <select
                   id="goal-subject"
                   className="form-input"
@@ -355,22 +361,39 @@ export default function Goals() {
                 </select>
               </div>
 
-              <div className="form-group">
-                <label className="form-label" htmlFor="goal-obj-hours">Objetivo (Horas)</label>
-                <input
-                  id="goal-obj-hours"
-                  type="number"
-                  className="form-input"
-                  min="1"
-                  value={objectiveHours}
-                  onChange={(e) => setObjectiveHours(Number(e.target.value))}
-                  required
-                />
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '13px', marginBottom: '13px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="goal-curr-mastery" style={{ fontSize: '13px', marginBottom: '5px' }}>Domínio Atual (%)</label>
+                  <input
+                    id="goal-curr-mastery"
+                    type="number"
+                    className="form-input"
+                    min="0"
+                    max="100"
+                    value={currentMastery}
+                    onChange={(e) => setCurrentMastery(Number(e.target.value))}
+                    required
+                  />
+                </div>
+
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="goal-target-mastery" style={{ fontSize: '13px', marginBottom: '5px' }}>Domínio Alvo (%)</label>
+                  <input
+                    id="goal-target-mastery"
+                    type="number"
+                    className="form-input"
+                    min="1"
+                    max="100"
+                    value={targetMastery}
+                    onChange={(e) => setTargetMastery(Number(e.target.value))}
+                    required
+                  />
+                </div>
               </div>
 
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '1rem' }}>
-                <div className="form-group">
-                  <label className="form-label" htmlFor="goal-start">Data de Início</label>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '13px', marginBottom: '13px' }}>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="goal-start" style={{ fontSize: '13px', marginBottom: '5px' }}>Data de Início</label>
                   <input
                     id="goal-start"
                     type="date"
@@ -381,8 +404,8 @@ export default function Goals() {
                   />
                 </div>
 
-                <div className="form-group">
-                  <label className="form-label" htmlFor="goal-end">Data de Fim</label>
+                <div className="form-group" style={{ marginBottom: 0 }}>
+                  <label className="form-label" htmlFor="goal-end" style={{ fontSize: '13px', marginBottom: '5px' }}>Data Limite</label>
                   <input
                     id="goal-end"
                     type="date"
@@ -394,7 +417,7 @@ export default function Goals() {
                 </div>
               </div>
 
-              <div className="modal-actions">
+              <div className="modal-actions" style={{ marginTop: '21px', gap: '13px' }}>
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
                   Cancelar
                 </button>

@@ -1,8 +1,8 @@
 import React from 'react';
 import { useQuery, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import type { StudySession, Subject, Goal } from '../types';
-import { Clock, BookOpen, Target, CheckCircle, Flame } from 'lucide-react';
+import type { StudySession, Subject, Goal, ExamPrep } from '../types';
+import { Clock, BookOpen, Target, CheckCircle, Flame, Calendar, Plus } from 'lucide-react';
 import { Link } from 'react-router-dom';
 
 // Importando os sub-componentes refatorados
@@ -15,23 +15,45 @@ import WhiteboardOcrCard from '../components/WhiteboardOcrCard';
 export default function Dashboard() {
   const queryClient = useQueryClient();
 
-  // ─── Queries de dados ────────────────────────────────────────────────
+  // ─── Queries de dados com fallback resiliente ─────────────────────────
   const { data: sessions = [], isLoading: loadingSessions } = useQuery<StudySession[]>({
     queryKey: ['sessions'],
-    queryFn: async () => (await apiClient.get<StudySession[]>('/api/study-sessions')).data,
+    queryFn: async () => {
+      const res = await apiClient.get<any>('/api/study-sessions');
+      return Array.isArray(res.data) ? res.data : (res.data.content || []);
+    },
   });
 
   const { data: subjects = [], isLoading: loadingSubjects } = useQuery<Subject[]>({
     queryKey: ['subjects'],
-    queryFn: async () => (await apiClient.get<Subject[]>('/api/subjects')).data,
+    queryFn: async () => {
+      const res = await apiClient.get<any>('/api/subjects');
+      return Array.isArray(res.data) ? res.data : (res.data.content || []);
+    },
   });
 
   const { data: goals = [], isLoading: loadingGoals } = useQuery<Goal[]>({
     queryKey: ['goals'],
-    queryFn: async () => (await apiClient.get<Goal[]>('/api/goals')).data,
+    queryFn: async () => {
+      const res = await apiClient.get<any>('/api/goals');
+      return Array.isArray(res.data) ? res.data : (res.data.content || []);
+    },
   });
 
-  const isLoading = loadingSessions || loadingSubjects || loadingGoals;
+  const { data: examPreps = [], isLoading: loadingExams } = useQuery<ExamPrep[]>({
+    queryKey: ['examPreps'],
+    queryFn: async () => {
+      try {
+        const response = await apiClient.get<any>('/api/v1/exam-preps');
+        return Array.isArray(response.data) ? response.data : (response.data.content || []);
+      } catch (err) {
+        console.error("Failed to load exam preps:", err);
+        return [];
+      }
+    },
+  });
+
+  const isLoading = loadingSessions || loadingSubjects || loadingGoals || loadingExams;
 
   // ─── Lógica de cálculo de estatísticas e streak ─────────────────────────
   const calcularStreak = (sessoes: StudySession[]): number => {
@@ -58,7 +80,6 @@ export default function Dashboard() {
   const completedGoals = goals.filter(g => g.progress >= g.objectiveHours).length;
   const activeGoals = goals.length - completedGoals;
 
-  // Handler para atualizar os dados do dashboard quando o timer salva uma sessão
   const handleSessionSaved = () => {
     queryClient.invalidateQueries({ queryKey: ['sessions'] });
     queryClient.invalidateQueries({ queryKey: ['goals'] });
@@ -72,123 +93,155 @@ export default function Dashboard() {
     );
   }
 
+  const activeExam = examPreps.find(e => e.status === 'ACTIVE') || examPreps[0];
+
   return (
-    <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '1.5rem' }}>
-      <div className="title-section">
+    <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
+      <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
         <div>
-          <h1>Meu Painel de Estudos</h1>
-          <p className="subtitle" style={{ fontSize: '0.9rem', color: 'var(--text-secondary)', marginTop: '2px' }}>Visão geral do seu foco, metas e evolução</p>
+          <h1 style={{ fontSize: 'var(--space-lg)', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Painel de Estudos</h1>
+          <p className="subtitle" style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginTop: '4px' }}>Seu centro de foco e controle de preparação</p>
         </div>
       </div>
 
-      {/* ── Grid de Estatísticas Rápidas ── */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(160px, 1fr))', gap: '1rem' }}>
-        <div className="stat-card">
+      {/* ── Widget de Contagem Regressiva do Exame (Exam Prep) ── */}
+      {activeExam ? (
+        <div style={{ 
+          background: 'linear-gradient(135deg, hsla(217, 91%, 60%, 0.15), hsla(142, 72%, 45%, 0.08))',
+          border: '1px solid hsla(217, 91%, 60%, 0.25)',
+          display: 'flex',
+          justifyContent: 'space-between',
+          alignItems: 'center',
+          padding: 'var(--space-sm) var(--space-md)',
+          borderRadius: 'var(--radius-lg)',
+          boxShadow: 'var(--shadow-lg)'
+        }}>
+          <div>
+            <span style={{ fontSize: '0.72rem', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', fontWeight: 800 }}>Cronograma Ativo</span>
+            <h2 style={{ fontSize: '1.25rem', fontWeight: 800, margin: '2px 0 0 0', color: 'var(--text-primary)' }}>{activeExam.title}</h2>
+            <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', margin: '4px 0 0 0' }}>
+              Objetivo: <strong style={{ color: 'var(--text-primary)' }}>{activeExam.targetScore}% de Maestria</strong> • Exame em {new Date(activeExam.examDate + 'T00:00:00').toLocaleDateString('pt-BR')}
+            </p>
+          </div>
+          <div style={{ textAlign: 'center', background: 'var(--bg-secondary)', padding: '8px 16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+            <span style={{ fontSize: '1.5rem', fontWeight: 900, color: 'var(--warning)', display: 'block', lineHeight: 1 }}>
+              {activeExam.daysRemaining >= 0 ? activeExam.daysRemaining : 0}
+            </span>
+            <span style={{ fontSize: '0.62rem', textTransform: 'uppercase', fontWeight: 700, color: 'var(--text-muted)' }}>
+              Dias Restantes
+            </span>
+          </div>
+        </div>
+      ) : (
+        <div style={{ 
+          background: 'var(--bg-secondary)',
+          border: '1px dashed var(--border-color)',
+          padding: 'var(--space-md)',
+          borderRadius: 'var(--radius-lg)',
+          textAlign: 'center'
+        }}>
+          <h3 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 700, color: 'var(--text-primary)' }}>Nenhuma preparação de prova configurada</h3>
+          <p style={{ fontSize: '0.82rem', color: 'var(--text-muted)', margin: '4px 0 12px 0' }}>
+            Defina seu objetivo de maestria para ativar a contagem regressiva e os cards inteligentes.
+          </p>
+          <Link to="/goals" className="btn btn-secondary btn-sm" style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}>
+            <Plus size={14} />
+            Criar Nova Meta de Maestria
+          </Link>
+        </div>
+      )}
+
+      {/* ── Grid de Estatísticas Rápidas (Fibonacci Spacing) ── */}
+      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: 'var(--space-xs)', marginBottom: 0 }}>
+        <div className="stat-card" style={{ padding: 'var(--space-sm)' }}>
           <div className="stat-icon" style={{ backgroundColor: 'var(--primary-glow)', color: 'var(--primary)' }}>
-            <Clock size={24} />
+            <Clock size={20} />
           </div>
           <div className="stat-info">
-            <h3>Total Estudado</h3>
-            <p>{totalHours}h</p>
+            <h3 style={{ fontSize: '13px' }}>Total Estudado</h3>
+            <p style={{ fontSize: '21px' }}>{totalHours}h</p>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: 'rgba(20, 184, 166, 0.15)', color: '#14b8a6' }}>
-            <BookOpen size={24} />
+        <div className="stat-card" style={{ padding: 'var(--space-sm)' }}>
+          <div className="stat-icon" style={{ backgroundColor: 'hsla(142, 72%, 45%, 0.15)', color: 'var(--success)' }}>
+            <BookOpen size={20} />
           </div>
           <div className="stat-info">
-            <h3>Matérias Ativas</h3>
-            <p>{subjects.length}</p>
+            <h3 style={{ fontSize: '13px' }}>Matérias</h3>
+            <p style={{ fontSize: '21px' }}>{subjects.length}</p>
           </div>
         </div>
 
-        <div className="stat-card">
+        <div className="stat-card" style={{ padding: 'var(--space-sm)' }}>
           <div className="stat-icon" style={{ backgroundColor: 'var(--warning-glow)', color: 'var(--warning)' }}>
-            <Target size={24} />
+            <Target size={20} />
           </div>
           <div className="stat-info">
-            <h3>Metas em Andamento</h3>
-            <p>{activeGoals}</p>
+            <h3 style={{ fontSize: '13px' }}>Metas Ativas</h3>
+            <p style={{ fontSize: '21px' }}>{activeGoals}</p>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: 'var(--success-glow)', color: 'var(--success)' }}>
-            <CheckCircle size={24} />
+        <div className="stat-card" style={{ padding: 'var(--space-sm)' }}>
+          <div className="stat-icon" style={{ backgroundColor: 'hsla(217, 91%, 60%, 0.15)', color: 'var(--primary)' }}>
+            <CheckCircle size={20} />
           </div>
           <div className="stat-info">
-            <h3>Metas Concluídas</h3>
-            <p>{completedGoals}</p>
+            <h3 style={{ fontSize: '13px' }}>Metas Batidas</h3>
+            <p style={{ fontSize: '21px' }}>{completedGoals}</p>
           </div>
         </div>
 
-        <div className="stat-card">
-          <div className="stat-icon" style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', color: '#f97316' }}>
-            <Flame size={24} />
+        <div className="stat-card" style={{ padding: 'var(--space-sm)' }}>
+          <div className="stat-icon" style={{ backgroundColor: 'hsla(38, 92%, 50%, 0.15)', color: 'var(--warning)' }}>
+            <Flame size={20} />
           </div>
           <div className="stat-info">
-            <h3>Sequência de Estudo</h3>
-            <p>{streak === 1 ? '1 dia' : `${streak} dias`}</p>
+            <h3 style={{ fontSize: '13px' }}>Sequência</h3>
+            <p style={{ fontSize: '21px' }}>{streak === 1 ? '1 dia' : `${streak} dias`}</p>
           </div>
         </div>
       </div>
 
-      {/* ── Seção de Foco e Produtividade (Timer + Meta Semanal + Whiteboard AI) ── */}
-      <div className="focus-row-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(300px, 1fr))', gap: '1.25rem' }}>
+      {/* ── Painel de Foco e Produtividade (Timer, OCR e Histórico) ── */}
+      <div className="focus-row-container" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-xs)' }}>
         <TimerCard subjects={subjects} onSessionSaved={handleSessionSaved} />
         <WhiteboardOcrCard subjects={subjects} />
         <WeeklyFocusCard sessions={sessions} />
       </div>
 
-      {/* ── Estado vazio com Assistente de Onboarding Guiado ── */}
+      {/* ── Seção de Ações Rápidas (Cognitive Load Reduction) ── */}
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: 'var(--space-xs)' }}>
+        <div className="card" style={{ padding: 'var(--space-sm)' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>Estudar Flashcards</h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '13px' }}>Pratique revisões ativas com o sistema Leitner e acelere a retenção de conceitos.</p>
+          <Link to="/flashcards" className="btn btn-secondary btn-sm" style={{ width: '100%' }}>Ir para Flashcards</Link>
+        </div>
+
+        <div className="card" style={{ padding: 'var(--space-sm)' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>Responder Quizzes</h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '13px' }}>Teste seus conhecimentos por matéria com geração instantânea baseada nos seus PDFs.</p>
+          <Link to="/quiz" className="btn btn-secondary btn-sm" style={{ width: '100%' }}>Iniciar Quiz</Link>
+        </div>
+
+        <div className="card" style={{ padding: 'var(--space-sm)' }}>
+          <h3 style={{ fontSize: '16px', fontWeight: 600, marginBottom: '8px' }}>Simulados de Exame</h3>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '13px' }}>Faça exames simulados cronometrados de 15 minutos e teste sua velocidade.</p>
+          <Link to="/simulation" className="btn btn-secondary btn-sm" style={{ width: '100%' }}>Iniciar Simulado</Link>
+        </div>
+      </div>
+
+      {/* ── Metas Ativas e Histórico de Sessões ── */}
       {sessions.length === 0 ? (
         <div className="card empty-state" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>
-          <h2 style={{ marginBottom: 'var(--space-xs)' }}>Bem-vindo ao StudyFlow! 🎉</h2>
+          <h2 style={{ marginBottom: 'var(--space-xs)' }}>Pronto para decolar nos estudos? 🚀</h2>
           <p style={{ maxWidth: '600px', margin: '0 auto var(--space-md)', color: 'var(--text-secondary)', fontSize: '0.95rem' }}>
-            Preparamos um guia rápido com 3 passos simples baseados em psicologia da aprendizagem para você iniciar sua rotina com foco máximo:
+            Siga o Onboarding e comece a registrar suas sessões de foco agora mesmo.
           </p>
-          
-          <div style={{ display: 'flex', gap: 'var(--space-md)', justifyContent: 'center', flexWrap: 'wrap', margin: '0 auto var(--space-lg)', maxWidth: '900px', textAlign: 'left' }}>
-            {/* Passo 1 */}
-            <div className="card" style={{ flex: '1 1 250px', background: 'var(--bg-tertiary)', border: '1px dashed var(--border-color)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', fontSize: '0.85rem', fontWeight: 'bold' }}>1</span>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Crie Matérias</h4>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: '1.4' }}>
-                Divida seu escopo de estudo para medir seu tempo individual por disciplina e ter clareza gráfica.
-              </p>
-              <Link to="/subjects" className="btn btn-primary btn-sm" style={{ width: '100%' }}>Cadastrar Matéria</Link>
-            </div>
-
-            {/* Passo 2 */}
-            <div className="card" style={{ flex: '1 1 250px', background: 'var(--bg-tertiary)', border: '1px dashed var(--border-color)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', fontSize: '0.85rem', fontWeight: 'bold' }}>2</span>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Inicie um Ciclo</h4>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: '1.4' }}>
-                Use o timer científico de Sessão Ativa acima para focar no Modo Pomodoro ou Modo Livre.
-              </p>
-              <button className="btn btn-secondary btn-sm" onClick={() => window.scrollTo({ top: 0, behavior: 'smooth' })} style={{ width: '100%' }}>Ir para o Timer</button>
-            </div>
-
-            {/* Passo 3 */}
-            <div className="card" style={{ flex: '1 1 250px', background: 'var(--bg-tertiary)', border: '1px dashed var(--border-color)' }}>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '8px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', width: '24px', height: '24px', borderRadius: '50%', backgroundColor: 'var(--primary)', color: 'white', fontSize: '0.85rem', fontWeight: 'bold' }}>3</span>
-                <h4 style={{ margin: 0, fontSize: '0.95rem', fontWeight: 600 }}>Sintetize Resumos</h4>
-              </div>
-              <p style={{ fontSize: '0.78rem', color: 'var(--text-secondary)', marginBottom: '12px', lineHeight: '1.4' }}>
-                Escreva resumos no editor com Modo Zen e gerador de som de isolamento acústico offline.
-              </p>
-              <Link to="/summaries" className="btn btn-secondary btn-sm" style={{ width: '100%' }}>Criar Resumo</Link>
-            </div>
-          </div>
         </div>
       ) : (
-        <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '1.25rem' }}>
+        <div className="dashboard-grid" style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: 'var(--space-xs)' }}>
           <ActiveGoalsCard goals={goals} />
           <RecentSessionsCard sessions={sessions} />
         </div>

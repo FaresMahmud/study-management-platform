@@ -29,9 +29,23 @@ apiClient.interceptors.request.use(
   }
 );
 
-// Interceptor para tratar erros de autenticação (401 ou 403) globalmente
+// Interceptor para tratar respostas paginadas e erros de autenticação globalmente
 apiClient.interceptors.response.use(
-  (response) => response,
+  (response) => {
+    // Se a resposta for um objeto paginado do Spring (contendo 'content' e 'pageable'),
+    // desembrulhamos o array, mas mantemos compatibilidade com chamadas que buscam .content
+    if (response.data && typeof response.data === 'object' && 'content' in response.data && 'pageable' in response.data) {
+      const contentArray = response.data.content || [];
+      Object.defineProperty(contentArray, 'content', {
+        value: contentArray,
+        writable: true,
+        enumerable: false,
+        configurable: true
+      });
+      response.data = contentArray;
+    }
+    return response;
+  },
   (error) => {
     if (error.response && (error.response.status === 401 || error.response.status === 403)) {
       // Se receber 401 ou 403, a sessão está expirada/inválida, desloga o usuário
