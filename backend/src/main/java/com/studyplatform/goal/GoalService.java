@@ -197,4 +197,14 @@ public class GoalService {
 
         return (int) Math.round(sum / totalCount);
     }
+
+    @Transactional
+    public void recalculateGoalMastery(Long examPrepId) {
+        int finalMastery = obterMaestriaCalculadaParaExamPrep(examPrepId);
+        List<Goal> goals = goalRepository.findByExamPrepId(examPrepId);
+        for (Goal goal : goals) {
+            goal.updateMastery(finalMastery);
+            goalRepository.save(goal);
+        }
+    }
 }

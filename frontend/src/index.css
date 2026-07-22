@@ -5,27 +5,28 @@
   --bg-secondary: hsl(222, 24%, 12%);
   --bg-tertiary: hsl(222, 20%, 15%);
   --border-color: hsl(222, 16%, 22%);
-  --border-focus: hsl(217, 91%, 60%);
+  --border-focus: hsl(258, 90%, 66%);
   
   --text-primary: hsl(210, 40%, 98%);
   --text-secondary: hsl(215, 20%, 75%);
   --text-muted: hsl(215, 12%, 55%);
   
-  --primary: hsl(217, 91%, 60%);
-  --primary-hover: hsl(217, 91%, 50%);
-  --primary-glow: hsla(217, 91%, 60%, 0.15);
+  --primary: hsl(258, 90%, 66%);
+  --primary-hover: hsl(258, 90%, 60%);
+  --primary-glow: hsla(258, 90%, 66%, 0.15);
   
-  --success: hsl(142, 72%, 45%);
-  --success-glow: hsla(142, 72%, 45%, 0.15);
+  --success: hsl(162, 72%, 45%);
+  --success-glow: hsla(162, 72%, 45%, 0.15);
   --danger: hsl(354, 70%, 54%);
   --danger-glow: hsla(354, 70%, 54%, 0.15);
-  --warning: hsl(38, 92%, 50%);
-  --warning-glow: hsla(38, 92%, 50%, 0.15);
+  --warning: hsl(36, 100%, 43%);
+  --warning-glow: hsla(36, 100%, 43%, 0.15);
+  --ai: hsl(330, 85%, 57%);
   
   --sans: 'Outfit', system-ui, -apple-system, sans-serif;
-  --radius-sm: 6px;
+  --radius-sm: 8px;
   --radius-md: 12px;
-  --radius-lg: 16px;
+  --radius-lg: 24px;
   
   --shadow-sm: 0 1px 2px 0 rgba(0, 0, 0, 0.05);
   --shadow-md: 0 4px 6px -1px rgba(0, 0, 0, 0.1), 0 2px 4px -1px rgba(0, 0, 0, 0.06);

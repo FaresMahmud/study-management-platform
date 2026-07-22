@@ -3,6 +3,7 @@ import com.studyplatform.auth.AuthService;
 import com.studyplatform.shared.config.RateLimitingFilter;
 import com.studyplatform.shared.security.JwtAuthenticationFilter;
 import com.studyplatform.shared.security.UserDetailsServiceImpl;
+import com.studyplatform.shared.security.OAuth2AuthenticationSuccessHandler;
 import java.util.Arrays;
 import java.util.List;
 import lombok.RequiredArgsConstructor;
@@ -34,6 +35,7 @@ public class SecurityConfig {
     private final JwtAuthenticationFilter jwtAuthenticationFilter;
     private final UserDetailsServiceImpl userDetailsService;
     private final RateLimitingFilter rateLimitingFilter;
+    private final OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
 
     @org.springframework.beans.factory.annotation.Value("${app.cors.allowed-origins}")
     private String allowedOrigins;
@@ -48,15 +50,23 @@ public class SecurityConfig {
             .csrf(AbstractHttpConfigurer::disable)
 
             .authorizeHttpRequests(auth -> auth
-                // Rotas públicas: auth e documentação Swagger
+                // Rotas públicas: auth, documentação Swagger, Actuator e endpoints OAuth2
                 .requestMatchers(
                     "/api/v1/auth/**",
                     "/api/v1/exam-preps/public/share/**",
                     "/v3/api-docs/**",
                     "/swagger-ui/**",
-                    "/swagger-ui.html"
+                    "/swagger-ui.html",
+                    "/login/oauth2/**",
+                    "/oauth2/**",
+                    "/actuator/**"
                 ).permitAll()
                 .anyRequest().authenticated()
+            )
+
+            // Configuração do Login Social OAuth2
+            .oauth2Login(oauth2 -> oauth2
+                .successHandler(oAuth2AuthenticationSuccessHandler)
             )
 
             // Stateless: sem sessão HTTP, cada requisição precisa do token

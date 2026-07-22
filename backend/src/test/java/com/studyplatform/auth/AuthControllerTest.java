@@ -53,6 +53,9 @@ class AuthControllerTest {
     @MockBean
     private UserDetailsServiceImpl userDetailsService;
 
+    @MockBean
+    private com.studyplatform.shared.security.OAuth2AuthenticationSuccessHandler oAuth2AuthenticationSuccessHandler;
+
     // ==================== TESTES DE REGISTRO ====================
 
     @Test

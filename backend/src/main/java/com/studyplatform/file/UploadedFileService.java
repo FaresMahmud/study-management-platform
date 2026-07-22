@@ -78,8 +78,7 @@ public class UploadedFileService {
 
             // Dispara extração de texto assíncrona baseada no arquivo salvo em disco
             try {
-                java.io.InputStream diskStream = Files.newInputStream(targetLocation);
-                pdfProcessingService.processFileAsync(saved, diskStream);
+                pdfProcessingService.processFileAsync(saved, targetLocation);
             } catch (Exception ex) {
                 log.error("Erro ao enfileirar processamento assíncrono de OCR para o arquivo ID: {}", saved.getId(), ex);
             }

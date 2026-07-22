@@ -3,6 +3,7 @@ import com.studyplatform.subject.Subject;
 import com.studyplatform.user.User;
 import jakarta.persistence.*;
 import java.time.LocalDate;
+import java.time.LocalDateTime;
 import lombok.AllArgsConstructor;
 import lombok.Builder;
 import lombok.EqualsAndHashCode;
@@ -10,6 +11,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 // Representa uma meta de estudo. O Subject é opcional:
 // o usuário pode criar metas gerais (ex: "estudar 100h no mês") sem vincular a uma matéria.
@@ -21,6 +25,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "goals")
 public class Goal {
 
@@ -60,6 +65,14 @@ public class Goal {
     @JoinColumn(name = "exam_prep_id", nullable = true)
     @ToString.Exclude
     private com.studyplatform.examprep.ExamPrep examPrep;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     /**
      * Retorna a porcentagem de conclusão com base no progresso de domínio atual.

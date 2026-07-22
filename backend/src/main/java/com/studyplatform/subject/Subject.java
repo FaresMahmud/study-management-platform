@@ -3,6 +3,7 @@ import com.studyplatform.goal.Goal;
 import com.studyplatform.session.StudySession;
 import com.studyplatform.user.User;
 import jakarta.persistence.*;
+import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
 import lombok.AllArgsConstructor;
@@ -12,6 +13,9 @@ import lombok.Getter;
 import lombok.NoArgsConstructor;
 import lombok.Setter;
 import lombok.ToString;
+import org.springframework.data.annotation.CreatedDate;
+import org.springframework.data.annotation.LastModifiedDate;
+import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 
 // Representa uma matéria/área de estudo do usuário.
 // Ao deletar um Subject, o Cascade garante que todas as sessões e metas vinculadas também somem.
@@ -23,6 +27,7 @@ import lombok.ToString;
 @NoArgsConstructor
 @AllArgsConstructor
 @Entity
+@EntityListeners(AuditingEntityListener.class)
 @Table(name = "subjects")
 public class Subject {
 
@@ -53,6 +58,14 @@ public class Subject {
     @JoinColumn(name = "exam_prep_id")
     @ToString.Exclude
     private com.studyplatform.examprep.ExamPrep examPrep;
+
+    @CreatedDate
+    @Column(name = "created_at", nullable = false, updatable = false)
+    private LocalDateTime createdAt;
+
+    @LastModifiedDate
+    @Column(name = "updated_at", nullable = false)
+    private LocalDateTime updatedAt;
 
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default

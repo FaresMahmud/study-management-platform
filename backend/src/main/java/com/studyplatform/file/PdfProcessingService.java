@@ -34,8 +34,8 @@ public class PdfProcessingService {
         }
 
         String[] words = text.split("\\s+");
-        int chunkSize = 600; // 600 palavras por chunk
-        int overlap = 50;   // Overlap de 50 palavras para manter contexto semântico
+        int chunkSize = 120; // ~700 caracteres (dentro da faixa de 500 a 1000 caracteres contextuais)
+        int overlap = 15;    // Overlap para manter contexto semântico
 
         for (int i = 0; i < words.length; i += (chunkSize - overlap)) {
             int end = Math.min(words.length, i + chunkSize);
@@ -50,7 +50,7 @@ public class PdfProcessingService {
 
     @Async
     @Transactional
-    public void processFileAsync(UploadedFile file, InputStream inputStream) {
+    public void processFileAsync(UploadedFile file, java.nio.file.Path filePath) {
         log.info("Iniciando extração de texto assíncrona para arquivo ID: {}", file.getId());
         try {
             if (file.getSubject() == null || file.getSubject().getExamPrep() == null) {
@@ -58,7 +58,11 @@ public class PdfProcessingService {
                 return;
             }
 
-            String text = extractText(inputStream);
+            String text;
+            try (InputStream inputStream = java.nio.file.Files.newInputStream(filePath)) {
+                text = extractText(inputStream);
+            }
+
             List<String> textChunks = splitIntoChunks(text);
 
             List<PdfChunk> chunksToSave = new ArrayList<>();
