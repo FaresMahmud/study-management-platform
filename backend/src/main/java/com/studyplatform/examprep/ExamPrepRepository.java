@@ -10,5 +10,6 @@ import java.util.UUID;
 @Repository
 public interface ExamPrepRepository extends JpaRepository<ExamPrep, Long> {
     List<ExamPrep> findByUser_Id(Long userId);
+    Optional<ExamPrep> findByIdAndUserId(Long id, Long userId);
     Optional<ExamPrep> findByShareToken(UUID shareToken);
 }

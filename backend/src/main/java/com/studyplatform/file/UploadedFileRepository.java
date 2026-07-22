@@ -15,4 +15,6 @@ public interface UploadedFileRepository extends JpaRepository<UploadedFile, Long
     Optional<UploadedFile> findByIdAndUserId(Long id, Long userId);
 
     List<UploadedFile> findByUserIdAndSubjectId(Long userId, Long subjectId);
+    
+    List<UploadedFile> findBySubjectId(Long subjectId);
 }
