@@ -343,7 +343,7 @@ export default function Flashcards() {
                   <>
                     <button className="fsrs-btn again" onClick={() => handleReview('hard')}>
                       <span>De Novo (1)</span>
-                      <small style={{ fontSize: '10px', opacity: 0.8 }}>< 1min</small>
+                      <small style={{ fontSize: '10px', opacity: 0.8 }}>{"< 1min"}</small>
                     </button>
                     <button className="fsrs-btn hard" onClick={() => handleReview('hard')}>
                       <span>Difícil (2)</span>
