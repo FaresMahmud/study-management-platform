@@ -144,6 +144,38 @@ Cada seção descreve o que foi alterado, os arquivos afetados e o motivo da mud
 
 ---
 
+## Sessão 6 — Preparação de Exame, Compartilhamento Social e Tutor Virtual RAG
+
+### 6.1 Assistente de Onboarding (ExamPrep Wizard)
+- **O que foi feito:** Se o usuário não possui preparações para prova cadastradas, o Dashboard é substituído por um assistente em 3 passos: dados da prova, meta de acerto (0-100% via slider) e vinculação de matérias em lote. O clique final persiste o ExamPrep no banco e atualiza as matérias vinculadas.
+- **Arquivos afetados:**
+  - `frontend/src/pages/Dashboard.tsx`
+  - `frontend/src/types/index.ts`
+- **Motivo:** Automatizar e facilitar a criação de planos de estudo para provas com foco em maestria e metas integradas.
+
+### 6.2 Compartilhamento Social de Objetivos
+- **O que foi feito:** O card do exame ativo no Dashboard ganhou o botão "Compartilhar", que gera um token UUID público no backend e o salva na área de transferência. Uma rota pública e anônima `/public/share/:token` exibe o cronograma, maestria e contagem regressiva para visitantes.
+- **Arquivos afetados:**
+  - `frontend/src/pages/Dashboard.tsx`
+  - `frontend/src/pages/PublicShareView.tsx` *(novo)*
+  - `frontend/src/App.tsx`
+- **Motivo:** Permitir que o aluno compartilhe sua preparação de forma transparente, além de servir como atração para novos usuários.
+
+### 6.3 Tutor Virtual Flutuante (RAG)
+- **O que foi feito:** Um widget flutuante rosa no canto inferior do Dashboard abre um chat interativo conectado à API `/api/v1/chat/ask` do backend. As dúvidas são resolvidas recuperando trechos dos PDFs carregados e citando fontes automaticamente.
+- **Arquivos afetados:**
+  - `frontend/src/pages/Dashboard.tsx`
+- **Motivo:** Reduzir a carga cognitiva do estudante ao permitir que tire dúvidas em tempo real de forma restrita e contextualizada ao seu material de estudo.
+
+### 6.4 Correção: Nullability de Auditoria no MySQL
+- **O que foi feito:** Alterada a configuração dos campos de auditoria `@CreatedDate` e `@LastModifiedDate` de `nullable = false` para `nullable = true`.
+- **Arquivos afetados:**
+  - `backend/src/main/java/com/studyplatform/subject/Subject.java`
+  - `backend/src/main/java/com/studyplatform/goal/Goal.java`
+- **Motivo:** Evitar erro de truncamento de dados (`Incorrect datetime value: '0000-00-00 00:00:00'`) no MySQL durante a execução do DDL do Hibernate.
+
+---
+
 ## Estrutura rápida do projeto
 
 ```
