@@ -17,6 +17,7 @@ import StudyWorkspace from './pages/StudyWorkspace';
 import Quiz from './pages/Quiz';
 import Simulation from './pages/Simulation';
 import PublicShareView from './pages/PublicShareView';
+import Podcast from './pages/Podcast';
 
 
 
@@ -96,6 +97,7 @@ export default function App() {
             <Route path="/workspace" element={<StudyWorkspace />} />
             <Route path="/quiz" element={<Quiz />} />
             <Route path="/simulation" element={<Simulation />} />
+            <Route path="/podcast" element={<Podcast />} />
           </Route>
 
 

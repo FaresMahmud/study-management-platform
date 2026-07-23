@@ -7,4 +7,5 @@ import java.util.List;
 @Repository
 public interface AiGeneratedContentRepository extends JpaRepository<AiGeneratedContent, Long> {
     List<AiGeneratedContent> findByExamPrepIdAndContentType(Long examPrepId, ContentType contentType);
+    java.util.Optional<AiGeneratedContent> findByExamPrepIdAndContentTypeAndDifficultyLevel(Long examPrepId, ContentType contentType, DifficultyLevel difficultyLevel);
 }

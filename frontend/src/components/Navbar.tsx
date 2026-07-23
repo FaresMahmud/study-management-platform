@@ -16,7 +16,8 @@ import {
   TrendingUp,
   Brain,
   HelpCircle,
-  Compass
+  Compass,
+  Headphones
 } from 'lucide-react';
 
 export default function Navbar() {
@@ -68,6 +69,10 @@ export default function Navbar() {
           <Link to="/simulation" className={`navbar-link ${isActive('/simulation')}`}>
             <Compass size={18} />
             <span>Simulados</span>
+          </Link>
+          <Link to="/podcast" className={`navbar-link ${isActive('/podcast')}`}>
+            <Headphones size={18} />
+            <span>Podcasts</span>
           </Link>
           <Link to="/analytics" className={`navbar-link ${isActive('/analytics')}`}>
             <TrendingUp size={18} />
