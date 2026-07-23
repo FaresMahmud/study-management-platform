@@ -139,6 +139,12 @@
             <scope>test</scope>
         </dependency>
 
+        <!-- Spring Boot Starter Data Redis -->
+        <dependency>
+            <groupId>org.springframework.boot</groupId>
+            <artifactId>spring-boot-starter-data-redis</artifactId>
+        </dependency>
+
         <!-- Spring OAuth2 Client -->
         <dependency>
             <groupId>org.springframework.boot</groupId>

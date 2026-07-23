@@ -44,6 +44,10 @@ public class AiService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
     }
 
+    @org.springframework.cache.annotation.Cacheable(
+        value = "aiContent",
+        key = "T(org.springframework.util.DigestUtils).md5DigestAsHex(#text.getBytes()) + '_' + #subjectId"
+    )
     @Transactional
     public List<FlashcardResponseDTO> generateFlashcards(String text, Long subjectId) {
         User user = getAuthenticatedUser();

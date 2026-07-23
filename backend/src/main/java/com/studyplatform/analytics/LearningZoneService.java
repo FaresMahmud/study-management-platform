@@ -36,6 +36,7 @@ public class LearningZoneService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
     }
 
+    @org.springframework.cache.annotation.Cacheable(value = "leaderboard", key = "#examPrepId")
     @Transactional(readOnly = true)
     public LearningZoneResponseDTO getLearningZone(Long examPrepId) {
         User user = getAuthenticatedUser();

@@ -49,6 +49,10 @@ public class StudySessionService {
     }
 
 
+    @org.springframework.cache.annotation.Cacheable(
+        value = "studySessions",
+        key = "T(org.springframework.security.core.context.SecurityContextHolder).getContext().getAuthentication().getName() + '_' + #page + '_' + #size"
+    )
     @Transactional(readOnly = true)
     public Page<StudySessionResponseDTO> findAll(int page, int size) {
         User user = getAuthenticatedUser();
@@ -70,6 +74,10 @@ public class StudySessionService {
         return studySessionMapper.toResponseDTO(session);
     }
 
+    @org.springframework.cache.annotation.Caching(evict = {
+        @org.springframework.cache.annotation.CacheEvict(value = "studySessions", allEntries = true),
+        @org.springframework.cache.annotation.CacheEvict(value = "leaderboard", allEntries = true)
+    })
     @Transactional
     public StudySessionResponseDTO create(StudySessionRequestDTO request) {
         User user = getAuthenticatedUser();
@@ -84,6 +92,10 @@ public class StudySessionService {
         return studySessionMapper.toResponseDTO(savedSession);
     }
 
+    @org.springframework.cache.annotation.Caching(evict = {
+        @org.springframework.cache.annotation.CacheEvict(value = "studySessions", allEntries = true),
+        @org.springframework.cache.annotation.CacheEvict(value = "leaderboard", allEntries = true)
+    })
     @Transactional
     public StudySessionResponseDTO update(Long id, StudySessionRequestDTO request) {
         User user = getAuthenticatedUser();
@@ -111,6 +123,10 @@ public class StudySessionService {
         return studySessionMapper.toResponseDTO(updatedSession);
     }
 
+    @org.springframework.cache.annotation.Caching(evict = {
+        @org.springframework.cache.annotation.CacheEvict(value = "studySessions", allEntries = true),
+        @org.springframework.cache.annotation.CacheEvict(value = "leaderboard", allEntries = true)
+    })
     @Transactional
     public void delete(Long id) {
         User user = getAuthenticatedUser();

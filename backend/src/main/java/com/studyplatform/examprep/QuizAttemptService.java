@@ -35,6 +35,7 @@ public class QuizAttemptService {
                 .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
     }
 
+    @org.springframework.cache.annotation.CacheEvict(value = "leaderboard", key = "#examPrepId")
     @Transactional
     public QuizAttempt saveAttempt(Long examPrepId, int correctAnswers, int totalQuestions, String contentJson) {
         User user = getAuthenticatedUser();

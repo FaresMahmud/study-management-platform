@@ -104,6 +104,7 @@ public class ExamSimulationService {
     /**
      * Finaliza a simulação e calcula o resultado da prova cronometrada de 15 minutos.
      */
+    @org.springframework.cache.annotation.CacheEvict(value = "leaderboard", key = "#result.examPrep.id")
     @Transactional
     public ExamSimulation finishSimulation(Long simulationId, Map<Integer, String> answers) {
         User user = getAuthenticatedUser();
