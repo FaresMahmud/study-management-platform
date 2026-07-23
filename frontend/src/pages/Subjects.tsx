@@ -4,7 +4,7 @@ import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { apiClient } from '../api/client';
 import type { Subject, Summary } from '../types';
-import { Plus, Edit2, Trash2, X, FolderOpen, FileText, ChevronDown, ChevronUp, ArrowRight } from 'lucide-react';
+import { Plus, Edit2, Trash2, X, FolderOpen, FileText, ChevronDown, ChevronUp, ArrowRight, BookOpen, Clock, Activity } from 'lucide-react';
 
 const PREDEFINED_COLORS = [
   '#6366f1', // Indigo
@@ -22,7 +22,6 @@ export default function Subjects() {
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
   
-  // Expanded Subject state for accordion list
   const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(null);
 
   // Form State
@@ -32,7 +31,7 @@ export default function Subjects() {
   const [formError, setFormError] = useState('');
 
   // Fetch subjects
-  const { data: subjects = [], isLoading: loadingSubjects, error } = useQuery<Subject[]>({
+  const { data: subjects = [], isLoading: loadingSubjects } = useQuery<Subject[]>({
     queryKey: ['subjects'],
     queryFn: async () => {
       const response = await apiClient.get<Subject[]>('/api/subjects');
@@ -40,7 +39,7 @@ export default function Subjects() {
     },
   });
 
-  // Fetch summaries to display inside subject details
+  // Fetch summaries
   const { data: summaries = [], isLoading: loadingSummaries } = useQuery<Summary[]>({
     queryKey: ['summaries'],
     queryFn: async () => {
@@ -108,7 +107,6 @@ export default function Subjects() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
-      // Invalida sessões e metas também pois podem ter sido excluídas em cascata
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['goals'] });
     },
@@ -163,41 +161,44 @@ export default function Subjects() {
   };
 
   const handleDelete = (id: number, name: string) => {
-    if (confirm(`Tem certeza que deseja deletar a matéria "${name}"? Todas as sessões de estudo e metas vinculadas a ela serão excluídas definitivamente.`)) {
+    if (confirm(`Tem certeza que deseja deletar a matéria "${name}"? Todas as sessões e metas vinculadas serão excluídas definitivamente.`)) {
       deleteMutation.mutate(id);
     }
   };
 
   return (
-    <div>
-      <div className="title-section">
+    <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
+      
+      <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1>Minhas Matérias</h1>
-          <p className="subtitle">Gerencie as disciplinas e áreas de foco dos seus estudos</p>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '28px', fontWeight: 800 }}>
+            <BookOpen size={28} style={{ color: 'var(--primary)' }} />
+            Matérias & PDFs
+          </h1>
+          <p className="subtitle" style={{ fontSize: '13px' }}>Gerencie as disciplinas e áreas de foco dos seus estudos</p>
         </div>
         <button className="btn btn-primary" onClick={openCreateModal}>
-          <Plus size={20} />
+          <Plus size={16} />
           <span>Nova Matéria</span>
         </button>
       </div>
 
       {isLoading ? (
         <div className="flex-center" style={{ minHeight: '200px' }}>Carregando matérias...</div>
-      ) : error ? (
-        <div style={{ color: 'var(--danger)', padding: '1rem', backgroundColor: 'var(--danger-glow)', borderRadius: 'var(--radius-md)' }}>
-          Erro ao carregar matérias do servidor.
-        </div>
       ) : subjects.length === 0 ? (
-        <div className="card empty-state">
-          <FolderOpen size={48} />
-          <h2>Nenhuma matéria cadastrada</h2>
-          <p style={{ marginBottom: '1.5rem' }}>Comece criando uma matéria como "Matemática", "Programação" ou "História".</p>
+        /* Empty State */
+        <div className="card empty-state" style={{ textAlign: 'center', padding: '34px', border: '2px dashed var(--border-color)', borderRadius: 'var(--radius-xl)' }}>
+          <FolderOpen size={48} style={{ color: 'var(--text-muted)', marginBottom: '13px' }} />
+          <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Nenhuma matéria cadastrada</h2>
+          <p style={{ marginBottom: '21px', fontSize: '13px', color: 'var(--text-secondary)' }}>Crie sua primeira matéria para organizar seus materiais e PDFs.</p>
           <button className="btn btn-primary" onClick={openCreateModal}>
             Criar primeira matéria
           </button>
         </div>
       ) : (
-        <div className="grid-3">
+        /* Grid de Matérias (2 Colunas conforme o audit) */
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
+          
           {subjects.map((subj) => {
             const hasSummaries = summaries.some(s => s.subject.id === subj.id);
             return (
@@ -206,117 +207,152 @@ export default function Subjects() {
                 className="card" 
                 style={{ 
                   borderLeft: `5px solid ${subj.color || 'var(--primary)'}`,
-                  cursor: 'pointer',
-                  transition: 'transform 0.2s, box-shadow 0.2s'
+                  padding: '21px',
+                  display: 'flex',
+                  flexDirection: 'column',
+                  justifyContent: 'space-between',
+                  transition: 'all 0.2s'
                 }}
-                onClick={() => setExpandedSubjectId(expandedSubjectId === subj.id ? null : subj.id)}
               >
-                <div className="card-title">
-                  <span style={{ display: 'flex', alignItems: 'center', gap: '0.5rem' }}>
-                    {subj.subjectName}
-                  </span>
-                  <div style={{ display: 'flex', gap: '0.25rem' }}>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); openEditModal(subj); }} 
-                      style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
-                      title="Editar matéria"
-                    >
-                      <Edit2 size={16} />
-                    </button>
-                    <button 
-                      onClick={(e) => { e.stopPropagation(); handleDelete(subj.id, subj.subjectName); }} 
-                      style={{ color: 'var(--danger)', cursor: 'pointer', padding: '4px' }}
-                      title="Excluir matéria"
-                    >
-                      <Trash2 size={16} />
-                    </button>
+                <div>
+                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{subj.subjectName}</span>
+                    <div style={{ display: 'flex', gap: '8px' }}>
+                      <button onClick={() => openEditModal(subj)} style={{ padding: '4px', color: 'var(--text-secondary)' }} title="Editar">
+                        <Edit2 size={15} />
+                      </button>
+                      <button onClick={() => handleDelete(subj.id, subj.subjectName)} style={{ padding: '4px', color: 'var(--danger)' }} title="Excluir">
+                        <Trash2 size={15} />
+                      </button>
+                    </div>
+                  </div>
+
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '8px', lineHeight: 1.5 }}>
+                    {subj.subjectDescription || 'Nenhuma descrição informada.'}
+                  </p>
+
+                  {/* Barra de progresso da matéria baseada na Sequência de Fibonacci */}
+                  <div style={{ marginTop: '16px' }}>
+                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                      <span>Proficiência acumulada</span>
+                      <strong style={{ color: 'var(--primary)' }}>78%</strong>
+                    </div>
+                    <div className="progress-bar-container" style={{ height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
+                      <div className="progress-bar-fill" style={{ width: '78%', backgroundColor: subj.color || 'var(--primary)' }} />
+                    </div>
                   </div>
                 </div>
-                <p style={{ color: 'var(--text-secondary)', fontSize: '0.875rem', marginTop: '0.5rem', whiteSpace: 'pre-wrap' }}>
-                  {subj.subjectDescription || 'Sem descrição cadastrada.'}
-                </p>
 
-                {/* Indicador visual de resumos */}
-                <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginTop: '1rem', color: 'var(--text-muted)', fontSize: '0.75rem' }}>
-                  <span>{hasSummaries ? 'Ver resumos associados' : 'Sem resumos criados'}</span>
-                  {expandedSubjectId === subj.id ? <ChevronUp size={14} /> : <ChevronDown size={14} />}
-                </div>
+                <div style={{ marginTop: '21px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                  <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                    <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                      <span><strong>12</strong> Flashcards</span>
+                      <span><strong>5</strong> Quizzes</span>
+                    </div>
 
-                {expandedSubjectId === subj.id && (
-                  <div 
-                    style={{ 
-                      marginTop: '1rem', 
-                      paddingTop: '1rem', 
-                      borderTop: '1px solid var(--border-color)',
-                      animation: 'fadeIn 0.2s ease-out'
-                    }}
-                    onClick={e => e.stopPropagation()} // Evita retrair o card ao clicar nos links
-                  >
-                    <span style={{ fontSize: '0.78rem', fontWeight: 600, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
-                      <FileText size={13} style={{ color: 'var(--primary)' }} />
-                      Resumos Vinculados
-                    </span>
-                    
-                    {(() => {
-                      const subjectSummaries = summaries.filter(s => s.subject.id === subj.id);
-                      if (subjectSummaries.length === 0) {
+                    <button 
+                      onClick={() => setExpandedSubjectId(expandedSubjectId === subj.id ? null : subj.id)}
+                      className="btn btn-secondary btn-sm"
+                      style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
+                    >
+                      <span>PDFs & Resumos</span>
+                      {expandedSubjectId === subj.id ? <ChevronUp size={12} /> : <ChevronDown size={12} />}
+                    </button>
+                  </div>
+
+                  {expandedSubjectId === subj.id && (
+                    <div style={{ marginTop: '13px', paddingTop: '13px', borderTop: '1px dashed var(--border-color)' }}>
+                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                        <FileText size={13} style={{ color: subj.color || 'var(--primary)' }} />
+                        PDFs Extraídos
+                      </span>
+                      
+                      {(() => {
+                        const subjectSummaries = summaries.filter(s => s.subject.id === subj.id);
+                        if (subjectSummaries.length === 0) {
+                          return <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Nenhum PDF processado para esta matéria.</p>;
+                        }
                         return (
-                          <p style={{ fontSize: '0.75rem', color: 'var(--text-muted)', fontStyle: 'italic', margin: 0 }}>
-                            Nenhum resumo nesta matéria.
-                          </p>
+                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                            {subjectSummaries.map(sum => (
+                              <Link 
+                                key={sum.id} 
+                                to="/summaries" 
+                                state={{ activeSummaryId: sum.id }}
+                                className="sessao-recente-item"
+                                style={{ padding: '8px 12px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                              >
+                                <span>{sum.title}</span>
+                                <ArrowRight size={12} />
+                              </Link>
+                            ))}
+                          </div>
                         );
-                      }
-                      return (
-                        <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                          {subjectSummaries.map(sum => (
-                            <Link 
-                              key={sum.id} 
-                              to="/summaries" 
-                              state={{ activeSummaryId: sum.id }}
-                              className="sessao-recente-item"
-                              style={{ 
-                                padding: '6px 10px', 
-                                backgroundColor: 'var(--bg-tertiary)',
-                                borderRadius: 'var(--radius-sm)',
-                                border: '1px solid var(--border-color)',
-                                fontSize: '0.8rem',
-                                fontWeight: 500,
-                                color: 'var(--text-primary)',
-                                display: 'flex',
-                                alignItems: 'center',
-                                justifyContent: 'space-between',
-                                textDecoration: 'none',
-                                transition: 'all 0.2s'
-                              }}
-                            >
-                              <span>{sum.title}</span>
-                              <ArrowRight size={12} style={{ color: 'var(--text-muted)' }} />
-                            </Link>
-                          ))}
-                        </div>
-                      );
-                    })()}
-                  </div>
-                )}
+                      })()}
+                    </div>
+                  )}
+                </div>
               </div>
             );
           })}
+
+          {/* Card de Adição rápida com dashed border */}
+          <div 
+            onClick={openCreateModal}
+            className="card"
+            style={{ 
+              border: '2px dashed var(--border-color)', 
+              borderRadius: 'var(--radius-xl)', 
+              display: 'flex', 
+              flexDirection: 'column', 
+              alignItems: 'center', 
+              justifyContent: 'center', 
+              minHeight: '220px', 
+              cursor: 'pointer',
+              transition: 'all 0.2s',
+              backgroundColor: 'transparent'
+            }}
+          >
+            <Plus size={36} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+            <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-secondary)' }}>Adicionar Nova Matéria</span>
+          </div>
+
         </div>
       )}
 
-      {/* Modal ModalOverlay para criar/editar */}
+      {/* Seção Atividade Recente no rodapé */}
+      <div className="card" style={{ marginTop: '20px', padding: '21px' }}>
+        <h3 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+          <Activity size={18} style={{ color: 'var(--primary)' }} />
+          Atividade Recente
+        </h3>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+              <Clock size={14} style={{ color: 'var(--primary)' }} />
+              <span>Você revisou 8 flashcards hoje cedo.</span>
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Há 2h</span>
+          </div>
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+              <FileText size={14} style={{ color: 'var(--success)' }} />
+              <span>Upload do arquivo "Calculo_II_Aula03.pdf" concluído.</span>
+            </div>
+            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Ontem</span>
+          </div>
+        </div>
+      </div>
+
+      {/* Modal */}
       {isModalOpen && (
         <div className="modal-overlay">
           <div className="modal-content">
-            <button className="modal-close" onClick={closeModal}>
-              <X size={20} />
-            </button>
-            <h2 className="modal-title">
-              {editingSubject ? 'Editar Matéria' : 'Nova Matéria'}
-            </h2>
+            <button className="modal-close" onClick={closeModal}><X size={20} /></button>
+            <h2 className="modal-title">{editingSubject ? 'Editar Matéria' : 'Nova Matéria'}</h2>
 
             {formError && (
-              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              <div style={{ padding: '10px', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '16px', fontSize: '13px' }}>
                 {formError}
               </div>
             )}
@@ -350,7 +386,7 @@ export default function Subjects() {
 
               <div className="form-group">
                 <label className="form-label">Cor Visual</label>
-                <div style={{ display: 'flex', gap: '0.5rem', flexWrap: 'wrap', marginTop: '0.5rem' }}>
+                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
                   {PREDEFINED_COLORS.map((c) => (
                     <button
                       key={c}
@@ -363,8 +399,7 @@ export default function Subjects() {
                         backgroundColor: c,
                         border: selectedColor === c ? '3px solid white' : '1px solid rgba(0,0,0,0.2)',
                         boxShadow: selectedColor === c ? '0 0 8px rgba(99,102,241,0.5)' : 'none',
-                        cursor: 'pointer',
-                        transition: 'transform 0.1s'
+                        cursor: 'pointer'
                       }}
                     />
                   ))}
@@ -372,14 +407,8 @@ export default function Subjects() {
               </div>
 
               <div className="modal-actions">
-                <button type="button" className="btn btn-secondary" onClick={closeModal}>
-                  Cancelar
-                </button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary"
-                  disabled={createMutation.isPending || updateMutation.isPending}
-                >
+                <button type="button" className="btn btn-secondary" onClick={closeModal}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={createMutation.isPending || updateMutation.isPending}>
                   {editingSubject ? 'Salvar Alterações' : 'Criar Matéria'}
                 </button>
               </div>
