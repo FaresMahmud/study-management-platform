@@ -44,7 +44,7 @@ export default function PdfViewer({
     queryKey: ['annotations', activeFileId, pageNum],
     queryFn: async () => {
       if (!activeFileId) return [];
-      return (await apiClient.get<FileAnnotation[]>(`/api/files/${activeFileId}/annotations?page=${pageNum}`)).data;
+      return (await apiClient.get<FileAnnotation[]>(`/api/v1/files/${activeFileId}/annotations?page=${pageNum}`)).data;
     },
     enabled: !!activeFileId,
   });
@@ -52,7 +52,7 @@ export default function PdfViewer({
   // Mutations
   const saveAnnotationMutation = useMutation({
     mutationFn: async (annotation: FileAnnotation) => {
-      return (await apiClient.post<FileAnnotation>('/api/files/annotations', annotation)).data;
+      return (await apiClient.post<FileAnnotation>('/api/v1/files/annotations', annotation)).data;
     },
     onSuccess: () => {
       refetchAnnotations();
@@ -61,7 +61,7 @@ export default function PdfViewer({
 
   const deleteAnnotationMutation = useMutation({
     mutationFn: async (annId: number) => {
-      await apiClient.delete(`/api/files/annotations/${annId}`);
+      await apiClient.delete(`/api/v1/files/annotations/${annId}`);
     },
     onSuccess: () => {
       refetchAnnotations();
@@ -79,7 +79,7 @@ export default function PdfViewer({
     const loadPdf = async () => {
       setPdfLoading(true);
       try {
-        const fileUrl = `${apiClient.defaults.baseURL}/api/files/${activeFileId}/view`;
+        const fileUrl = `${apiClient.defaults.baseURL}/api/v1/files/${activeFileId}/view`;
         const token = localStorage.getItem('token');
         
         const loadingTask = pdfjsLib.getDocument({
