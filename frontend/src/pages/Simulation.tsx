@@ -1,8 +1,8 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Award, Clock, Compass, Flag } from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import { apiClient, normalizeListResponse } from '../api/client';
 import { triggerConfetti } from '../utils/confetti';
-import { Compass, AlertTriangle, Play, CheckCircle, XCircle, RefreshCw, Award, ChevronLeft, ChevronRight, Maximize2, Minimize2, Info, Clock, Flag } from 'lucide-react';
 
 interface ExamPrep {
   id: number;
@@ -60,7 +60,7 @@ export default function Simulation() {
     queryKey: ['exam-preps'],
     queryFn: async () => {
       const res = await apiClient.get<any>('/api/v1/exam-preps');
-      return res.data.content || [];
+      return normalizeListResponse<ExamPrep>(res.data);
     }
   });
 
@@ -128,7 +128,7 @@ export default function Simulation() {
       setSimulationCompleted(true);
       setSimulationStarted(false);
       queryClient.invalidateQueries({ queryKey: ['goals'] });
-      
+
       if ((data.score ?? 0) >= (selectedPrep?.targetScore || 80)) {
         triggerConfetti();
       }
@@ -195,15 +195,15 @@ export default function Simulation() {
   };
 
   return (
-    <div className="dashboard-root" id="simulation-fullscreen-root" style={{ 
-      animation: 'fadeIn 0.4s ease-out', 
-      display: 'flex', 
-      flexDirection: 'column', 
-      height: inFullscreen ? '100vh' : 'auto', 
-      backgroundColor: inFullscreen ? 'var(--bg-primary)' : 'transparent', 
-      padding: inFullscreen ? '24px' : '0' 
+    <div className="dashboard-root" id="simulation-fullscreen-root" style={{
+      animation: 'fadeIn 0.4s ease-out',
+      display: 'flex',
+      flexDirection: 'column',
+      height: inFullscreen ? '100vh' : 'auto',
+      backgroundColor: inFullscreen ? 'var(--bg-primary)' : 'transparent',
+      padding: inFullscreen ? '24px' : '0'
     }}>
-      
+
       <style>{`
         .simulation-grid {
           display: grid;
@@ -305,15 +305,15 @@ export default function Simulation() {
         </div>
       ) : (
         <div className="simulation-grid">
-          
+
           {/* Coluna Esquerda: Questão Ativa */}
           <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '400px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '21px' }}>
                 <span className="badge badge-primary">Questão {currentIdx + 1} de {questions.length}</span>
-                <button 
-                  className="btn btn-secondary btn-sm" 
-                  onClick={handleMarkQuestion} 
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleMarkQuestion}
                   style={{ display: 'flex', alignItems: 'center', gap: '4px', borderColor: markedQuestions[currentIdx] ? 'var(--warning)' : 'var(--border-color)' }}
                 >
                   <Flag size={14} style={{ color: markedQuestions[currentIdx] ? 'var(--warning)' : 'inherit' }} />
@@ -329,9 +329,9 @@ export default function Simulation() {
                 {(['A', 'B', 'C', 'D', 'E'] as const).map((key) => {
                   const isSelected = answers[currentIdx] === key;
                   return (
-                    <button 
-                      key={key} 
-                      className={`sim-option-btn ${isSelected ? 'selected' : ''}`} 
+                    <button
+                      key={key}
+                      className={`sim-option-btn ${isSelected ? 'selected' : ''}`}
                       onClick={() => handleSelectAnswer(key)}
                     >
                       <span>{key}) {questions[currentIdx]?.options[key]}</span>
@@ -364,7 +364,7 @@ export default function Simulation() {
                   const isCurrent = idx === currentIdx;
                   const isAnswered = answers[idx] !== undefined;
                   const isMarked = markedQuestions[idx] === true;
-                  
+
                   let cellClass = 'nav-cell';
                   if (isCurrent) cellClass += ' active';
                   if (isAnswered) cellClass += ' answered';

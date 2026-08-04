@@ -1,41 +1,37 @@
-import React, { useState, useEffect, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { useLocation } from 'react-router-dom';
-import axios from 'axios';
-import { apiClient } from '../api/client';
-import type { Summary, Subject, SpringPage } from '../types';
-import { triggerConfetti } from '../utils/confetti';
-import { 
-  Plus, 
-  Trash2, 
-  FileText, 
-  BookOpen, 
-  Check, 
-  CloudRain, 
-  RefreshCw,
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import {
   Bold,
-  Italic,
-  Underline,
+  BookOpen,
+  Brain,
+  Check,
+  CloudRain,
+  Code,
+  Coffee,
+  FileText,
   Heading1,
   Heading2,
+  Italic,
   List,
-  Quote,
-  Code,
-  CheckSquare,
-  Play,
-  Pause,
-  RotateCcw,
-  Volume2,
-  VolumeX,
-  Eye,
-  EyeOff,
-  Timer,
   Maximize2,
   Minimize2,
-  Coffee,
-  X,
-  Brain
+  Pause,
+  Play,
+  Plus,
+  Quote,
+  RefreshCw,
+  RotateCcw,
+  Timer,
+  Trash2,
+  Underline,
+  Volume2,
+  VolumeX,
+  X
 } from 'lucide-react';
+import React, { useEffect, useRef, useState } from 'react';
+import { useLocation } from 'react-router-dom';
+import { apiClient, normalizeListResponse } from '../api/client';
+import type { SpringPage, Subject, Summary } from '../types';
+import { triggerConfetti } from '../utils/confetti';
 
 export default function Summaries() {
   const queryClient = useQueryClient();
@@ -53,13 +49,13 @@ export default function Summaries() {
       setActiveSummaryId(routeState.activeSummaryId);
     }
   }, [routeState]);
-  
+
   // Editor State
   const [editorTitle, setEditorTitle] = useState('');
   const [editorSubjectId, setEditorSubjectId] = useState<number | ''>('');
   const [salvando, setSalvando] = useState(false);
   const [ultimoSalvo, setUltimoSalvo] = useState<string | null>(null);
-  
+
   const editorRef = useRef<HTMLDivElement>(null);
   const autoSaveTimeoutRef = useRef<ReturnType<typeof setTimeout> | null>(null);
   const isEditingRef = useRef(false); // Evita loop de atualização de estado no contentEditable
@@ -111,12 +107,12 @@ export default function Summaries() {
     }
     const selection = window.getSelection();
     const selectedText = selection ? selection.toString().trim() : '';
-    
+
     if (!selectedText) {
       alert('Selecione uma palavra ou frase no seu texto do resumo para preencher a frente do flashcard!');
       return;
     }
-    
+
     setFlashcardFront(selectedText);
     setFlashcardBack('');
     setFlashcardError('');
@@ -174,7 +170,7 @@ export default function Summaries() {
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(titulo, { body: corpo });
-      } catch (e) {}
+      } catch (e) { }
     }
   };
 
@@ -216,7 +212,7 @@ export default function Summaries() {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
       osc.start();
       osc.stop(ctx.currentTime + 0.8);
-    } catch (e) {}
+    } catch (e) { }
   };
 
   // Synthesize rain/white noise using Web Audio API (highly lightweight & offline friendly)
@@ -273,13 +269,13 @@ export default function Summaries() {
     if (audioSourceRef.current) {
       try {
         audioSourceRef.current.stop();
-      } catch (e) {}
+      } catch (e) { }
       audioSourceRef.current = null;
     }
     if (audioCtxRef.current) {
       try {
         audioCtxRef.current.close();
-      } catch (e) {}
+      } catch (e) { }
       audioCtxRef.current = null;
     }
   };
@@ -311,7 +307,7 @@ export default function Summaries() {
     queryKey: ['subjects'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
-      return res.data.content;
+      return normalizeListResponse<Subject>(res.data);
     },
   });
 
@@ -319,7 +315,7 @@ export default function Summaries() {
     queryKey: ['summaries'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<Summary>>('/api/summaries?size=1000');
-      return res.data.content;
+      return normalizeListResponse<Summary>(res.data);
     },
   });
 
@@ -383,7 +379,7 @@ export default function Summaries() {
   // Auto-save logic
   const triggerAutoSave = (newTitle: string, newSubjectId: number | '', newContent: string) => {
     if (!activeSummaryId || newSubjectId === '') return;
-    
+
     setSalvando(true);
     if (autoSaveTimeoutRef.current) {
       clearTimeout(autoSaveTimeoutRef.current);
@@ -436,7 +432,7 @@ export default function Summaries() {
     if (selectedSubjectId !== 'all') {
       targetSubjId = Number(selectedSubjectId);
     }
-    
+
     isEditingRef.current = false;
     createMutation.mutate({
       title: 'Resumo sem título',
@@ -483,7 +479,7 @@ export default function Summaries() {
         <div className="sidebar-section">
           <h3>Matérias</h3>
           <div className="sidebar-list">
-            <button 
+            <button
               className={`sidebar-item ${selectedSubjectId === 'all' ? 'active' : ''}`}
               onClick={() => { setSelectedSubjectId('all'); setActiveSummaryId(null); isEditingRef.current = false; }}
             >
@@ -517,7 +513,7 @@ export default function Summaries() {
               <p className="empty-text">Nenhum resumo nesta pasta.</p>
             ) : (
               filteredSummaries.map(s => (
-                <div 
+                <div
                   key={s.id}
                   className={`document-card ${activeSummaryId === s.id ? 'active' : ''}`}
                   onClick={() => { setActiveSummaryId(s.id); isEditingRef.current = false; }}
@@ -525,13 +521,13 @@ export default function Summaries() {
                   <div className="doc-title">{s.title || 'Sem título'}</div>
                   <div className="doc-preview">{getPreviewText(s.content)}</div>
                   <div className="doc-meta">
-                    <span 
+                    <span
                       className="subject-tag"
                       style={{ color: s.subject.color || 'var(--primary)' }}
                     >
                       {s.subject.subjectName}
                     </span>
-                    <button 
+                    <button
                       className="btn-delete-doc"
                       onClick={(e) => { e.stopPropagation(); handleDelete(s.id); }}
                     >
@@ -563,7 +559,7 @@ export default function Summaries() {
                     </option>
                   ))}
                 </select>
-                
+
                 {salvando ? (
                   <span className="save-status saving">
                     <RefreshCw size={12} className="spin" />
@@ -581,7 +577,7 @@ export default function Summaries() {
 
               {/* Controles de Foco (Modo Zen e Pomodoro) */}
               <div className="editor-header-controls">
-                <button 
+                <button
                   type="button"
                   className={`control-btn ${isZenMode ? 'active' : ''}`}
                   onClick={() => setIsZenMode(!isZenMode)}
@@ -591,7 +587,7 @@ export default function Summaries() {
                   <span>{isZenMode ? "Modo Normal" : "Modo Zen"}</span>
                 </button>
 
-                <button 
+                <button
                   type="button"
                   className={`control-btn ${isFocusPanelOpen ? 'active' : ''}`}
                   onClick={() => setIsFocusPanelOpen(!isFocusPanelOpen)}
@@ -604,7 +600,7 @@ export default function Summaries() {
             </div>
 
             {/* Input de Título */}
-            <input 
+            <input
               type="text"
               className="editor-title-input"
               placeholder="Digite o título do resumo..."
@@ -614,25 +610,25 @@ export default function Summaries() {
 
             {/* Barra de Ferramentas Notion-style */}
             <div className="editor-toolbar">
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Negrito"
                 onClick={() => executeCommand('bold')}
               >
                 <Bold size={16} />
               </button>
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Itálico"
                 onClick={() => executeCommand('italic')}
               >
                 <Italic size={16} />
               </button>
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Sublinhado"
                 onClick={() => executeCommand('underline')}
               >
@@ -641,17 +637,17 @@ export default function Summaries() {
 
               <div className="toolbar-separator" />
 
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Título 1"
                 onClick={() => executeCommand('formatBlock', '<h1>')}
               >
                 <Heading1 size={16} />
               </button>
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Título 2"
                 onClick={() => executeCommand('formatBlock', '<h2>')}
               >
@@ -660,26 +656,26 @@ export default function Summaries() {
 
               <div className="toolbar-separator" />
 
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Lista com Marcadores"
                 onClick={() => executeCommand('insertUnorderedList')}
               >
                 <List size={16} />
               </button>
 
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Citação"
                 onClick={() => executeCommand('formatBlock', '<blockquote>')}
               >
                 <Quote size={16} />
               </button>
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Bloco de Código"
                 onClick={() => executeCommand('formatBlock', '<pre>')}
               >
@@ -689,48 +685,48 @@ export default function Summaries() {
               <div className="toolbar-separator" />
 
               {/* Cores Rápidas */}
-              <button 
-                type="button" 
-                className="toolbar-btn text-color-btn" 
+              <button
+                type="button"
+                className="toolbar-btn text-color-btn"
                 title="Texto Vermelho"
                 onClick={() => executeCommand('foreColor', '#ef4444')}
                 style={{ color: '#ef4444' }}
               >
                 A
               </button>
-              <button 
-                type="button" 
-                className="toolbar-btn text-color-btn" 
+              <button
+                type="button"
+                className="toolbar-btn text-color-btn"
                 title="Texto Verde"
                 onClick={() => executeCommand('foreColor', '#10b981')}
                 style={{ color: '#10b981' }}
               >
                 A
               </button>
-              <button 
-                type="button" 
-                className="toolbar-btn text-color-btn" 
+              <button
+                type="button"
+                className="toolbar-btn text-color-btn"
                 title="Texto Azul"
                 onClick={() => executeCommand('foreColor', '#6366f1')}
                 style={{ color: '#6366f1' }}
               >
                 A
               </button>
-              <button 
-                type="button" 
-                className="toolbar-btn text-color-btn" 
+              <button
+                type="button"
+                className="toolbar-btn text-color-btn"
                 title="Cor Padrão (Branco)"
                 onClick={() => executeCommand('foreColor', '#f8fafc')}
                 style={{ color: '#f8fafc' }}
               >
                 A
               </button>
-              
+
               <div className="toolbar-separator" />
-              
-              <button 
-                type="button" 
-                className="toolbar-btn" 
+
+              <button
+                type="button"
+                className="toolbar-btn"
                 title="Criar Flashcard a partir da Seleção"
                 onClick={handleCreateFlashcardFromSelection}
                 style={{ color: 'var(--primary)', fontWeight: 'bold', display: 'inline-flex', alignItems: 'center', gap: '4px', padding: '0 8px' }}
@@ -741,7 +737,7 @@ export default function Summaries() {
             </div>
 
             {/* Área de Edição contentEditable */}
-            <div 
+            <div
               ref={editorRef}
               className="editor-content-area"
               contentEditable
@@ -781,35 +777,35 @@ export default function Summaries() {
             </div>
             <h4>{pomodoroType === 'study' ? 'Hora de Focar' : 'Hora de Descansar'}</h4>
             <div className="pomodoro-timer">{formatarPomodoroTime(pomodoroTime)}</div>
-            
+
             <div className="pomodoro-controls">
-              <button 
+              <button
                 type="button"
-                className={`btn btn-${pomodoroActive ? 'secondary' : 'primary'} btn-sm`} 
+                className={`btn btn-${pomodoroActive ? 'secondary' : 'primary'} btn-sm`}
                 onClick={() => { requestNotificationPermission(); setPomodoroActive(!pomodoroActive); }}
               >
                 {pomodoroActive ? <Pause size={14} /> : <Play size={14} />}
                 <span>{pomodoroActive ? 'Pausar' : 'Iniciar'}</span>
               </button>
-              <button 
+              <button
                 type="button"
-                className="btn btn-secondary btn-sm" 
+                className="btn btn-secondary btn-sm"
                 onClick={() => { setPomodoroActive(false); setPomodoroTime(pomodoroType === 'study' ? 25 * 60 : 5 * 60); }}
                 title="Reiniciar"
               >
                 <RotateCcw size={14} />
               </button>
             </div>
-            
+
             <div className="pomodoro-types">
-              <button 
+              <button
                 type="button"
                 className={`type-btn ${pomodoroType === 'study' ? 'active' : ''}`}
                 onClick={() => { setPomodoroActive(false); setPomodoroType('study'); setPomodoroTime(25 * 60); }}
               >
                 Estudo (25m)
               </button>
-              <button 
+              <button
                 type="button"
                 className={`type-btn ${pomodoroType === 'break' ? 'active' : ''}`}
                 onClick={() => { setPomodoroActive(false); setPomodoroType('break'); setPomodoroTime(5 * 60); }}
@@ -823,9 +819,9 @@ export default function Summaries() {
           <div className="focus-widget audio-widget">
             <h4>Isolamento Acústico</h4>
             <p className="widget-desc">Sons suaves gerados pelo navegador para focar e acalmar.</p>
-            
+
             <div className="audio-options">
-              <button 
+              <button
                 type="button"
                 className={`audio-btn ${ambientSound === 'none' ? 'active' : ''}`}
                 onClick={() => handleAmbientSoundToggle('none')}
@@ -834,7 +830,7 @@ export default function Summaries() {
                 <span>Silêncio</span>
               </button>
 
-              <button 
+              <button
                 type="button"
                 className={`audio-btn ${ambientSound === 'rain' ? 'active' : ''}`}
                 onClick={() => handleAmbientSoundToggle('rain')}
@@ -843,7 +839,7 @@ export default function Summaries() {
                 <span>Chuva</span>
               </button>
 
-              <button 
+              <button
                 type="button"
                 className={`audio-btn ${ambientSound === 'white' ? 'active' : ''}`}
                 onClick={() => handleAmbientSoundToggle('white')}
@@ -867,7 +863,7 @@ export default function Summaries() {
             <p style={{ fontSize: '0.85rem', color: 'var(--text-secondary)', marginBottom: '1.25rem' }}>
               Transforme este trecho de texto em uma pergunta e resposta de revisão rápida.
             </p>
-            
+
             {flashcardError && (
               <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.85rem' }}>
                 {flashcardError}
@@ -877,49 +873,49 @@ export default function Summaries() {
             <form onSubmit={handleSaveFlashcard}>
               <div className="form-group">
                 <label className="form-label" htmlFor="fc-subject">Matéria Associada</label>
-                <input 
-                  type="text" 
-                  id="fc-subject" 
-                  className="form-input" 
-                  value={activeSummary?.subject.subjectName || ''} 
-                  disabled 
+                <input
+                  type="text"
+                  id="fc-subject"
+                  className="form-input"
+                  value={activeSummary?.subject.subjectName || ''}
+                  disabled
                   style={{ opacity: 0.7 }}
                 />
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="fc-front">Frente / Pergunta (Trecho Selecionado)</label>
-                <textarea 
-                  id="fc-front" 
-                  className="form-input" 
+                <textarea
+                  id="fc-front"
+                  className="form-input"
                   style={{ minHeight: '80px', resize: 'vertical' }}
-                  placeholder="Ex: O que é...?" 
-                  value={flashcardFront} 
-                  onChange={e => setFlashcardFront(e.target.value)} 
+                  placeholder="Ex: O que é...?"
+                  value={flashcardFront}
+                  onChange={e => setFlashcardFront(e.target.value)}
                   maxLength={500}
-                  required 
+                  required
                 />
               </div>
 
               <div className="form-group">
                 <label className="form-label" htmlFor="fc-back">Verso / Resposta</label>
-                <textarea 
-                  id="fc-back" 
-                  className="form-input" 
+                <textarea
+                  id="fc-back"
+                  className="form-input"
                   style={{ minHeight: '80px', resize: 'vertical' }}
-                  placeholder="Ex: É o processo pelo qual..." 
-                  value={flashcardBack} 
-                  onChange={e => setFlashcardBack(e.target.value)} 
+                  placeholder="Ex: É o processo pelo qual..."
+                  value={flashcardBack}
+                  onChange={e => setFlashcardBack(e.target.value)}
                   maxLength={1000}
-                  required 
+                  required
                 />
               </div>
 
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={() => setFlashcardModalOpen(false)}>Cancelar</button>
-                <button 
-                  type="submit" 
-                  className="btn btn-primary" 
+                <button
+                  type="submit"
+                  className="btn btn-primary"
                   disabled={createFlashcardMutation.isPending}
                 >
                   {createFlashcardMutation.isPending ? 'Criando...' : 'Criar Flashcard'}

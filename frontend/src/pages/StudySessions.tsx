@@ -1,10 +1,10 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { apiClient } from '../api/client';
-import type { StudySession, Subject, SpringPage } from '../types';
-import { Plus, Edit2, Trash2, X, Calendar, Clock, FileText, Filter } from 'lucide-react';
+import { Calendar, Clock, Edit2, FileText, Filter, Plus, Trash2, X } from 'lucide-react';
+import React, { useState } from 'react';
 import { Link } from 'react-router-dom';
+import { apiClient, normalizeListResponse } from '../api/client';
+import type { SpringPage, StudySession, Subject } from '../types';
 
 interface StudySessionInput {
   duration: number;
@@ -17,7 +17,7 @@ export default function StudySessions() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSession, setEditingSession] = useState<StudySession | null>(null);
-  
+
   // Filters
   const [subjectFilter, setSubjectFilter] = useState<string>('all');
 
@@ -35,7 +35,7 @@ export default function StudySessions() {
     queryKey: ['sessions'],
     queryFn: async () => {
       const response = await apiClient.get<SpringPage<StudySession>>('/api/study-sessions?size=1000');
-      return response.data.content;
+      return normalizeListResponse<StudySession>(response.data);
     },
   });
 
@@ -44,7 +44,7 @@ export default function StudySessions() {
     queryKey: ['subjects'],
     queryFn: async () => {
       const response = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
-      return response.data.content;
+      return normalizeListResponse<Subject>(response.data);
     },
   });
 
@@ -202,8 +202,8 @@ export default function StudySessions() {
           <h1>Sessões de Estudo</h1>
           <p className="subtitle">Registre o tempo gasto focando em cada matéria</p>
         </div>
-        <button 
-          className="btn btn-primary" 
+        <button
+          className="btn btn-primary"
           onClick={openCreateModal}
           disabled={subjects.length === 0}
         >
@@ -251,8 +251,8 @@ export default function StudySessions() {
           <Calendar size={48} />
           <h2>Nenhuma sessão registrada</h2>
           <p style={{ marginBottom: '1.5rem' }}>Organize seu tempo e comece a registrar seus estudos!</p>
-          <button 
-            className="btn btn-primary" 
+          <button
+            className="btn btn-primary"
             onClick={openCreateModal}
             disabled={subjects.length === 0}
           >
@@ -288,9 +288,9 @@ export default function StudySessions() {
                   </td>
                   <td>
                     <div style={{ display: 'flex', alignItems: 'center' }}>
-                      <span 
-                        className="color-dot" 
-                        style={{ backgroundColor: session.subject.color || 'var(--primary)' }} 
+                      <span
+                        className="color-dot"
+                        style={{ backgroundColor: session.subject.color || 'var(--primary)' }}
                       />
                       <span style={{ fontWeight: 600 }}>{session.subject.subjectName}</span>
                     </div>
@@ -309,16 +309,16 @@ export default function StudySessions() {
                   </td>
                   <td style={{ textAlign: 'right' }}>
                     <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
-                      <button 
-                        className="btn btn-secondary btn-sm" 
+                      <button
+                        className="btn btn-secondary btn-sm"
                         style={{ padding: '0.35rem', borderRadius: '4px' }}
                         onClick={() => openEditModal(session)}
                         title="Editar"
                       >
                         <Edit2 size={14} />
                       </button>
-                      <button 
-                        className="btn btn-danger btn-sm" 
+                      <button
+                        className="btn btn-danger btn-sm"
                         style={{ padding: '0.35rem', borderRadius: '4px' }}
                         onClick={() => handleDelete(session.id)}
                         title="Deletar"
@@ -415,8 +415,8 @@ export default function StudySessions() {
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
                   Cancelar
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >

@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { ArrowRight, Award, Brain, HelpCircle, Sparkles } from 'lucide-react';
+import { useState } from 'react';
 import { apiClient } from '../api/client';
+import type { Flashcard, Subject } from '../types';
 import { triggerConfetti } from '../utils/confetti';
-import type { Subject, Flashcard } from '../types';
-import { Brain, HelpCircle, CheckCircle, XCircle, ArrowRight, RefreshCw, Sparkles, Award, ChevronRight, Plus } from 'lucide-react';
 
 interface ExamPrep {
   id: number;
@@ -72,7 +72,7 @@ export default function Quiz() {
 
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>('');
   const [selectedExamPrepId, setSelectedExamPrepId] = useState<number | ''>('');
-  
+
   const [quizStarted, setQuizStarted] = useState(false);
   const [questions, setQuestions] = useState<Question[]>([]);
   const [currentIdx, setCurrentIdx] = useState(0);
@@ -82,17 +82,32 @@ export default function Quiz() {
   const [shakeOption, setShakeOption] = useState<'A' | 'B' | 'C' | 'D' | 'E' | null>(null);
   const [quizCompleted, setQuizCompleted] = useState(false);
 
+  const normalizeListResponse = <T,>(data: unknown): T[] => {
+    if (Array.isArray(data)) {
+      return data as T[];
+    }
+
+    if (data && typeof data === 'object' && Array.isArray((data as { content?: unknown }).content)) {
+      return (data as { content: T[] }).content;
+    }
+
+    return [];
+  };
+
   // Queries
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ['subjects'],
-    queryFn: async () => (await apiClient.get<Subject[]>('/api/subjects')).data,
+    queryFn: async () => {
+      const res = await apiClient.get<Subject[]>('/api/subjects');
+      return normalizeListResponse<Subject>(res.data);
+    },
   });
 
   const { data: flashcards = [] } = useQuery<Flashcard[]>({
     queryKey: ['flashcards-all'],
     queryFn: async () => {
       const res = await apiClient.get<any>('/api/v1/flashcards?size=1000');
-      return res.data.content || [];
+      return normalizeListResponse<Flashcard>(res.data);
     }
   });
 
@@ -100,7 +115,7 @@ export default function Quiz() {
     queryKey: ['exam-preps'],
     queryFn: async () => {
       const res = await apiClient.get<any>('/api/v1/exam-preps');
-      return res.data.content || [];
+      return normalizeListResponse<ExamPrep>(res.data);
     }
   });
 
@@ -189,7 +204,7 @@ export default function Quiz() {
 
   return (
     <div className="dashboard-root" style={{ animation: 'fadeIn 0.4s ease-out' }}>
-      
+
       <style>{`
         .circle-letter {
           width: 28px;
@@ -254,7 +269,7 @@ export default function Quiz() {
             <HelpCircle size={48} style={{ color: 'var(--success)', marginBottom: '12px' }} />
             <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Iniciar Quiz Personalizado</h2>
           </div>
-          
+
           <div className="form-group" style={{ marginBottom: '13px' }}>
             <label className="form-label">Selecione a disciplina</label>
             <select className="form-input" value={selectedSubjectId} onChange={e => setSelectedSubjectId(e.target.value ? Number(e.target.value) : '')}>
@@ -286,73 +301,89 @@ export default function Quiz() {
         </div>
       ) : (
         <div style={{ maxWidth: '800px', margin: '20px auto' }}>
-          
-          {/* Header e Progresso */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px' }}>
-            <span>Questão {currentIdx + 1} de {questions.length}</span>
-            <span style={{ color: 'var(--success)', fontWeight: 600 }}>Acertos: {correctAnswersCount}/{questions.length}</span>
-          </div>
-
-          <div className="progress-bar-container" style={{ height: '6px', borderRadius: '3px', overflow: 'hidden', marginBottom: '21px' }}>
-            <div className="progress-bar-fill" style={{ width: `${((currentIdx + 1) / questions.length) * 100}%`, backgroundColor: 'var(--success)' }} />
-          </div>
-
-          <div className="card" style={{ padding: '24px' }}>
-            <div style={{ display: 'flex', gap: '8px', marginBottom: '13px' }}>
-              <span className="badge badge-primary">Nível Médio</span>
-              <span className="badge badge-success">Material do PDF</span>
+          {questions.length === 0 ? (
+            <div className="card" style={{ padding: '24px', textAlign: 'center' }}>
+              <HelpCircle size={48} style={{ color: 'var(--success)', marginBottom: '12px' }} />
+              <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Nenhuma questão disponível</h2>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+                Tente iniciar o quiz novamente para gerar as perguntas.
+              </p>
+              <button className="btn btn-primary" style={{ marginTop: '16px' }} onClick={() => setQuizStarted(false)}>
+                Voltar
+              </button>
             </div>
+          ) : (
+            <>
 
-            <h3 style={{ fontSize: '21px', fontWeight: 800, marginBottom: '21px', lineHeight: 1.5 }}>{questions[currentIdx].question}</h3>
+              {/* Header e Progresso */}
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px' }}>
+                <span>Questão {currentIdx + 1} de {questions.length}</span>
+                <span style={{ color: 'var(--success)', fontWeight: 600 }}>Acertos: {correctAnswersCount}/{questions.length}</span>
+              </div>
 
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '13px' }}>
-              {(['A', 'B', 'C', 'D', 'E'] as const).map((key) => {
-                const isSelected = selectedAnswer === key;
-                const isCorrect = key === questions[currentIdx].correctAnswer;
-                
-                let optClass = 'option-container';
-                if (answered) {
-                  if (isSelected) {
-                    optClass += isCorrect ? ' correct' : ' incorrect';
-                  } else if (isCorrect) {
-                    optClass += ' correct';
-                  }
-                }
-                if (shakeOption === key) optClass += ' shake';
+              <div className="progress-bar-container" style={{ height: '6px', borderRadius: '3px', overflow: 'hidden', marginBottom: '21px' }}>
+                <div className="progress-bar-fill" style={{ width: `${((currentIdx + 1) / questions.length) * 100}%`, backgroundColor: 'var(--success)' }} />
+              </div>
 
-                return (
-                  <button key={key} className={optClass} onClick={() => handleSelectAnswer(key)} disabled={answered}>
-                    <span className="circle-letter">{key}</span>
-                    <span style={{ fontSize: '15px' }}>{questions[currentIdx].options[key]}</span>
-                  </button>
-                );
-              })}
-            </div>
-
-            {/* Painel de Explicação detalhada */}
-            {answered && (
-              <div style={{ marginTop: '21px', padding: '16px', background: 'var(--bg-tertiary)', borderLeft: '4px solid var(--success)', borderRadius: 'var(--radius-md)' }}>
-                <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--success)', fontWeight: 700, marginBottom: '8px' }}>
-                  <Sparkles size={16} />
-                  Explicação Detalhada
-                </h4>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.8 }}>{questions[currentIdx].explanation}</p>
-                
-                <div style={{ display: 'flex', gap: '8px', marginTop: '13px' }}>
-                  <button className="btn btn-secondary btn-sm" onClick={convertToFlashcard}>Converter em Flashcard SRS</button>
+              <div className="card" style={{ padding: '24px' }}>
+                <div style={{ display: 'flex', gap: '8px', marginBottom: '13px' }}>
+                  <span className="badge badge-primary">Nível Médio</span>
+                  <span className="badge badge-success">Material do PDF</span>
                 </div>
-              </div>
-            )}
 
-            {answered && (
-              <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '21px' }}>
-                <button className="btn btn-primary" onClick={handleNextQuestion}>
-                  <span>{currentIdx + 1 === questions.length ? 'Ver Resultados' : 'Próxima Questão'}</span>
-                  <ArrowRight size={16} />
-                </button>
+                <h3 style={{ fontSize: '21px', fontWeight: 800, marginBottom: '21px', lineHeight: 1.5 }}>{questions[currentIdx].question}</h3>
+
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '13px' }}>
+                  {(['A', 'B', 'C', 'D', 'E'] as const).map((key) => {
+                    const isSelected = selectedAnswer === key;
+                    const isCorrect = key === questions[currentIdx].correctAnswer;
+
+                    let optClass = 'option-container';
+                    if (answered) {
+                      if (isSelected) {
+                        optClass += isCorrect ? ' correct' : ' incorrect';
+                      } else if (isCorrect) {
+                        optClass += ' correct';
+                      }
+                    }
+                    if (shakeOption === key) optClass += ' shake';
+
+                    return (
+                      <button key={key} className={optClass} onClick={() => handleSelectAnswer(key)} disabled={answered}>
+                        <span className="circle-letter">{key}</span>
+                        <span style={{ fontSize: '15px' }}>{questions[currentIdx].options[key]}</span>
+                      </button>
+                    );
+                  })}
+                </div>
+
+                {/* Painel de Explicação detalhada */}
+                {answered && (
+                  <div style={{ marginTop: '21px', padding: '16px', background: 'var(--bg-tertiary)', borderLeft: '4px solid var(--success)', borderRadius: 'var(--radius-md)' }}>
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--success)', fontWeight: 700, marginBottom: '8px' }}>
+                      <Sparkles size={16} />
+                      Explicação Detalhada
+                    </h4>
+                    <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.8 }}>{questions[currentIdx].explanation}</p>
+
+                    <div style={{ display: 'flex', gap: '8px', marginTop: '13px' }}>
+                      <button className="btn btn-secondary btn-sm" onClick={convertToFlashcard}>Converter em Flashcard SRS</button>
+                    </div>
+                  </div>
+                )}
+
+                {answered && (
+                  <div style={{ display: 'flex', justifyContent: 'flex-end', marginTop: '21px' }}>
+                    <button className="btn btn-primary" onClick={handleNextQuestion}>
+                      <span>{currentIdx + 1 === questions.length ? 'Ver Resultados' : 'Próxima Questão'}</span>
+                      <ArrowRight size={16} />
+                    </button>
+                  </div>
+                )}
               </div>
-            )}
-          </div>
+
+            </>
+          )}
         </div>
       )}
     </div>

@@ -1,15 +1,15 @@
-import React, { useState, useRef } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Upload, Plus, Sparkles } from 'lucide-react';
-import { apiClient } from '../api/client';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { BookOpen, Plus, Sparkles, Upload } from 'lucide-react';
+import React, { useRef, useState } from 'react';
+import { apiClient, normalizeListResponse } from '../api/client';
+import type { PDFFile, SpringPage, Subject, Summary } from '../types';
 import { triggerConfetti } from '../utils/confetti';
-import type { Subject, PDFFile, Summary } from '../types';
 
 // Importando componentes refatorados
-import PdfViewer from '../components/PdfViewer';
-import SummaryEditor from '../components/SummaryEditor';
 import FlashcardCreatorModal from '../components/FlashcardCreatorModal';
 import PaywallModal from '../components/PaywallModal';
+import PdfViewer from '../components/PdfViewer';
+import SummaryEditor from '../components/SummaryEditor';
 
 export default function StudyWorkspace() {
   const queryClient = useQueryClient();
@@ -33,7 +33,7 @@ export default function StudyWorkspace() {
     queryKey: ['subjects'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
-      return res.data.content;
+      return normalizeListResponse<Subject>(res.data);
     },
   });
 
@@ -111,11 +111,11 @@ export default function StudyWorkspace() {
 
     if (editorRef.current) {
       editorRef.current.innerHTML += citationHtml;
-      
+
       // Posiciona o foco e move o scroll para o fim
       editorRef.current.focus();
       editorRef.current.scrollTop = editorRef.current.scrollHeight;
-      
+
       // Dispara o salvamento automático simulando a entrada do usuário
       const event = new Event('input', { bubbles: true });
       editorRef.current.dispatchEvent(event);
@@ -130,15 +130,15 @@ export default function StudyWorkspace() {
 
   return (
     <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', height: 'calc(100vh - 80px)', overflow: 'hidden', padding: 0 }}>
-      
+
       {/* BARRA DE SELEÇÃO INICIAL */}
       <div className="flex-between" style={{ padding: '12px var(--space-md)', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
           <BookOpen size={20} className="text-primary" />
-          <select 
-            className="form-input" 
+          <select
+            className="form-input"
             style={{ width: '220px', margin: 0 }}
-            value={selectedSubjectId} 
+            value={selectedSubjectId}
             onChange={(e) => {
               setSelectedSubjectId(e.target.value ? Number(e.target.value) : '');
               setActiveFileId(null);
@@ -195,7 +195,7 @@ export default function StudyWorkspace() {
 
             {/* Split layout toggle buttons */}
             <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '12px', marginLeft: '12px' }}>
-              <button 
+              <button
                 className={`btn btn-sm ${splitRatio === 100 ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ padding: '6px', minWidth: '40px' }}
                 onClick={() => setSplitRatio(100)}
@@ -203,7 +203,7 @@ export default function StudyWorkspace() {
               >
                 PDF
               </button>
-              <button 
+              <button
                 className={`btn btn-sm ${splitRatio === 55 ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ padding: '6px', minWidth: '40px' }}
                 onClick={() => setSplitRatio(55)}
@@ -211,7 +211,7 @@ export default function StudyWorkspace() {
               >
                 Dividido
               </button>
-              <button 
+              <button
                 className={`btn btn-sm ${splitRatio === 0 ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ padding: '6px', minWidth: '40px' }}
                 onClick={() => setSplitRatio(0)}
@@ -235,10 +235,10 @@ export default function StudyWorkspace() {
         </div>
       ) : (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
-          
+
           {/* LADO ESQUERDO: PDF VIEWER */}
           <div style={{ width: `${splitRatio}%`, display: splitRatio === 0 ? 'none' : 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-color)', height: '100%', overflow: 'hidden' }}>
-            <PdfViewer 
+            <PdfViewer
               activeFileId={activeFileId}
               selectedSubjectId={selectedSubjectId}
               activeSummaryId={activeSummaryId}
@@ -249,7 +249,7 @@ export default function StudyWorkspace() {
 
           {/* LADO DIREITO: EDITOR DE TEXTO */}
           <div style={{ width: `${100 - splitRatio}%`, display: splitRatio === 100 ? 'none' : 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', backgroundColor: 'var(--bg-primary)' }}>
-            <SummaryEditor 
+            <SummaryEditor
               selectedSubjectId={selectedSubjectId}
               activeSummaryId={activeSummaryId}
               activeSummary={activeSummary}
@@ -263,7 +263,7 @@ export default function StudyWorkspace() {
       )}
 
       {/* ================= MODAIS AUXILIARES ================= */}
-      <FlashcardCreatorModal 
+      <FlashcardCreatorModal
         isOpen={flashcardModalOpen}
         onClose={() => setFlashcardModalOpen(false)}
         initialFront={flashcardFront}
@@ -271,7 +271,7 @@ export default function StudyWorkspace() {
         summaryId={activeSummaryId}
       />
 
-      <PaywallModal 
+      <PaywallModal
         isOpen={paywallModalOpen}
         onClose={() => setPaywallModalOpen(false)}
       />

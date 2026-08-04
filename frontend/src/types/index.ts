@@ -98,3 +98,12 @@ export interface FileAnnotation {
   type?: string;
   content: string;
 }
+
+export interface SpringPage<T> {
+  content: T[];
+  pageable?: unknown;
+  totalElements?: number;
+  totalPages?: number;
+  size?: number;
+  number?: number;
+}
