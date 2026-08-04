@@ -66,11 +66,9 @@ public class ExamPrep {
 
     @OneToMany(mappedBy = "examPrep", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @Builder.Default
-    private List<Subject> subjects = new java.util.ArrayList<>();
+    private List<Subject> subjects;
 
     @OneToMany(mappedBy = "examPrep", cascade = CascadeType.ALL, orphanRemoval = true)
     @ToString.Exclude
-    @Builder.Default
-    private List<Goal> goals = new java.util.ArrayList<>();
+    private List<Goal> goals;
 }
