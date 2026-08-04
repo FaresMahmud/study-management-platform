@@ -1,24 +1,24 @@
-import { Link, useLocation } from 'react-router-dom';
-import { useAuthStore } from '../store/authStore';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import { calcularStreak } from '../utils/streak';
-import type { StudySession, SpringPage } from '../types';
-import { 
-  BookOpen, 
-  LayoutDashboard, 
-  Calendar, 
-  Target, 
-  LogOut, 
-  User,
+import {
+  BookOpen,
+  Brain,
+  Calendar,
+  Compass,
   FileText,
   Flame,
-  TrendingUp,
-  Brain,
+  Headphones,
   HelpCircle,
-  Compass,
-  Headphones
+  LayoutDashboard,
+  LogOut,
+  Target,
+  TrendingUp,
+  User
 } from 'lucide-react';
+import { Link, useLocation } from 'react-router-dom';
+import { apiClient, normalizeListResponse } from '../api/client';
+import { useAuthStore } from '../store/authStore';
+import type { SpringPage, StudySession } from '../types';
+import { calcularStreak } from '../utils/streak';
 
 export default function Navbar() {
   const { userName, logout, isAuthenticated } = useAuthStore();
@@ -29,7 +29,7 @@ export default function Navbar() {
     queryKey: ['sessions'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<StudySession>>('/api/study-sessions?size=1000');
-      return res.data.content;
+      return normalizeListResponse<StudySession>(res.data);
     },
     enabled: !!isAuthenticated, // Só busca se estiver autenticado
   });
@@ -103,16 +103,16 @@ export default function Navbar() {
             </div>
           )}
 
-          <button 
+          <button
             onClick={() => window.dispatchEvent(new CustomEvent('open-onboarding'))}
-            style={{ 
-              display: 'inline-flex', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              padding: '6px', 
-              border: 'none', 
-              background: 'transparent', 
-              cursor: 'pointer', 
+            style={{
+              display: 'inline-flex',
+              alignItems: 'center',
+              justifyContent: 'center',
+              padding: '6px',
+              border: 'none',
+              background: 'transparent',
+              cursor: 'pointer',
               color: 'var(--text-secondary)',
               borderRadius: '50%',
               transition: 'background-color 0.2s'
@@ -128,8 +128,8 @@ export default function Navbar() {
             <User size={18} />
             <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{userName}</span>
           </div>
-          <button 
-            onClick={logout} 
+          <button
+            onClick={logout}
             className="btn btn-secondary btn-sm"
             style={{ padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
           >

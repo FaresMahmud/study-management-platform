@@ -1,4 +1,4 @@
-import axios from 'axios';
+import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '../store/authStore';
 
 // URL base apontando para o servidor Spring Boot
@@ -10,6 +10,18 @@ export const apiClient = axios.create({
     'Content-Type': 'application/json',
   },
 });
+
+export function normalizeListResponse<T>(data: unknown): T[] {
+  if (Array.isArray(data)) {
+    return data as T[];
+  }
+
+  if (data && typeof data === 'object' && Array.isArray((data as { content?: unknown }).content)) {
+    return (data as { content: T[] }).content;
+  }
+
+  return [];
+}
 
 // Interceptor para injetar o token JWT e mapear para a API versionada (/api/v1)
 apiClient.interceptors.request.use(
@@ -32,6 +44,19 @@ apiClient.interceptors.request.use(
 // Interceptor para tratar respostas paginadas e erros de autenticação globalmente
 apiClient.interceptors.response.use(
   (response) => {
+    if (typeof response.data === 'string' && response.data.includes('Please sign in')) {
+      useAuthStore.getState().logout();
+      return Promise.reject(
+        new AxiosError(
+          'Sessão expirada ou não autenticada. Faça login novamente.',
+          AxiosError.ERR_BAD_REQUEST,
+          response.config,
+          response.request,
+          response
+        )
+      );
+    }
+
     // Se a resposta for um objeto paginado do Spring (contendo 'content' e 'pageable'),
     // desembrulhamos o array, mas mantemos compatibilidade com chamadas que buscam .content
     if (response.data && typeof response.data === 'object' && 'content' in response.data && 'pageable' in response.data) {
