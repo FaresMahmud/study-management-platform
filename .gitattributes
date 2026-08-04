@@ -1,0 +1,63 @@
+# Set default behavior for git line endings handling
+* text=auto eol=lf
+
+# Explicit binary files
+*.png binary
+*.jpg binary
+*.jpeg binary
+*.gif binary
+*.ico binary
+*.pdf binary
+*.woff binary
+*.woff2 binary
+
+# Windows scripts
+*.bat text eol=crlf
+*.cmd text eol=crlf
+*.ps1 text eol=crlf
+
+# Bash scripts
+*.sh text eol=lf
+
+# -------------------------------------------------------------------------------
+# GitHub Linguist Configuration
+# Controls language statistics displayed on GitHub repository summary
+# -------------------------------------------------------------------------------
+
+# Core project languages explicitly marked for detection
+*.java linguist-detectable=true
+*.ts linguist-detectable=true
+*.tsx linguist-detectable=true
+*.css linguist-detectable=true
+*.html linguist-detectable=true
+*.sql linguist-language=TSQL linguist-detectable=true
+*.tsql linguist-language=TSQL linguist-detectable=true
+Dockerfile linguist-language=Dockerfile linguist-detectable=true
+*.dockerfile linguist-language=Dockerfile linguist-detectable=true
+
+# Documentation (excluded from language percentage stats)
+*.md linguist-documentation=true
+docs/** linguist-documentation=true
+LICENSE linguist-documentation=true
+
+# Lockfiles and generated data (excluded from language stats)
+package-lock.json linguist-generated=true
+yarn.lock linguist-generated=true
+pnpm-lock.yaml linguist-generated=true
+
+# Configuration, metadata and tooling files
+.env* linguist-generated=true
+*.json linguist-generated=true
+*.config.js linguist-generated=true
+*.config.ts linguist-generated=true
+tsconfig*.json linguist-generated=true
+pom.xml linguist-generated=true
+nginx.conf linguist-generated=true
+debug-interceptor.mjs linguist-generated=true
+
+# Vendored / build directories
+node_modules/** linguist-vendored=true
+target/** linguist-vendored=true
+dist/** linguist-vendored=true
+.vscode/** linguist-vendored=true
+.agents/** linguist-vendored=true
