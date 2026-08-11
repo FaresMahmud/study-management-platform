@@ -79,14 +79,12 @@ export default function PdfViewer({
     const loadPdf = async () => {
       setPdfLoading(true);
       try {
-        const fileUrl = `${apiClient.defaults.baseURL}/api/v1/files/${activeFileId}/view`;
-        const token = localStorage.getItem('token');
-        
+        const response = await apiClient.get(`/api/v1/files/${activeFileId}/view`, {
+          responseType: 'arraybuffer',
+        });
+
         const loadingTask = pdfjsLib.getDocument({
-          url: fileUrl,
-          httpHeaders: {
-            'Authorization': token ? `Bearer ${token}` : ''
-          }
+          data: new Uint8Array(response.data),
         });
 
         const pdf = await loadingTask.promise;

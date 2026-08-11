@@ -1,16 +1,19 @@
 package com.studyplatform.ai;
-import com.studyplatform.ai.AiService;
-import com.studyplatform.flashcard.dto.FlashcardResponseDTO;
-import io.swagger.v3.oas.annotations.Operation;
-import io.swagger.v3.oas.annotations.tags.Tag;
 import java.util.List;
-import lombok.Data;
-import lombok.RequiredArgsConstructor;
+import java.util.Map;
+
 import org.springframework.http.ResponseEntity;
 import org.springframework.web.bind.annotation.PostMapping;
 import org.springframework.web.bind.annotation.RequestBody;
 import org.springframework.web.bind.annotation.RequestMapping;
 import org.springframework.web.bind.annotation.RestController;
+
+import com.studyplatform.flashcard.dto.FlashcardResponseDTO;
+
+import io.swagger.v3.oas.annotations.Operation;
+import io.swagger.v3.oas.annotations.tags.Tag;
+import lombok.Data;
+import lombok.RequiredArgsConstructor;
 
 @RestController
 @RequestMapping("/api/v1/ai")
@@ -19,6 +22,16 @@ import org.springframework.web.bind.annotation.RestController;
 public class AiController {
 
     private final AiService aiService;
+    private final GeminiService geminiService;
+
+    @Operation(summary = "Consultar status da IA", description = "Retorna se o Gemini está configurado e qual modelo está ativo")
+    @org.springframework.web.bind.annotation.GetMapping("/status")
+    public ResponseEntity<Map<String, Object>> status() {
+        return ResponseEntity.ok(Map.of(
+                "configured", geminiService.isConfigured(),
+                "textModel", geminiService.getTextModel()
+        ));
+    }
 
     @Operation(summary = "Gerar flashcards a partir de um texto de estudo", description = "Lê o texto do resumo e gera de 3 a 5 cartões Leitner automaticamente")
     @PostMapping("/generate-flashcards")

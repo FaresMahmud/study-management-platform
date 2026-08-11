@@ -1,12 +1,5 @@
 package com.studyplatform.ai;
 
-import com.fasterxml.jackson.databind.ObjectMapper;
-import com.studyplatform.shared.exception.BusinessException;
-import lombok.RequiredArgsConstructor;
-import lombok.extern.slf4j.Slf4j;
-import org.springframework.beans.factory.annotation.Value;
-import org.springframework.stereotype.Service;
-
 import java.io.IOException;
 import java.net.URI;
 import java.net.http.HttpClient;
@@ -14,6 +7,15 @@ import java.net.http.HttpRequest;
 import java.net.http.HttpResponse;
 import java.util.List;
 import java.util.Map;
+
+import org.springframework.beans.factory.annotation.Value;
+import org.springframework.stereotype.Service;
+
+import com.fasterxml.jackson.databind.ObjectMapper;
+import com.studyplatform.shared.exception.BusinessException;
+
+import lombok.RequiredArgsConstructor;
+import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
@@ -25,8 +27,15 @@ public class GeminiService {
     @Value("${gemini.api.key:}")
     private String geminiApiKey;
 
+    @Value("${gemini.text.model:gemini-2.5-flash}")
+    private String textModel;
+
     public boolean isConfigured() {
         return geminiApiKey != null && !geminiApiKey.trim().isEmpty() && !geminiApiKey.equals("SUA_CHAVE_GEMINI_AQUI");
+    }
+
+    public String getTextModel() {
+        return textModel;
     }
 
     public String generateContent(String prompt) throws IOException, InterruptedException {
@@ -34,7 +43,7 @@ public class GeminiService {
             throw new IllegalStateException("Chave de API do Gemini não configurada.");
         }
 
-        // Cria o payload para o Gemini 1.5 Flash (modelo estável e rápido)
+        // Cria o payload para o modelo de geração configurado
         Map<String, Object> requestBody = Map.of(
                 "contents", List.of(
                         Map.of("parts", List.of(
@@ -46,7 +55,7 @@ public class GeminiService {
         String jsonPayload = objectMapper.writeValueAsString(requestBody);
 
         HttpClient client = HttpClient.newHttpClient();
-        URI uri = URI.create("https://generativelanguage.googleapis.com/v1beta/models/gemini-1.5-flash:generateContent?key=" + geminiApiKey);
+        URI uri = URI.create("https://generativelanguage.googleapis.com/v1beta/models/" + textModel + ":generateContent?key=" + geminiApiKey);
 
         HttpRequest request = HttpRequest.newBuilder()
                 .uri(uri)
