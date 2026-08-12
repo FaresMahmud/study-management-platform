@@ -1,9 +1,9 @@
-import React, { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { apiClient } from '../api/client';
-import type { Goal, Subject, SpringPage } from '../types';
-import { Plus, Edit2, Trash2, X, Target, Calendar } from 'lucide-react';
+import { Calendar, Edit2, Plus, Target, Trash2, X } from 'lucide-react';
+import React, { useState } from 'react';
+import { apiClient, normalizeListResponse } from '../api/client';
+import type { Goal, SpringPage, Subject } from '../types';
 
 interface GoalInput {
   title: string;
@@ -35,7 +35,7 @@ export default function Goals() {
     queryKey: ['goals'],
     queryFn: async () => {
       const response = await apiClient.get<SpringPage<Goal>>('/api/goals?size=1000');
-      return response.data.content;
+      return normalizeListResponse<Goal>(response.data);
     },
   });
 
@@ -44,7 +44,7 @@ export default function Goals() {
     queryKey: ['subjects'],
     queryFn: async () => {
       const response = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
-      return response.data.content;
+      return normalizeListResponse<Subject>(response.data);
     },
   });
 
@@ -215,10 +215,10 @@ export default function Goals() {
     today.setHours(0, 0, 0, 0);
     const end = new Date(endDateStr);
     end.setHours(0, 0, 0, 0);
-    
+
     const diffTime = end.getTime() - today.getTime();
     const diffDays = Math.ceil(diffTime / (1000 * 60 * 60 * 24));
-    
+
     if (diffDays < 0) return 'Expirada';
     if (diffDays === 0) return 'Termina hoje';
     if (diffDays === 1) return '1 dia restante';
@@ -257,20 +257,20 @@ export default function Goals() {
             const percentage = Math.round(goal.completionPercentage || 0);
             const isCompleted = percentage >= 100;
             const daysRemaining = calculateDaysRemaining(goal.endDateGoal);
-            
+
             return (
               <div key={goal.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '200px', padding: 'var(--space-sm)' }}>
                 <div>
                   <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
                     <span style={{ fontWeight: 700, fontSize: '16px' }}>{goal.title}</span>
                     <div style={{ display: 'flex', gap: '4px' }}>
-                      <button 
+                      <button
                         onClick={() => openEditModal(goal)}
                         style={{ color: 'var(--text-secondary)', cursor: 'pointer', padding: '4px' }}
                       >
                         <Edit2 size={16} />
                       </button>
-                      <button 
+                      <button
                         onClick={() => handleDelete(goal.id, goal.title)}
                         style={{ color: 'var(--danger)', cursor: 'pointer', padding: '4px' }}
                       >
@@ -302,12 +302,12 @@ export default function Goals() {
                   </div>
 
                   <div className="progress-bar-container" style={{ height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
-                    <div 
-                      className="progress-bar-fill" 
-                      style={{ 
-                        width: `${percentage}%`, 
-                        backgroundColor: isCompleted ? 'var(--success)' : (goal.subject?.color || 'var(--primary)') 
-                      }} 
+                    <div
+                      className="progress-bar-fill"
+                      style={{
+                        width: `${percentage}%`,
+                        backgroundColor: isCompleted ? 'var(--success)' : (goal.subject?.color || 'var(--primary)')
+                      }}
                     />
                   </div>
                 </div>
@@ -317,9 +317,9 @@ export default function Goals() {
                     <Calendar size={12} />
                     {formatDate(goal.startDateGoal)} até {formatDate(goal.endDateGoal)}
                   </span>
-                  <span style={{ 
-                    fontWeight: 600, 
-                    color: daysRemaining === 'Expirada' ? 'var(--danger)' : daysRemaining === 'Termina hoje' || daysRemaining === '1 dia restante' ? 'var(--warning)' : 'var(--text-secondary)' 
+                  <span style={{
+                    fontWeight: 600,
+                    color: daysRemaining === 'Expirada' ? 'var(--danger)' : daysRemaining === 'Termina hoje' || daysRemaining === '1 dia restante' ? 'var(--warning)' : 'var(--text-secondary)'
                   }}>
                     {daysRemaining}
                   </span>
@@ -453,8 +453,8 @@ export default function Goals() {
                 <button type="button" className="btn btn-secondary" onClick={closeModal}>
                   Cancelar
                 </button>
-                <button 
-                  type="submit" 
+                <button
+                  type="submit"
                   className="btn btn-primary"
                   disabled={createMutation.isPending || updateMutation.isPending}
                 >

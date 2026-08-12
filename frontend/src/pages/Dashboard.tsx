@@ -1,12 +1,12 @@
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Award, BookOpen, Check, CheckCircle, ChevronLeft, ChevronRight, Clock, Flame, Pause, Play, Plus, Share2, Sparkles, Square, Target, X } from 'lucide-react';
 import React, { useState } from 'react';
-import { useQuery, useQueryClient, useMutation } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import type { StudySession, Subject, Goal, ExamPrep } from '../types';
-import { Clock, BookOpen, Target, CheckCircle, Flame, Calendar, Plus, Play, Pause, Square, Sparkles, AlertCircle, Share2, RefreshCw, X, ChevronRight, ChevronLeft, Check, Award } from 'lucide-react';
 import { Link } from 'react-router-dom';
-import WeeklyFocusCard from '../components/WeeklyFocusCard';
+import { apiClient } from '../api/client';
 import ActiveGoalsCard from '../components/ActiveGoalsCard';
 import RecentSessionsCard from '../components/RecentSessionsCard';
+import WeeklyFocusCard from '../components/WeeklyFocusCard';
+import type { ExamPrep, Goal, StudySession, Subject } from '../types';
 import { triggerConfetti } from '../utils/confetti';
 
 export default function Dashboard() {
@@ -65,6 +65,14 @@ export default function Dashboard() {
         return [];
       }
     }
+  });
+
+  const { data: aiStatus } = useQuery<{ configured: boolean; textModel: string }>({
+    queryKey: ['ai-status'],
+    queryFn: async () => {
+      const response = await apiClient.get('/api/v1/ai/status');
+      return response.data;
+    },
   });
 
   // ─── Wizard & Sharing States ───
@@ -184,15 +192,15 @@ export default function Dashboard() {
         examPrepId: activeExam.id,
         question: userText
       });
-      setChatMessages(prev => [...prev, { 
-        sender: 'tutor', 
+      setChatMessages(prev => [...prev, {
+        sender: 'tutor',
         text: response.data.answer || 'Não consegui formular uma resposta baseada no contexto fornecido.',
-        sources: response.data.sources 
+        sources: response.data.sources
       }]);
     } catch (err) {
-      setChatMessages(prev => [...prev, { 
-        sender: 'tutor', 
-        text: 'Erro ao conectar ao tutor. Por favor, certifique-se de que fez o upload de arquivos PDF para o seu exame na área de estudos.' 
+      setChatMessages(prev => [...prev, {
+        sender: 'tutor',
+        text: 'Erro ao conectar ao tutor. Por favor, certifique-se de que fez o upload de arquivos PDF para o seu exame na área de estudos.'
       }]);
     } finally {
       setChatLoading(false);
@@ -272,8 +280,7 @@ export default function Dashboard() {
   if (examPreps.length === 0 || wizardOpen) {
     return (
       <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)', padding: '24px' }}>
-        <div className="card wizard-card" style={{ position: 'relative' }}>
-          
+        <div className="card wizard-card" style={{ position: 'relative', maxWidth: '560px', width: '100%', border: '1px solid var(--border-color)' }}>
           {examPreps.length > 0 && (
             <button className="modal-close" onClick={() => setWizardOpen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
               <X size={18} />
@@ -337,7 +344,7 @@ export default function Dashboard() {
                 <h3 style={{ fontSize: '18px', fontWeight: 800, marginBottom: '4px' }}>Mapear matérias do edital</h3>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Selecione quais das matérias abaixo fazem parte do seu plano de estudos para esta prova.</p>
               </div>
-              
+
               {subjects.length === 0 ? (
                 <div style={{ padding: '24px', textAlign: 'center', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px dashed var(--border-color)' }}>
                   <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Nenhuma matéria cadastrada no momento. Prossiga para criar seu objetivo e adicione matérias depois!</p>
@@ -393,14 +400,13 @@ export default function Dashboard() {
 
   // ─── Render Active Dashboard View ───
   const activeExamGoals = goals.filter(g => g.examPrepId === activeExam?.id);
-  const averageMastery = activeExamGoals.length > 0 
+  const averageMastery = activeExamGoals.length > 0
     ? Math.round(activeExamGoals.reduce((sum, g) => sum + g.currentMastery, 0) / activeExamGoals.length)
     : 0;
   const strokeDashoffset = 251.2 - (251.2 * averageMastery) / 100;
 
   return (
     <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
       {/* ─── CABEÇALHO DO DASHBOARD: TÍTULO E AÇÕES RÁPIDAS DE CRIAÇÃO ─── */}
       <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '8px' }}>
         <div>
@@ -422,26 +428,38 @@ export default function Dashboard() {
           </Link>
         </div>
       </div>
-      
       {/* ─── TELA 1: HERO SECTION - POMODORO + EXAME ATIVO ─── */}
-      <div className="card" style={{ 
+      <div className="card" style={{
         background: 'linear-gradient(135deg, hsla(258, 90%, 66%, 0.12), hsla(162, 72%, 45%, 0.06))',
         border: '1px solid hsla(258, 90%, 66%, 0.2)',
         padding: '24px',
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-lg)'
       }}>
+        <div style={{ display: 'flex', justifyContent: 'flex-end', marginBottom: '12px' }}>
+          <span
+            className="badge"
+            style={{
+              backgroundColor: aiStatus?.configured ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)',
+              color: aiStatus?.configured ? 'var(--success)' : 'var(--warning)',
+              fontSize: '11px',
+              fontWeight: 700,
+              letterSpacing: '0.02em'
+            }}
+          >
+            Gemini {aiStatus?.configured ? 'ativo' : 'não configurado'}{aiStatus?.textModel ? ` · ${aiStatus.textModel}` : ''}
+          </span>
+        </div>
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '34px', alignItems: 'center' }}>
-          
           {/* COLUNA ESQUERDA: TIMER POMODORO */}
           <div className="timer-hero-col">
             <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', fontWeight: 800 }}>Sessão de Foco Ativa</span>
             <div style={{ fontSize: '56px', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '-0.04em', color: 'var(--text-primary)', margin: '4px 0', fontVariantNumeric: 'tabular-nums' }}>
               {formatTimer(time)}
             </div>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', gap: '13px', marginTop: '13px', flexWrap: 'wrap' }}>
-              <select 
+              <select
                 style={{ background: 'var(--bg-tertiary)', border: '1px solid var(--border-color)', borderRadius: 'var(--radius-sm)', padding: '6px 12px', fontSize: '13px', color: 'var(--text-primary)' }}
                 value={selectedSubject}
                 onChange={e => setSelectedSubject(e.target.value ? Number(e.target.value) : '')}
@@ -471,16 +489,16 @@ export default function Dashboard() {
             {/* Indicadores de Pomodoro */}
             <div style={{ display: 'flex', gap: '6px', marginTop: '13px' }}>
               {[1, 2, 3, 4, 5].map((dot) => (
-                <div 
-                  key={dot} 
-                  style={{ 
-                    width: '8px', 
-                    height: '8px', 
-                    borderRadius: '50%', 
+                <div
+                  key={dot}
+                  style={{
+                    width: '8px',
+                    height: '8px',
+                    borderRadius: '50%',
                     backgroundColor: dot <= 3 ? 'var(--success)' : 'var(--border-color)',
                     boxShadow: dot <= 3 ? '0 0 6px var(--success)' : 'none',
                     transition: 'all 0.3s ease'
-                  }} 
+                  }}
                 />
               ))}
             </div>
@@ -497,11 +515,11 @@ export default function Dashboard() {
                   )}
                 </div>
                 <h3 style={{ fontSize: '21px', fontWeight: 900, color: 'var(--text-primary)', margin: 0, letterSpacing: '-0.02em' }}>{activeExam.title}</h3>
-                
+
                 <span style={{ fontSize: '13px', color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Clock size={14} className="text-warning" />
-                  {activeExam.daysRemaining !== undefined && activeExam.daysRemaining >= 0 
-                    ? `Faltam ${activeExam.daysRemaining} dias para a prova` 
+                  {activeExam.daysRemaining !== undefined && activeExam.daysRemaining >= 0
+                    ? `Faltam ${activeExam.daysRemaining} dias para a prova`
                     : `Prova concluída`
                   }
                 </span>
@@ -511,7 +529,7 @@ export default function Dashboard() {
                     <Share2 size={12} />
                     <span>{activeExam.isPublic ? 'Copiar Link' : 'Compartilhar'}</span>
                   </button>
-                  
+
                   {activeExam.isPublic && (
                     <button className="btn btn-secondary btn-sm" onClick={() => revokeShareMutation.mutate(activeExam.id)} disabled={revokeShareMutation.isPending} style={{ color: 'var(--text-muted)' }}>
                       Privar
@@ -529,8 +547,8 @@ export default function Dashboard() {
                 <svg width="84" height="84" viewBox="0 0 100 100">
                   <circle cx="50" cy="50" r="40" stroke="var(--border-color)" strokeWidth="8" fill="transparent" />
                   <circle cx="50" cy="50" r="40" stroke="var(--success)" strokeWidth="8" fill="transparent"
-                          strokeDasharray="251.2" strokeDashoffset={strokeDashoffset} strokeLinecap="round"
-                          style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
+                    strokeDasharray="251.2" strokeDashoffset={strokeDashoffset} strokeLinecap="round"
+                    style={{ transition: 'stroke-dashoffset 0.5s ease' }} />
                   <text x="50" y="56" textAnchor="middle" fill="var(--text-primary)" fontSize="20" fontWeight="bold">
                     {averageMastery}%
                   </text>
@@ -604,7 +622,7 @@ export default function Dashboard() {
       {/* ─── TELA 1.3: GRÁFICO E AGENDA (2 COLUNAS) ─── */}
       <div className="dashboard-double-grid">
         <WeeklyFocusCard sessions={sessions} />
-        
+
         <div className="card" style={{ padding: '21px' }}>
           <div className="flex-between" style={{ marginBottom: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
             <h3 style={{ fontSize: '16px', fontWeight: 800 }}>Agenda do Dia & Revisões</h3>
@@ -618,7 +636,7 @@ export default function Dashboard() {
               </div>
               <Link to="/flashcards" className="btn btn-secondary btn-sm" style={{ padding: '4px 10px', fontSize: '12px' }}>Iniciar</Link>
             </div>
-            
+
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--success)' }}>
               <div>
                 <h4 style={{ fontSize: '13px', fontWeight: 700 }}>Mini Quiz do Dia</h4>
@@ -671,7 +689,7 @@ export default function Dashboard() {
         <RecentSessionsCard sessions={sessions} />
       </div>
 
-      {/* ─── BANNER DE CONQUISTAS OU DICAS DINÂMICAS (RODAPÉ) ─── */}
+      {/* ─── BANNER DE CONQUIPSTAS OU DICAS DINÂMICAS (RODAPÉ) ─── */}
       {completedGoals > 0 ? (
         <div className="card" style={{ 
           background: 'linear-gradient(135deg, hsla(38, 92%, 50%, 0.12), hsla(258, 90%, 66%, 0.08))',
@@ -730,7 +748,6 @@ export default function Dashboard() {
           </div>
         </div>
       )}
-      
       {/* ─── MODAL DE COMPARTILHAMENTO DE EXAME ─── */}
       {shareModalOpen && (
         <div className="modal-overlay" style={{ zIndex: 10000, display: 'flex', justifyContent: 'center', alignItems: 'center', position: 'fixed', inset: 0, background: 'rgba(0,0,0,0.6)' }}>
@@ -763,19 +780,19 @@ export default function Dashboard() {
       {/* ─── CHAT FLUTUANTE DO TUTOR INTELIGENTE ─── */}
       <div className="chat-tutor-container">
         {!chatOpen ? (
-          <button 
+          <button
             onClick={() => setChatOpen(true)}
-            style={{ 
-              backgroundColor: 'var(--ai)', 
-              color: 'white', 
-              borderRadius: '50px', 
-              padding: '13px 21px', 
-              border: 'none', 
-              boxShadow: '0 8px 34px rgba(236, 72, 153, 0.4)', 
-              display: 'flex', 
-              alignItems: 'center', 
-              gap: '8px', 
-              fontWeight: 700, 
+            style={{
+              backgroundColor: 'var(--ai)',
+              color: 'white',
+              borderRadius: '50px',
+              padding: '13px 21px',
+              border: 'none',
+              boxShadow: '0 8px 34px rgba(236, 72, 153, 0.4)',
+              display: 'flex',
+              alignItems: 'center',
+              gap: '8px',
+              fontWeight: 700,
               cursor: 'pointer',
               transition: 'transform 0.2s',
               animation: 'pulse 2s infinite'
@@ -799,7 +816,7 @@ export default function Dashboard() {
                   <span style={{ fontSize: '10px', color: 'var(--text-muted)' }}>Respondendo via RAG</span>
                 </div>
               </div>
-              <button 
+              <button
                 onClick={() => setChatOpen(false)}
                 style={{ background: 'transparent', border: 'none', color: 'var(--text-muted)', cursor: 'pointer' }}
               >
@@ -810,9 +827,9 @@ export default function Dashboard() {
             {/* Messages List */}
             <div style={{ flex: 1, padding: '16px', overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '12px' }}>
               {chatMessages.map((msg, i) => (
-                <div 
-                  key={i} 
-                  style={{ 
+                <div
+                  key={i}
+                  style={{
                     alignSelf: msg.sender === 'user' ? 'flex-end' : 'flex-start',
                     maxWidth: '80%',
                     padding: '10px 14px',
@@ -843,18 +860,18 @@ export default function Dashboard() {
 
             {/* Input Form */}
             <form onSubmit={handleSendChatMessage} style={{ padding: '12px', borderTop: '1px solid var(--border-color)', display: 'flex', gap: '8px', backgroundColor: 'var(--bg-tertiary)' }}>
-              <input 
-                type="text" 
-                className="form-input" 
+              <input
+                type="text"
+                className="form-input"
                 placeholder={activeExam ? "Pergunte algo sobre seus PDFs..." : "Crie um objetivo para perguntar"}
                 disabled={!activeExam || chatLoading}
-                value={chatInput} 
-                onChange={e => setChatInput(e.target.value)} 
+                value={chatInput}
+                onChange={e => setChatInput(e.target.value)}
                 style={{ flex: 1, margin: 0, fontSize: '13px', height: '36px' }}
               />
-              <button 
-                type="submit" 
-                className="btn btn-primary" 
+              <button
+                type="submit"
+                className="btn btn-primary"
                 disabled={!activeExam || !chatInput.trim() || chatLoading}
                 style={{ padding: '0 16px', height: '36px', minWidth: 'auto', margin: 0 }}
               >

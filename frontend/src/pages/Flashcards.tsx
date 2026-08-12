@@ -1,8 +1,8 @@
-import React, { useState, useEffect } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
+import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X, RotateCcw, ArrowRight, Sparkles } from 'lucide-react';
+import React, { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
 import type { Flashcard, Subject, SpringPage } from '../types';
-import { Brain, Layers, HelpCircle, Trash2, Edit3, Plus, Check, RotateCcw, ArrowRight, X, Sparkles } from 'lucide-react';
 
 export default function Flashcards() {
   const queryClient = useQueryClient();
@@ -20,20 +20,32 @@ export default function Flashcards() {
   const [formSubjectId, setFormSubjectId] = useState<number | ''>('');
   const [formError, setFormError] = useState('');
 
+  const normalizeListResponse = <T,>(data: unknown): T[] => {
+    if (Array.isArray(data)) {
+      return data as T[];
+    }
+
+    if (data && typeof data === 'object' && Array.isArray((data as { content?: unknown }).content)) {
+      return (data as { content: T[] }).content;
+    }
+
+    return [];
+  };
+
   // Queries
   const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ['subjects'],
     queryFn: async () => {
-      const res = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
-      return res.data.content;
+      const res = await apiClient.get<unknown>('/api/subjects?size=1000');
+      return normalizeListResponse<Subject>(res.data);
     },
   });
 
   const { data: allCards = [], isLoading: loadingAll } = useQuery<Flashcard[]>({
     queryKey: ['flashcards'],
     queryFn: async () => {
-      const res = await apiClient.get<SpringPage<Flashcard>>('/api/flashcards?size=1000');
-      return res.data.content;
+      const res = await apiClient.get<unknown>('/api/flashcards?size=1000');
+      return normalizeListResponse<Flashcard>(res.data);
     },
   });
 
@@ -82,7 +94,7 @@ export default function Flashcards() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flashcards'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
-      
+
       setShowAnswer(false);
       setReviewedCount(c => c + 1);
       setCurrentIndex(i => i + 1);
@@ -93,7 +105,7 @@ export default function Flashcards() {
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (activeTab !== 'review' || dueCards.length === 0 || currentIndex >= dueCards.length) return;
-      
+
       // Don't trigger shortcuts inside text inputs
       if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
 
@@ -125,7 +137,7 @@ export default function Flashcards() {
     setEditingCard(card);
     setFormFront(card.front);
     setFormBack(card.back);
-    setFormSubjectId(card.subject.id);
+    setFormSubjectId(card.subject?.id ?? '');
     setFormError('');
     setModalOpen(true);
   };
@@ -178,7 +190,7 @@ export default function Flashcards() {
 
   return (
     <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', animation: 'fadeIn 0.3s ease-out' }}>
-      
+
       <style>{`
         .srs-grid {
           display: grid;
@@ -273,7 +285,7 @@ export default function Flashcards() {
       {activeTab === 'review' ? (
         /* ================= TELA DE REVISÃO ATIVA FSRS ================= */
         <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
-          
+
           {/* Header e Fila SRS */}
           <div className="srs-grid" style={{ marginBottom: '20px' }}>
             <div className="srs-indicator-card" style={{ borderLeft: '4px solid var(--danger)' }}>
@@ -315,7 +327,7 @@ export default function Flashcards() {
               {/* Área de Estudo Ativo */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
                 <span>Revisando {currentIndex + 1} de {dueCards.length}</span>
-                <span>Matéria: <strong>{dueCards[currentIndex].subject.subjectName}</strong></span>
+                <span>Matéria: <strong>{dueCards[currentIndex].subject?.subjectName ?? 'Sem matéria'}</strong></span>
               </div>
 
               <div className="flashcard-box" onClick={() => setShowAnswer(prev => !prev)} style={{ marginBottom: '20px' }}>
@@ -331,7 +343,7 @@ export default function Flashcards() {
                   <div className="flashcard-face back">
                     <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--primary)', letterSpacing: '0.05em', marginBottom: '16px' }}>Verso</span>
                     <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.5 }}>{dueCards[currentIndex].back}</h3>
-                    
+
                     {dueCards[currentIndex].summaryTitle && (
                       <div className="explanation-box" style={{ width: '100%', marginTop: '20px', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
                         <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Origem do PDF: {dueCards[currentIndex].summaryTitle}</span>
@@ -374,15 +386,15 @@ export default function Flashcards() {
             <h3 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '16px' }}>Seus Decks por Matéria</h3>
             <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
               {subjects.map(subj => {
-                const count = allCards.filter(c => c.subject.id === subj.id).length;
+                const count = allCards.filter(c => c.subject?.id === subj.id).length;
                 return (
                   <div key={subj.id} className="card" style={{ padding: '16px', borderLeft: `4px solid ${subj.color}` }}>
                     <h4 style={{ fontSize: '14px', fontWeight: 700 }}>{subj.subjectName}</h4>
                     <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{count} cartões carregados</p>
-                    
-                    <button 
+
+                    <button
                       onClick={() => { setActiveTab('review'); reiniciarRevisoes(); }}
-                      className="btn btn-secondary btn-sm" 
+                      className="btn btn-secondary btn-sm"
                       style={{ width: '100%', marginTop: '13px', fontSize: '12px' }}
                       disabled={count === 0}
                     >
@@ -437,8 +449,8 @@ export default function Flashcards() {
                         <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }}>{card.back}</td>
                         <td>
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
-                            <span className="color-dot" style={{ backgroundColor: card.subject.color, margin: 0 }} />
-                            {card.subject.subjectName}
+                            <span className="color-dot" style={{ backgroundColor: card.subject?.color ?? 'var(--text-muted)', margin: 0 }} />
+                            {card.subject?.subjectName ?? 'Sem matéria'}
                           </span>
                         </td>
                         <td>
@@ -477,7 +489,7 @@ export default function Flashcards() {
           <div className="modal-content">
             <button className="modal-close" onClick={fecharModal}><X size={20} /></button>
             <h2 className="modal-title">{editingCard ? 'Editar Flashcard' : 'Novo Flashcard'}</h2>
-            
+
             {formError && <div style={{ padding: '8px 12px', backgroundColor: 'var(--danger-glow)', color: 'var(--danger)', marginBottom: '13px', fontSize: '13px' }}>{formError}</div>}
 
             <form onSubmit={handleSubmit}>

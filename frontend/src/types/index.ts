@@ -101,11 +101,12 @@ export interface FileAnnotation {
 
 export interface SpringPage<T> {
   content: T[];
-  totalElements: number;
-  totalPages: number;
-  size: number;
-  number: number;
-  first: boolean;
-  last: boolean;
-  empty: boolean;
+  pageable?: unknown;
+  totalElements?: number;
+  totalPages?: number;
+  size?: number;
+  number?: number;
+  first?: boolean;
+  last?: boolean;
+  empty?: boolean;
 }

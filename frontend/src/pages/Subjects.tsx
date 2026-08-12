@@ -1,10 +1,10 @@
-import { useState } from 'react';
-import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
-import { Link } from 'react-router-dom';
+import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
-import { apiClient } from '../api/client';
-import type { Subject, Summary, SpringPage } from '../types';
-import { Plus, Edit2, Trash2, X, FolderOpen, FileText, ChevronDown, ChevronUp, ArrowRight, BookOpen, Clock, Activity } from 'lucide-react';
+import { Activity, ArrowRight, BookOpen, ChevronDown, ChevronUp, Clock, Edit2, FileText, FolderOpen, Plus, Trash2, X } from 'lucide-react';
+import { useState } from 'react';
+import { Link } from 'react-router-dom';
+import { apiClient, normalizeListResponse } from '../api/client';
+import type { SpringPage, Subject, Summary } from '../types';
 
 const PREDEFINED_COLORS = [
   '#6366f1', // Indigo
@@ -21,7 +21,7 @@ export default function Subjects() {
   const queryClient = useQueryClient();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
-  
+
   const [expandedSubjectId, setExpandedSubjectId] = useState<number | null>(null);
 
   // Form State
@@ -35,7 +35,7 @@ export default function Subjects() {
     queryKey: ['subjects'],
     queryFn: async () => {
       const response = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
-      return response.data.content;
+      return normalizeListResponse<Subject>(response.data);
     },
   });
 
@@ -44,7 +44,7 @@ export default function Subjects() {
     queryKey: ['summaries'],
     queryFn: async () => {
       const response = await apiClient.get<SpringPage<Summary>>('/api/summaries?size=1000');
-      return response.data.content;
+      return normalizeListResponse<Summary>(response.data);
     },
   });
 
@@ -88,6 +88,9 @@ export default function Subjects() {
     },
     onError: (err) => {
       let msg = 'Erro ao criar matéria.';
+      if (axios.isAxiosError(err) && err.message) {
+        msg = err.message;
+      }
       if (
         axios.isAxiosError(err) &&
         err.response?.data &&
@@ -195,7 +198,7 @@ export default function Subjects() {
 
   return (
     <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
-      
+
       <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '28px', fontWeight: 800 }}>
@@ -225,14 +228,14 @@ export default function Subjects() {
       ) : (
         /* Grid de Matérias (2 Colunas conforme o audit) */
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
-          
+
           {subjects.map((subj) => {
             const hasSummaries = summaries.some(s => s.subject.id === subj.id);
             return (
-              <div 
-                key={subj.id} 
-                className="card" 
-                style={{ 
+              <div
+                key={subj.id}
+                className="card"
+                style={{
                   borderLeft: `5px solid ${subj.color || 'var(--primary)'}`,
                   padding: '21px',
                   display: 'flex',
@@ -289,7 +292,7 @@ export default function Subjects() {
                       );
                     })()}
 
-                    <button 
+                    <button
                       onClick={() => setExpandedSubjectId(expandedSubjectId === subj.id ? null : subj.id)}
                       className="btn btn-secondary btn-sm"
                       style={{ padding: '4px 10px', fontSize: '11px', display: 'flex', alignItems: 'center', gap: '4px' }}
@@ -305,7 +308,7 @@ export default function Subjects() {
                         <FileText size={13} style={{ color: subj.color || 'var(--primary)' }} />
                         PDFs Extraídos
                       </span>
-                      
+
                       {(() => {
                         const subjectSummaries = summaries.filter(s => s.subject.id === subj.id);
                         if (subjectSummaries.length === 0) {
@@ -314,9 +317,9 @@ export default function Subjects() {
                         return (
                           <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
                             {subjectSummaries.map(sum => (
-                              <Link 
-                                key={sum.id} 
-                                to="/summaries" 
+                              <Link
+                                key={sum.id}
+                                to="/summaries"
                                 state={{ activeSummaryId: sum.id }}
                                 className="sessao-recente-item"
                                 style={{ padding: '8px 12px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
@@ -336,17 +339,17 @@ export default function Subjects() {
           })}
 
           {/* Card de Adição rápida com dashed border */}
-          <div 
+          <div
             onClick={openCreateModal}
             className="card"
-            style={{ 
-              border: '2px dashed var(--border-color)', 
-              borderRadius: 'var(--radius-xl)', 
-              display: 'flex', 
-              flexDirection: 'column', 
-              alignItems: 'center', 
-              justifyContent: 'center', 
-              minHeight: '220px', 
+            style={{
+              border: '2px dashed var(--border-color)',
+              borderRadius: 'var(--radius-xl)',
+              display: 'flex',
+              flexDirection: 'column',
+              alignItems: 'center',
+              justifyContent: 'center',
+              minHeight: '220px',
               cursor: 'pointer',
               transition: 'all 0.2s',
               backgroundColor: 'transparent'

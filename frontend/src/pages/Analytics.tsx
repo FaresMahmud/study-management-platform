@@ -1,42 +1,42 @@
-import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
-import { apiClient } from '../api/client';
-import { calcularStreak } from '../utils/streak';
-import type { StudySession, Subject, Flashcard, SpringPage } from '../types';
 import {
-  BarChart,
+  Activity,
+  AlertCircle,
+  Award,
+  BookOpen,
+  Brain,
+  Calendar,
+  CheckCircle,
+  Clock,
+  Compass,
+  Flame,
+  Info,
+  TrendingUp
+} from 'lucide-react';
+import { useEffect, useRef, useState } from 'react';
+import {
+  Area,
+  AreaChart,
   Bar,
-  XAxis,
-  YAxis,
-  Tooltip,
-  ResponsiveContainer,
+  BarChart,
   Cell,
+  Legend,
+  PolarAngleAxis,
+  PolarGrid,
+  PolarRadiusAxis,
   Radar,
   RadarChart,
-  PolarGrid,
-  PolarAngleAxis,
-  PolarRadiusAxis,
-  AreaChart,
-  Area,
-  Legend
+  ResponsiveContainer,
+  Tooltip,
+  XAxis,
+  YAxis
 } from 'recharts';
-import {
-  TrendingUp,
-  Calendar,
-  Clock,
-  BookOpen,
-  Award,
-  Flame,
-  Brain,
-  Compass,
-  CheckCircle,
-  AlertCircle,
-  Activity,
-  Info
-} from 'lucide-react';
+import { apiClient, normalizeListResponse } from '../api/client';
+import type { Flashcard, SpringPage, StudySession, Subject } from '../types';
+import { calcularStreak } from '../utils/streak';
 
-const MESES_PT = ['Janeiro','Fevereiro','Março','Abril','Maio','Junho','Julho','Agosto','Setembro','Outubro','Novembro','Dezembro'];
-const DIAS_SEMANA_ABREV = ['Dom','Seg','Ter','Qua','Qui','Sex','Sáb'];
+const MESES_PT = ['Janeiro', 'Fevereiro', 'Março', 'Abril', 'Maio', 'Junho', 'Julho', 'Agosto', 'Setembro', 'Outubro', 'Novembro', 'Dezembro'];
+const DIAS_SEMANA_ABREV = ['Dom', 'Seg', 'Ter', 'Qua', 'Qui', 'Sex', 'Sáb'];
 
 interface DadosDia {
   totalMins: number;
@@ -76,12 +76,12 @@ interface PropsTooltipGrafico {
 
 function TooltipGrafico({ active, payload, label }: PropsTooltipGrafico) {
   if (!active || !payload || payload.length === 0) return null;
-  
+
   const mInfo = payload[0];
   const totalSubjHours = mInfo.value;
   const rawPayload = mInfo.payload;
   const listSessoes = rawPayload.sessionDates || [];
-  
+
   const formatarDuracao = (mins: number) => {
     const h = Math.floor(mins / 60);
     const m = mins % 60;
@@ -132,7 +132,7 @@ export default function Analytics() {
     queryKey: ['sessions'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<StudySession>>('/api/study-sessions?size=1000');
-      return res.data.content;
+      return normalizeListResponse<StudySession>(res.data);
     },
   });
 
@@ -140,7 +140,7 @@ export default function Analytics() {
     queryKey: ['subjects'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
-      return res.data.content;
+      return normalizeListResponse<Subject>(res.data);
     },
   });
 
@@ -239,7 +239,7 @@ export default function Analytics() {
     const ratio = mins / maxMinsNoMes;
     if (ratio <= 0) return 'transparent';
     if (ratio < 0.25) return 'rgba(99,102,241,0.25)';
-    if (ratio < 0.5)  return 'rgba(99,102,241,0.48)';
+    if (ratio < 0.5) return 'rgba(99,102,241,0.48)';
     if (ratio < 0.75) return 'rgba(99,102,241,0.72)';
     return 'rgba(99,102,241,0.95)';
   };
@@ -380,7 +380,7 @@ export default function Analytics() {
 
   return (
     <div className="dashboard-root" style={{ animation: 'fadeIn 0.4s ease-out' }}>
-      
+
       {/* Estilos embutidos locais da página */}
       <style>{`
         .analytics-tabs {
@@ -503,13 +503,13 @@ export default function Analytics() {
       {/* Tabs de Navegação */}
       <div className="analytics-tabs">
         <div className="analytics-tabs-buttons">
-          <button 
+          <button
             className={`analytics-tab-btn ${activeTab === 'temporal' ? 'active' : ''}`}
             onClick={() => setActiveTab('temporal')}
           >
             Foco Temporal (Horas & Hábitos)
           </button>
-          <button 
+          <button
             className={`analytics-tab-btn ${activeTab === 'learning_zone' ? 'active' : ''}`}
             onClick={() => setActiveTab('learning_zone')}
           >
@@ -527,10 +527,10 @@ export default function Analytics() {
             )}
             {temDadosReais && (
               <label style={{ display: 'inline-flex', alignItems: 'center', gap: '6px', fontSize: '0.78rem', color: 'var(--text-secondary)', cursor: 'pointer' }}>
-                <input 
-                  type="checkbox" 
-                  checked={useMock} 
-                  onChange={e => setUseMock(e.target.checked)} 
+                <input
+                  type="checkbox"
+                  checked={useMock}
+                  onChange={e => setUseMock(e.target.checked)}
                   style={{ width: '14px', height: '14px', accentColor: 'var(--primary)' }}
                 />
                 Simular Dados
@@ -691,7 +691,7 @@ export default function Analytics() {
 
                 <div className="heatmap-legenda" style={{ marginTop: '1.25rem' }}>
                   <span>Pouco</span>
-                  {['rgba(99,102,241,0.2)','rgba(99,102,241,0.45)','rgba(99,102,241,0.7)','rgba(99,102,241,0.95)'].map((cor, i) => (
+                  {['rgba(99,102,241,0.2)', 'rgba(99,102,241,0.45)', 'rgba(99,102,241,0.7)', 'rgba(99,102,241,0.95)'].map((cor, i) => (
                     <div key={i} className="heatmap-legenda-celula" style={{ backgroundColor: cor }} />
                   ))}
                   <span>Muito</span>
@@ -705,10 +705,10 @@ export default function Analytics() {
       {/* ─── TAB 2: ZONA DE APRENDIZADO ───────────────────────────────────────── */}
       {activeTab === 'learning_zone' && (
         <div style={{ animation: 'fadeIn 0.3s ease-out' }}>
-          
+
           {/* Grid de Proficiência / Zonas */}
           <div className="zone-grid">
-            
+
             {/* Card Streak */}
             <div className="zone-card streak">
               <div className="zone-icon" style={{ backgroundColor: 'rgba(249, 115, 22, 0.15)', color: '#f97316' }}>
@@ -717,8 +717,8 @@ export default function Analytics() {
               <h3 style={{ fontSize: '0.8rem', color: 'var(--text-secondary)' }}>Frequência de Estudos</h3>
               <p style={{ fontSize: '1.5rem', fontWeight: 800, margin: '4px 0' }}>{streakAtivo} {streakAtivo === 1 ? 'Dia Ativo' : 'Dias Ativos'}</p>
               <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)' }}>
-                {streakAtivo > 0 
-                  ? 'Seu cérebro adora consistência! Mantenha a chama acesa.' 
+                {streakAtivo > 0
+                  ? 'Seu cérebro adora consistência! Mantenha a chama acesa.'
                   : 'Grave sessões de estudo para começar sua sequência!'}
               </span>
             </div>
@@ -757,12 +757,12 @@ export default function Analytics() {
 
           {/* Gráficos de Radar e Área */}
           <div className="dashboard-grid">
-            
+
             {/* Gráfico Radar (Domínio Geral) */}
             <div className="dashboard-coluna-esquerda">
               <div className="card">
                 <h2 className="card-title" style={{ marginBottom: '1.5rem' }}>Proficiência por Tema (%)</h2>
-                
+
                 {radarData.length === 0 ? (
                   <div className="flex-center" style={{ height: '320px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     Crie e revise flashcards para ver sua proficiência.
@@ -774,14 +774,14 @@ export default function Analytics() {
                         <PolarGrid stroke="var(--border-color)" />
                         <PolarAngleAxis dataKey="subjectName" tick={{ fill: 'var(--text-secondary)', fontSize: 11 }} />
                         <PolarRadiusAxis angle={30} domain={[0, 100]} stroke="var(--text-muted)" tick={{ fill: 'var(--text-muted)', fontSize: 9 }} />
-                        <Radar 
-                          name="Domínio Cognitivo" 
-                          dataKey="Proficiência" 
-                          stroke="var(--primary)" 
-                          fill="var(--primary)" 
-                          fillOpacity={0.3} 
+                        <Radar
+                          name="Domínio Cognitivo"
+                          dataKey="Proficiência"
+                          stroke="var(--primary)"
+                          fill="var(--primary)"
+                          fillOpacity={0.3}
                         />
-                        <Tooltip 
+                        <Tooltip
                           contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                           formatter={(value) => [`${value}%`, 'Domínio']}
                         />
@@ -796,7 +796,7 @@ export default function Analytics() {
             <div className="dashboard-coluna-right" style={{ flex: 1 }}>
               <div className="card" style={{ height: '100%' }}>
                 <h2 className="card-title" style={{ marginBottom: '1.5rem' }}>Distribuição de Domínio por Matéria</h2>
-                
+
                 {areaData.length === 0 ? (
                   <div className="flex-center" style={{ height: '320px', color: 'var(--text-muted)', fontSize: '0.85rem' }}>
                     Crie e revise flashcards para analisar as zonas.
@@ -807,8 +807,8 @@ export default function Analytics() {
                       <AreaChart data={areaData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />
                         <YAxis stroke="var(--text-muted)" fontSize={11} />
-                        <Tooltip 
-                          contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }} 
+                        <Tooltip
+                          contentStyle={{ backgroundColor: 'var(--bg-secondary)', borderColor: 'var(--border-color)', color: 'var(--text-primary)' }}
                         />
                         <Area type="monotone" dataKey="Panic Zone" stackId="1" stroke="var(--danger)" fill="var(--danger)" fillOpacity={0.25} />
                         <Area type="monotone" dataKey="Learning Zone" stackId="1" stroke="var(--warning)" fill="var(--warning)" fillOpacity={0.25} />
@@ -835,7 +835,7 @@ export default function Analytics() {
                 const isInfo = rec.includes('💡');
                 const isSuccess = rec.includes('🏆');
                 const isRocket = rec.includes('🚀');
-                
+
                 let icon = <Info size={16} style={{ color: 'var(--text-muted)' }} />;
                 if (isWarning) icon = <AlertCircle size={16} style={{ color: 'var(--danger)' }} />;
                 if (isInfo) icon = <Compass size={16} style={{ color: 'var(--warning)' }} />;
