@@ -22,7 +22,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString
+@ToString(exclude = {"user", "examPrep", "studySessions", "goals"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -50,13 +50,11 @@ public class Subject {
     // Dono da matéria. LAZY pra não trazer o User em toda query de Subject.
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
     private User user;
 
     // Preparação para prova vinculada (ExamPrep)
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_prep_id")
-    @ToString.Exclude
     private com.studyplatform.examprep.ExamPrep examPrep;
 
     @CreatedDate
@@ -69,11 +67,9 @@ public class Subject {
 
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    @ToString.Exclude
     private List<StudySession> studySessions = new ArrayList<>();
 
     @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
     @Builder.Default
-    @ToString.Exclude
     private List<Goal> goals = new ArrayList<>();
 }

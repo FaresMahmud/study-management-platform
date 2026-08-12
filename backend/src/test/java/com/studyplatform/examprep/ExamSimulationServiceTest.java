@@ -59,6 +59,9 @@ public class ExamSimulationServiceTest {
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private com.studyplatform.shared.security.SecurityService securityService;
+
     @InjectMocks
     private ExamSimulationService examSimulationService;
 
@@ -75,9 +78,7 @@ public class ExamSimulationServiceTest {
 
     @Test
     void testStartSimulationOfflineFallback() {
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("student@studyflow.com");
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
         when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
         when(pdfChunkRepository.findByExamPrepId(eq(1L))).thenReturn(Collections.emptyList());
 
@@ -93,9 +94,7 @@ public class ExamSimulationServiceTest {
 
     @Test
     void testFinishSimulationSuccess() {
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("student@studyflow.com");
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
 
         String contentJson = "[\n" +
                 "  {\n" +
@@ -142,9 +141,7 @@ public class ExamSimulationServiceTest {
 
     @Test
     void testFinishSimulationTimeout() {
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("student@studyflow.com");
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
 
         String contentJson = "[]";
 
@@ -168,9 +165,7 @@ public class ExamSimulationServiceTest {
 
     @Test
     void testFinishSimulationAlreadyFinished() {
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("student@studyflow.com");
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
 
         ExamSimulation simulation = ExamSimulation.builder()
                 .id(10L)

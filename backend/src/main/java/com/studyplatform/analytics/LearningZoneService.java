@@ -28,12 +28,10 @@ public class LearningZoneService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final ExamSimulationRepository examSimulationRepository;
     private final StudySessionRepository studySessionRepository;
-    private final UserRepository userRepository;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     @org.springframework.cache.annotation.Cacheable(value = "leaderboard", key = "#examPrepId")

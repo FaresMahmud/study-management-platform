@@ -35,16 +35,14 @@ public class UploadedFileService {
 
     private final UploadedFileRepository uploadedFileRepository;
     private final FileAnnotationRepository fileAnnotationRepository;
-    private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
     private final PdfProcessingService pdfProcessingService;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private final Path fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     @Transactional

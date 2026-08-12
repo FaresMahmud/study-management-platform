@@ -42,6 +42,7 @@ class GoalServiceTest {
     @Mock private com.studyplatform.examprep.QuizAttemptRepository quizAttemptRepository;
     @Mock private SecurityContext securityContext;
     @Mock private Authentication authentication;
+    @Mock private com.studyplatform.shared.security.SecurityService securityService;
 
     @InjectMocks
     private GoalService goalService;
@@ -82,8 +83,7 @@ class GoalServiceTest {
         lenient().when(studySessionRepository.sumDurationBySubjectAndPeriod(any(), any(), any(), any())).thenReturn(600);
         lenient().when(studySessionRepository.sumDurationByUserAndPeriod(any(), any(), any())).thenReturn(600);
 
-        lenient().when(userRepository.findByEmail("joao@email.com"))
-                .thenReturn(Optional.of(authenticatedUser));
+        lenient().when(securityService.getAuthenticatedUser()).thenReturn(authenticatedUser);
     }
 
     // ==================== TESTES DE CRIAÇÃO ====================

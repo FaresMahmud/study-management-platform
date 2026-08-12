@@ -17,7 +17,7 @@ import java.util.List;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString
+@ToString(exclude = {"user", "subjects", "goals"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -61,14 +61,11 @@ public class ExamPrep {
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
-    @ToString.Exclude
     private User user;
 
     @OneToMany(mappedBy = "examPrep", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
     private List<Subject> subjects;
 
     @OneToMany(mappedBy = "examPrep", cascade = CascadeType.ALL, orphanRemoval = true)
-    @ToString.Exclude
     private List<Goal> goals;
 }

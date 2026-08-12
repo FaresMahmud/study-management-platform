@@ -29,17 +29,12 @@ public class StudySessionService {
 
     private final StudySessionRepository studySessionRepository;
     private final SubjectRepository subjectRepository;
-    private final UserRepository userRepository;
     private final StudySessionMapper studySessionMapper;
     private final GoalService goalService;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     private Subject findSubjectByIdAndUser(Long subjectId, Long userId) {

@@ -3,7 +3,7 @@ import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { Link } from 'react-router-dom';
 import axios from 'axios';
 import { apiClient } from '../api/client';
-import type { Subject, Summary } from '../types';
+import type { Subject, Summary, SpringPage } from '../types';
 import { Plus, Edit2, Trash2, X, FolderOpen, FileText, ChevronDown, ChevronUp, ArrowRight, BookOpen, Clock, Activity } from 'lucide-react';
 
 const PREDEFINED_COLORS = [
@@ -45,6 +45,33 @@ export default function Subjects() {
     queryFn: async () => {
       const response = await apiClient.get<SpringPage<Summary>>('/api/summaries?size=1000');
       return response.data.content;
+    },
+  });
+
+  // Fetch goals
+  const { data: goals = [] } = useQuery<any[]>({
+    queryKey: ['goals'],
+    queryFn: async () => {
+      const response = await apiClient.get<any>('/api/v1/goals?size=1000');
+      return response.data.content || response.data || [];
+    },
+  });
+
+  // Fetch flashcards
+  const { data: flashcards = [] } = useQuery<any[]>({
+    queryKey: ['flashcards'],
+    queryFn: async () => {
+      const response = await apiClient.get<any>('/api/flashcards?size=1000');
+      return response.data.content || response.data || [];
+    },
+  });
+
+  // Fetch sessions
+  const { data: sessions = [] } = useQuery<any[]>({
+    queryKey: ['sessions'],
+    queryFn: async () => {
+      const response = await apiClient.get<any>('/api/study-sessions?size=1000');
+      return response.data.content || response.data || [];
     },
   });
 
@@ -231,24 +258,36 @@ export default function Subjects() {
                     {subj.subjectDescription || 'Nenhuma descrição informada.'}
                   </p>
 
-                  {/* Barra de progresso da matéria baseada na Sequência de Fibonacci */}
-                  <div style={{ marginTop: '16px' }}>
-                    <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
-                      <span>Proficiência acumulada</span>
-                      <strong style={{ color: 'var(--primary)' }}>78%</strong>
-                    </div>
-                    <div className="progress-bar-container" style={{ height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
-                      <div className="progress-bar-fill" style={{ width: '78%', backgroundColor: subj.color || 'var(--primary)' }} />
-                    </div>
-                  </div>
+                  {/* Barra de progresso da matéria baseada na Maestria do Goal */}
+                  {(() => {
+                    const subjGoal = goals.find(g => g.subject?.id === subj.id);
+                    const mastery = subjGoal ? Math.round(subjGoal.currentMastery) : 0;
+                    return (
+                      <div style={{ marginTop: '16px' }}>
+                        <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
+                          <span>Proficiência acumulada</span>
+                          <strong style={{ color: subj.color || 'var(--primary)' }}>{mastery}%</strong>
+                        </div>
+                        <div className="progress-bar-container" style={{ height: '6px', borderRadius: '3px', overflow: 'hidden' }}>
+                          <div className="progress-bar-fill" style={{ width: `${mastery}%`, backgroundColor: subj.color || 'var(--primary)' }} />
+                        </div>
+                      </div>
+                    );
+                  })()}
                 </div>
 
                 <div style={{ marginTop: '21px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                    <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
-                      <span><strong>12</strong> Flashcards</span>
-                      <span><strong>5</strong> Quizzes</span>
-                    </div>
+                    {(() => {
+                      const cardsCount = flashcards.filter(f => f.subject?.id === subj.id).length;
+                      const pdfsCount = summaries.filter(s => s.subject?.id === subj.id).length;
+                      return (
+                        <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                          <span><strong>{cardsCount}</strong> Flashcards</span>
+                          <span><strong>{pdfsCount}</strong> PDFs / Resumos</span>
+                        </div>
+                      );
+                    })()}
 
                     <button 
                       onClick={() => setExpandedSubjectId(expandedSubjectId === subj.id ? null : subj.id)}
@@ -326,22 +365,32 @@ export default function Subjects() {
           <Activity size={18} style={{ color: 'var(--primary)' }} />
           Atividade Recente
         </h3>
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-              <Clock size={14} style={{ color: 'var(--primary)' }} />
-              <span>Você revisou 8 flashcards hoje cedo.</span>
-            </div>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Há 2h</span>
+        {sessions.length === 0 && summaries.length === 0 ? (
+          <p style={{ color: 'var(--text-secondary)', fontSize: '13px', margin: 0, fontStyle: 'italic' }}>
+            Nenhuma atividade de estudos ou upload registrado. Comece enviando um PDF ou completando uma sessão de foco!
+          </p>
+        ) : (
+          <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
+            {sessions.slice(0, 2).map(session => (
+              <div key={session.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                  <Clock size={14} style={{ color: 'var(--primary)' }} />
+                  <span>Você estudou a matéria "{session.subject?.subjectName}" por {session.duration} minutos.</span>
+                </div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Ativo</span>
+              </div>
+            ))}
+            {summaries.slice(0, 2).map(sum => (
+              <div key={sum.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                  <FileText size={14} style={{ color: 'var(--success)' }} />
+                  <span>Upload do material "{sum.title}" concluído com sucesso.</span>
+                </div>
+                <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Processado</span>
+              </div>
+            ))}
           </div>
-          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
-              <FileText size={14} style={{ color: 'var(--success)' }} />
-              <span>Upload do arquivo "Calculo_II_Aula03.pdf" concluído.</span>
-            </div>
-            <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Ontem</span>
-          </div>
-        </div>
+        )}
       </div>
 
       {/* Modal */}

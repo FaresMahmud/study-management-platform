@@ -27,7 +27,7 @@ export default function Goals() {
     new Date().toISOString().split('T')[0]
   );
   const [endDate, setEndDate] = useState<string>('');
-  const [subjectId, setSubjectId] = useState<number | string>('');
+  const [selectedSubjectIds, setSelectedSubjectIds] = useState<number[]>([]);
   const [formError, setFormError] = useState('');
 
   // Fetch goals
@@ -55,7 +55,6 @@ export default function Goals() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
-      closeModal();
     },
     onError: (err) => {
       let msg = 'Erro ao criar meta.';
@@ -121,7 +120,7 @@ export default function Goals() {
     const futureDate = new Date();
     futureDate.setDate(futureDate.getDate() + 30);
     setEndDate(futureDate.toISOString().split('T')[0]);
-    setSubjectId('');
+    setSelectedSubjectIds([]);
     setFormError('');
     setIsModalOpen(true);
   };
@@ -133,7 +132,7 @@ export default function Goals() {
     setCurrentMastery(goal.currentMastery);
     setStartDate(goal.startDateGoal);
     setEndDate(goal.endDateGoal);
-    setSubjectId(goal.subject ? goal.subject.id : '');
+    setSelectedSubjectIds(goal.subject ? [goal.subject.id] : []);
     setFormError('');
     setIsModalOpen(true);
   };
@@ -143,7 +142,7 @@ export default function Goals() {
     setEditingGoal(null);
   };
 
-  const handleSubmit = (e: React.FormEvent) => {
+  const handleSubmit = async (e: React.FormEvent) => {
     e.preventDefault();
     setFormError('');
 
@@ -162,22 +161,41 @@ export default function Goals() {
       return;
     }
 
-    const payload = {
+    const basePayload = {
       title,
       targetMastery: Number(targetMastery),
       currentMastery: Number(currentMastery),
       startDateGoal: startDate,
       endDateGoal: endDate,
-      subjectId: subjectId ? Number(subjectId) : null,
     };
 
-    if (editingGoal) {
-      updateMutation.mutate({
-        id: editingGoal.id,
-        ...payload,
-      });
-    } else {
-      createMutation.mutate(payload);
+    try {
+      if (editingGoal) {
+        await updateMutation.mutateAsync({
+          id: editingGoal.id,
+          ...basePayload,
+          subjectId: selectedSubjectIds.length > 0 ? selectedSubjectIds[0] : null
+        });
+      } else {
+        if (selectedSubjectIds.length === 0) {
+          await createMutation.mutateAsync({
+            ...basePayload,
+            subjectId: null
+          });
+        } else {
+          for (const subId of selectedSubjectIds) {
+            const sub = subjects.find(s => s.id === subId);
+            await createMutation.mutateAsync({
+              ...basePayload,
+              title: `${title} (${sub?.subjectName})`,
+              subjectId: subId
+            });
+          }
+        }
+        closeModal();
+      }
+    } catch (err) {
+      // O erro é tratado no callback onError da mutation
     }
   };
 
@@ -345,20 +363,34 @@ export default function Goals() {
               </div>
 
               <div className="form-group" style={{ marginBottom: '13px' }}>
-                <label className="form-label" htmlFor="goal-subject" style={{ fontSize: '13px', marginBottom: '5px' }}>Matéria Relacionada (Opcional)</label>
-                <select
-                  id="goal-subject"
-                  className="form-input"
-                  value={subjectId}
-                  onChange={(e) => setSubjectId(e.target.value)}
-                >
-                  <option value="">Nenhuma (Meta Geral)</option>
+                <label className="form-label" style={{ fontSize: '13px', marginBottom: '5px' }}>Matérias Relacionadas (Selecione uma ou mais)</label>
+                <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '160px', overflowY: 'auto', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                    <input
+                      type="checkbox"
+                      checked={selectedSubjectIds.length === 0}
+                      onChange={() => setSelectedSubjectIds([])}
+                    />
+                    <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Nenhuma (Meta Geral)</span>
+                  </label>
                   {subjects.map((sub) => (
-                    <option key={sub.id} value={sub.id}>
-                      {sub.subjectName}
-                    </option>
+                    <label key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                      <input
+                        type="checkbox"
+                        checked={selectedSubjectIds.includes(sub.id)}
+                        onChange={() => {
+                          setSelectedSubjectIds(prev => 
+                            prev.includes(sub.id) 
+                              ? prev.filter(id => id !== sub.id) 
+                              : [...prev, sub.id]
+                          );
+                        }}
+                      />
+                      <div style={{ width: '10px', height: '10px', borderRadius: '50%', backgroundColor: sub.color || 'var(--primary)' }} />
+                      <span>{sub.subjectName}</span>
+                    </label>
                   ))}
-                </select>
+                </div>
               </div>
 
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '13px', marginBottom: '13px' }}>

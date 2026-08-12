@@ -2,7 +2,7 @@ import React, { useState, useRef, useEffect } from 'react';
 import { useQuery } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import { calcularStreak } from '../utils/streak';
-import type { StudySession, Subject, Flashcard } from '../types';
+import type { StudySession, Subject, Flashcard, SpringPage } from '../types';
 import {
   BarChart,
   Bar,
@@ -649,39 +649,44 @@ export default function Analytics() {
                   </h2>
                 </div>
 
-                {/* Dias da semana */}
-                <div className="heatmap-grid" style={{ marginBottom: '8px' }}>
-                  {DIAS_SEMANA_ABREV.map(d => (
-                    <div key={d} className="heatmap-dia-semana">{d}</div>
-                  ))}
-                </div>
+                {/* Container de scroll para o heatmap em mobile */}
+                <div className="heatmap-scroll-container">
+                  <div style={{ minWidth: '320px' }}>
+                    {/* Dias da semana */}
+                    <div className="heatmap-grid" style={{ marginBottom: '8px' }}>
+                      {DIAS_SEMANA_ABREV.map(d => (
+                        <div key={d} className="heatmap-dia-semana">{d}</div>
+                      ))}
+                    </div>
 
-                {/* Grid dos dias */}
-                <div className="heatmap-grid">
-                  {celulasHeatmap.map((celula, idx) => {
-                    if (celula.tipo === 'padding') {
-                      return <div key={`pad-${idx}`} className="heatmap-celula heatmap-celula--padding" />;
-                    }
-                    const dados = mapaDias.get(celula.dateStr) ?? null;
-                    const temDados = dados !== null && dados.totalMins > 0;
-                    const eHoje = celula.dateStr === hojeStr;
-                    return (
-                      <div
-                        key={celula.dateStr}
-                        className={[
-                          'heatmap-celula',
-                          temDados ? 'heatmap-celula--com-dados' : '',
-                          eHoje ? 'heatmap-celula--hoje' : '',
-                        ].join(' ')}
-                        style={{ backgroundColor: temDados ? corCelulaDia(dados!.totalMins) : undefined }}
-                        onMouseEnter={e => setHeatmapTooltip({ dateStr: celula.dateStr, dados, mouseX: e.clientX, mouseY: e.clientY })}
-                        onMouseMove={e => setHeatmapTooltip(t => t ? { ...t, mouseX: e.clientX, mouseY: e.clientY } : null)}
-                        onMouseLeave={() => setHeatmapTooltip(null)}
-                      >
-                        {celula.dia}
-                      </div>
-                    );
-                  })}
+                    {/* Grid dos dias */}
+                    <div className="heatmap-grid">
+                      {celulasHeatmap.map((celula, idx) => {
+                        if (celula.tipo === 'padding') {
+                          return <div key={`pad-${idx}`} className="heatmap-celula heatmap-celula--padding" />;
+                        }
+                        const dados = mapaDias.get(celula.dateStr) ?? null;
+                        const temDados = dados !== null && dados.totalMins > 0;
+                        const eHoje = celula.dateStr === hojeStr;
+                        return (
+                          <div
+                            key={celula.dateStr}
+                            className={[
+                              'heatmap-celula',
+                              temDados ? 'heatmap-celula--com-dados' : '',
+                              eHoje ? 'heatmap-celula--hoje' : '',
+                            ].join(' ')}
+                            style={{ backgroundColor: temDados ? corCelulaDia(dados!.totalMins) : undefined }}
+                            onMouseEnter={e => setHeatmapTooltip({ dateStr: celula.dateStr, dados, mouseX: e.clientX, mouseY: e.clientY })}
+                            onMouseMove={e => setHeatmapTooltip(t => t ? { ...t, mouseX: e.clientX, mouseY: e.clientY } : null)}
+                            onMouseLeave={() => setHeatmapTooltip(null)}
+                          >
+                            {celula.dia}
+                          </div>
+                        );
+                      })}
+                    </div>
+                  </div>
                 </div>
 
                 <div className="heatmap-legenda" style={{ marginTop: '1.25rem' }}>

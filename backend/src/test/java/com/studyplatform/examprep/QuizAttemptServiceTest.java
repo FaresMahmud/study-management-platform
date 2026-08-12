@@ -50,6 +50,9 @@ public class QuizAttemptServiceTest {
     @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
+    @Mock
+    private com.studyplatform.shared.security.SecurityService securityService;
+
     @InjectMocks
     private QuizAttemptService quizAttemptService;
 
@@ -66,9 +69,7 @@ public class QuizAttemptServiceTest {
 
     @Test
     void testSaveAttemptAndRecalculateMastery() {
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("student@studyflow.com");
-        when(userRepository.findByEmail(anyString())).thenReturn(Optional.of(user));
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
         when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
 
         QuizAttempt attempt = QuizAttempt.builder()

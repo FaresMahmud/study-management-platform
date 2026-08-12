@@ -37,6 +37,7 @@ class SubjectServiceTest {
     @Mock private SubjectMapper subjectMapper;
     @Mock private SecurityContext securityContext;
     @Mock private Authentication authentication;
+    @Mock private com.studyplatform.shared.security.SecurityService securityService;
 
     @InjectMocks
     private SubjectService subjectService;
@@ -50,8 +51,8 @@ class SubjectServiceTest {
     void setUp() {
         // Configura o mock do SecurityContextHolder para simular usuário autenticado
         SecurityContextHolder.setContext(securityContext);
-        when(securityContext.getAuthentication()).thenReturn(authentication);
-        when(authentication.getName()).thenReturn("joao@email.com");
+        lenient().when(securityContext.getAuthentication()).thenReturn(authentication);
+        lenient().when(authentication.getName()).thenReturn("joao@email.com");
 
         authenticatedUser = User.builder()
                 .id(1L)
@@ -83,8 +84,7 @@ class SubjectServiceTest {
                 .build();
 
         // Mock padrão para carregar o usuário autenticado
-        when(userRepository.findByEmail("joao@email.com"))
-                .thenReturn(Optional.of(authenticatedUser));
+        lenient().when(securityService.getAuthenticatedUser()).thenReturn(authenticatedUser);
     }
 
     // ==================== TESTES DE LISTAGEM ====================
@@ -208,5 +208,39 @@ class SubjectServiceTest {
                 .isInstanceOf(ResourceNotFoundException.class);
 
         verify(subjectRepository, never()).delete(any());
+    }
+
+    @Test
+    @DisplayName("Lombok - toString, equals e hashCode não devem causar StackOverflowError com relacionamento bidirecional")
+    void lombok_bidirectionalRelationships_doNotCauseStackOverflow() {
+        // ARRANGE
+        com.studyplatform.examprep.ExamPrep exam = com.studyplatform.examprep.ExamPrep.builder()
+                .id(1L)
+                .title("Vestibular")
+                .build();
+        
+        Subject subj = Subject.builder()
+                .id(1L)
+                .subjectName("Matemática")
+                .examPrep(exam)
+                .build();
+
+        exam.setSubjects(List.of(subj)); // Relacionamento bidirecional populado!
+
+        // ACT & ASSERT
+        // Executa toString, equals e hashCode e garante que não lançam StackOverflowError
+        assertThat(subj.toString()).isNotEmpty();
+        assertThat(exam.toString()).isNotEmpty();
+        
+        assertThat(subj.hashCode()).isNotZero();
+        assertThat(exam.hashCode()).isNotZero();
+
+        Subject otherSubj = Subject.builder()
+                .id(1L)
+                .subjectName("Matemática")
+                .examPrep(exam)
+                .build();
+
+        assertThat(subj.equals(otherSubj)).isTrue();
     }
 }

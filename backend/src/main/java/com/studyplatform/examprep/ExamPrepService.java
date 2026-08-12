@@ -19,13 +19,11 @@ import org.springframework.transaction.annotation.Transactional;
 public class ExamPrepService {
 
     private final ExamPrepRepository examPrepRepository;
-    private final UserRepository userRepository;
     private final ExamPrepMapper examPrepMapper;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     @Transactional(readOnly = true)

@@ -32,16 +32,14 @@ public class ExamSimulationService {
     private final ExamSimulationRepository examSimulationRepository;
     private final ExamPrepRepository examPrepRepository;
     private final PdfChunkRepository pdfChunkRepository;
-    private final UserRepository userRepository;
     private final GeminiService geminiService;
     private final QuizAttemptService quizAttemptService;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     /**

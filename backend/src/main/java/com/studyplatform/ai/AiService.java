@@ -32,7 +32,6 @@ import org.springframework.transaction.annotation.Transactional;
 @RequiredArgsConstructor
 public class AiService {
 
-    private final UserRepository userRepository;
     private final SubjectRepository subjectRepository;
     private final FlashcardRepository flashcardRepository;
     private final FlashcardMapper flashcardMapper;
@@ -42,11 +41,10 @@ public class AiService {
     private final com.studyplatform.file.PdfChunkRepository pdfChunkRepository;
     private final AiGeneratedContentRepository aiGeneratedContentRepository;
     private final TtsService ttsService;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     @org.springframework.cache.annotation.Cacheable(

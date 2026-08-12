@@ -20,12 +20,10 @@ public class PomodoroSessionService {
 
     private final PomodoroSessionRepository pomodoroSessionRepository;
     private final ExamPrepRepository examPrepRepository;
-    private final UserRepository userRepository;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     @Transactional

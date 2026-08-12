@@ -1,7 +1,7 @@
 import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
-import type { Flashcard, Subject } from '../types';
+import type { Flashcard, Subject, SpringPage } from '../types';
 import { Brain, Layers, HelpCircle, Trash2, Edit3, Plus, Check, RotateCcw, ArrowRight, X, Sparkles } from 'lucide-react';
 
 export default function Flashcards() {

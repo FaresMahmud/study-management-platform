@@ -1,3 +1,4 @@
+import React, { useState, useEffect } from 'react';
 import { Link, useLocation } from 'react-router-dom';
 import { useAuthStore } from '../store/authStore';
 import { useQuery } from '@tanstack/react-query';
@@ -17,12 +18,20 @@ import {
   Brain,
   HelpCircle,
   Compass,
-  Headphones
+  Headphones,
+  Menu,
+  X
 } from 'lucide-react';
 
 export default function Navbar() {
   const { userName, logout, isAuthenticated } = useAuthStore();
   const location = useLocation();
+  const [isMenuOpen, setIsMenuOpen] = useState(false);
+
+  // Fecha o menu mobile quando a rota muda
+  useEffect(() => {
+    setIsMenuOpen(false);
+  }, [location.pathname]);
 
   // Busca as sessões de estudo para calcular o Streak diário
   const { data: sessions = [] } = useQuery<StudySession[]>({
@@ -48,7 +57,16 @@ export default function Navbar() {
           <span>StudyFlow</span>
         </Link>
 
-        <div className="navbar-menu">
+        {/* Botão Hambúrguer para Mobile/Tablet */}
+        <button 
+          className="navbar-toggle" 
+          onClick={() => setIsMenuOpen(!isMenuOpen)}
+          aria-label={isMenuOpen ? "Fechar Menu" : "Abrir Menu"}
+        >
+          {isMenuOpen ? <X size={24} /> : <Menu size={24} />}
+        </button>
+
+        <div className={`navbar-menu ${isMenuOpen ? 'mobile-open' : ''}`}>
           <Link to="/" className={`navbar-link ${isActive('/')}`}>
             <LayoutDashboard size={18} />
             <span>Dashboard</span>
@@ -87,14 +105,44 @@ export default function Navbar() {
           </Link>
           <Link to="/goals" className={`navbar-link ${isActive('/goals')}`}>
             <Target size={18} />
-            <span>Metas de Maestria</span>
+            <span>Metas</span>
           </Link>
-          <Link to="/subjects" className={`navbar-link ${isActive('/subjects')}`}>
-            <BookOpen size={18} />
-            <span>Matérias</span>
-          </Link>
+
+          {/* Perfil e Streak duplicados no Mobile Menu (Exibido apenas em mobile em CSS) */}
+          <div className="navbar-menu-user">
+            {streak > 0 && (
+              <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
+                <Flame size={18} className="flame-icon animate-pulse" />
+                <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
+              </div>
+            )}
+            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+              <User size={18} />
+              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{(!userName || userName === 'undefined') ? 'Estudante' : userName}</span>
+            </div>
+            <button 
+              onClick={() => {
+                window.dispatchEvent(new CustomEvent('open-onboarding'));
+                setIsMenuOpen(false);
+              }}
+              className="btn btn-secondary btn-sm"
+              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', justifyContent: 'center' }}
+            >
+              <HelpCircle size={18} />
+              <span>Ver Tutorial</span>
+            </button>
+            <button 
+              onClick={logout} 
+              className="btn btn-secondary btn-sm"
+              style={{ padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', justifyContent: 'center' }}
+            >
+              <LogOut size={14} />
+              <span>Sair</span>
+            </button>
+          </div>
         </div>
 
+        {/* Perfil e Ações do Usuário (Oculto em Mobile por CSS) */}
         <div className="navbar-user">
           {streak > 0 && (
             <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
@@ -126,7 +174,7 @@ export default function Navbar() {
 
           <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
             <User size={18} />
-            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{userName}</span>
+            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{(!userName || userName === 'undefined') ? 'Estudante' : userName}</span>
           </div>
           <button 
             onClick={logout} 

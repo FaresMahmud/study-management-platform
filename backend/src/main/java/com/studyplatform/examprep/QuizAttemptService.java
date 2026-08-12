@@ -25,14 +25,12 @@ public class QuizAttemptService {
     private final QuizAttemptRepository quizAttemptRepository;
     private final ExamSimulationRepository examSimulationRepository;
     private final ExamPrepRepository examPrepRepository;
-    private final UserRepository userRepository;
     private final GoalRepository goalRepository;
     private final ApplicationEventPublisher eventPublisher;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext().getAuthentication().getName();
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     @org.springframework.cache.annotation.CacheEvict(value = "leaderboard", key = "#examPrepId")

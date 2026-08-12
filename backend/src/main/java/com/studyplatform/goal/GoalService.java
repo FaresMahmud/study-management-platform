@@ -28,20 +28,15 @@ public class GoalService {
 
     private final GoalRepository goalRepository;
     private final SubjectRepository subjectRepository;
-    private final UserRepository userRepository;
     private final GoalMapper goalMapper;
     private final StudySessionRepository studySessionRepository;
     private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
     private final com.studyplatform.examprep.QuizAttemptRepository quizAttemptRepository;
     private final com.studyplatform.examprep.ExamSimulationRepository examSimulationRepository;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
     // Retorna null se subjectId for null (meta geral), ou valida o ownership se informado.

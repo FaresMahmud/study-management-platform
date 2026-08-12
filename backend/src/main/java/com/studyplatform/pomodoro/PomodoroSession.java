@@ -1,5 +1,6 @@
 package com.studyplatform.pomodoro;
 
+import com.fasterxml.jackson.annotation.JsonIgnore;
 import com.studyplatform.examprep.ExamPrep;
 import com.studyplatform.user.User;
 import jakarta.persistence.*;
@@ -25,11 +26,13 @@ public class PomodoroSession {
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "exam_prep_id", nullable = false)
     @ToString.Exclude
+    @JsonIgnore
     private ExamPrep examPrep;
 
     @ManyToOne(fetch = FetchType.LAZY)
     @JoinColumn(name = "user_id", nullable = false)
     @ToString.Exclude
+    @JsonIgnore
     private User user;
 
     @Column(name = "started_at", nullable = false)

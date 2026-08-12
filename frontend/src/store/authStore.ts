@@ -18,10 +18,13 @@ export const useAuthStore = create<AuthState>((set) => {
   const savedEmail = localStorage.getItem('study_email');
   const savedPremium = localStorage.getItem('study_premium') === 'true';
 
+  const userName = savedName === 'undefined' ? null : savedName;
+  const userEmail = savedEmail === 'undefined' ? null : savedEmail;
+
   return {
     token: savedToken,
-    userName: savedName,
-    userEmail: savedEmail,
+    userName: userName,
+    userEmail: userEmail,
     premium: savedPremium,
     isAuthenticated: !!savedToken,
     login: (token, userName, userEmail, premium) => {

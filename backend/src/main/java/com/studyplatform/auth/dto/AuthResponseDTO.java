@@ -42,4 +42,14 @@ public class AuthResponseDTO {
     private String nameUser;
     private String email;
     private Boolean premium;
+
+    @com.fasterxml.jackson.annotation.JsonProperty("userName")
+    public String getUserName() {
+        return nameUser;
+    }
+
+    @com.fasterxml.jackson.annotation.JsonProperty("userEmail")
+    public String getUserEmail() {
+        return email;
+    }
 }

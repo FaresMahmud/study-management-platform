@@ -55,6 +55,18 @@ export default function Dashboard() {
     },
   });
 
+  const { data: flashcards = [] } = useQuery<any[]>({
+    queryKey: ['flashcards'],
+    queryFn: async () => {
+      try {
+        const res = await apiClient.get<any>('/api/flashcards?size=1000');
+        return Array.isArray(res.data) ? res.data : (res.data.content || []);
+      } catch (err) {
+        return [];
+      }
+    }
+  });
+
   // ─── Wizard & Sharing States ───
   const [wizardOpen, setWizardOpen] = useState(false);
   const [wizardStep, setWizardStep] = useState(1);
@@ -75,7 +87,7 @@ export default function Dashboard() {
       return (await apiClient.post<ExamPrep>('/api/v1/exam-preps', newExam)).data;
     },
     onSuccess: async (data) => {
-      // Associa matérias selecionadas ao novo ExamPrep
+      // Associa matérias selecionadas ao novo ExamPrep e cria suas metas de maestria correspondentes
       for (const subjId of selectedSubjects) {
         const subj = subjects.find(s => s.id === subjId);
         if (subj) {
@@ -84,6 +96,16 @@ export default function Dashboard() {
             subjectDescription: subj.subjectDescription,
             color: subj.color,
             examPrepId: data.id
+          });
+
+          // Cria meta de maestria inicial para esta matéria vinculada ao exame
+          await apiClient.post('/api/goals', {
+            title: `Maestria em ${subj.subjectName}`,
+            targetMastery: data.targetScore || 80,
+            currentMastery: 0,
+            startDateGoal: new Date().toISOString().split('T')[0],
+            endDateGoal: data.examDate,
+            subjectId: subjId
           });
         }
       }
@@ -250,7 +272,7 @@ export default function Dashboard() {
   if (examPreps.length === 0 || wizardOpen) {
     return (
       <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '20px', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)', padding: '24px' }}>
-        <div className="card" style={{ maxWidth: '560px', width: '100%', padding: '34px', position: 'relative', border: '1px solid var(--border-color)' }}>
+        <div className="card wizard-card" style={{ position: 'relative' }}>
           
           {examPreps.length > 0 && (
             <button className="modal-close" onClick={() => setWizardOpen(false)} style={{ position: 'absolute', top: '16px', right: '16px', background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}>
@@ -337,7 +359,7 @@ export default function Dashboard() {
           )}
 
           {/* Wizard Footer Navigation */}
-          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '34px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+          <div style={{ display: 'flex', justifyContent: 'space-between', marginTop: '34px', borderTop: '1px solid var(--border-color)', paddingTop: '16px', gap: '12px', flexWrap: 'wrap' }}>
             {wizardStep > 1 ? (
               <button className="btn btn-secondary" onClick={() => setWizardStep(prev => prev - 1)} style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
                 <ChevronLeft size={16} />
@@ -379,6 +401,28 @@ export default function Dashboard() {
   return (
     <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '20px' }}>
       
+      {/* ─── CABEÇALHO DO DASHBOARD: TÍTULO E AÇÕES RÁPIDAS DE CRIAÇÃO ─── */}
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '16px', marginBottom: '8px' }}>
+        <div>
+          <h1 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>
+            Painel de Estudos
+          </h1>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', margin: '2px 0 0 0' }}>
+            Gerencie sua preparação ativa e acompanhe seu progresso de maestria.
+          </p>
+        </div>
+        <div style={{ display: 'flex', gap: '12px' }}>
+          <Link to="/subjects" className="btn btn-secondary" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', padding: '8px 14px', borderRadius: 'var(--radius-md)' }}>
+            <Plus size={14} />
+            <span>Nova Matéria</span>
+          </Link>
+          <Link to="/goals" className="btn btn-primary" style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', padding: '8px 14px', borderRadius: 'var(--radius-md)' }}>
+            <Target size={14} />
+            <span>Definir Meta</span>
+          </Link>
+        </div>
+      </div>
+      
       {/* ─── TELA 1: HERO SECTION - POMODORO + EXAME ATIVO ─── */}
       <div className="card" style={{ 
         background: 'linear-gradient(135deg, hsla(258, 90%, 66%, 0.12), hsla(162, 72%, 45%, 0.06))',
@@ -387,10 +431,10 @@ export default function Dashboard() {
         borderRadius: 'var(--radius-lg)',
         boxShadow: 'var(--shadow-lg)'
       }}>
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(280px, 1fr))', gap: '34px', alignItems: 'center' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(min(280px, 100%), 1fr))', gap: '34px', alignItems: 'center' }}>
           
           {/* COLUNA ESQUERDA: TIMER POMODORO */}
-          <div style={{ borderRight: window.innerWidth > 768 ? '1px solid var(--border-color)' : 'none', paddingRight: window.innerWidth > 768 ? '24px' : 0 }}>
+          <div className="timer-hero-col">
             <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', fontWeight: 800 }}>Sessão de Foco Ativa</span>
             <div style={{ fontSize: '56px', fontWeight: 900, fontFamily: 'monospace', letterSpacing: '-0.04em', color: 'var(--text-primary)', margin: '4px 0', fontVariantNumeric: 'tabular-nums' }}>
               {formatTimer(time)}
@@ -500,7 +544,7 @@ export default function Dashboard() {
       </div>
 
       {/* ─── TELA 1.2: STATS ROW - 5 CARDS HORIZONTAIS COM CONTEXTO ─── */}
-      <div className="stats-grid" style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(180px, 1fr))', gap: '16px' }}>
+      <div className="stats-grid">
         <div className="stat-card" style={{ padding: '16px' }}>
           <div className="stat-icon" style={{ backgroundColor: 'var(--primary-glow)', color: 'var(--primary)' }}>
             <Clock size={20} />
@@ -558,7 +602,7 @@ export default function Dashboard() {
       </div>
 
       {/* ─── TELA 1.3: GRÁFICO E AGENDA (2 COLUNAS) ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px' }}>
+      <div className="dashboard-double-grid">
         <WeeklyFocusCard sessions={sessions} />
         
         <div className="card" style={{ padding: '21px' }}>
@@ -570,7 +614,7 @@ export default function Dashboard() {
             <div style={{ display: 'flex', alignItems: 'center', justifyContent: 'space-between', padding: '13px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', borderLeft: '4px solid var(--primary)' }}>
               <div>
                 <h4 style={{ fontSize: '13px', fontWeight: 700 }}>Revisão de Flashcards</h4>
-                <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>8 cartões pendentes de memorização</p>
+                <p style={{ fontSize: '11px', color: 'var(--text-muted)' }}>{flashcards.length} {flashcards.length === 1 ? 'cartão cadastrado' : 'cartões cadastrados'} para memorização</p>
               </div>
               <Link to="/flashcards" className="btn btn-secondary btn-sm" style={{ padding: '4px 10px', fontSize: '12px' }}>Iniciar</Link>
             </div>
@@ -595,11 +639,11 @@ export default function Dashboard() {
       </div>
 
       {/* ─── TELA 1.4: AÇÕES RÁPIDAS - 4 CARDS COLORIDOS ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+      <div className="quick-actions-grid">
         <Link to="/flashcards" className="card" style={{ padding: '21px', borderLeft: '4px solid var(--primary)', transition: 'transform 0.2s', cursor: 'pointer' }}>
           <h4 style={{ fontSize: '16px', fontWeight: 700, color: 'var(--text-primary)' }}>Estudar Flashcards</h4>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '4px' }}>Revisão ativa com Leitner System</p>
-          <span style={{ display: 'inline-block', marginTop: '13px', fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>12 pendentes hoje →</span>
+          <span style={{ display: 'inline-block', marginTop: '13px', fontSize: '11px', color: 'var(--primary)', fontWeight: 600 }}>{flashcards.length} {flashcards.length === 1 ? 'card disponível' : 'cards disponíveis'} →</span>
         </Link>
 
         <Link to="/quiz" className="card" style={{ padding: '21px', borderLeft: '4px solid var(--success)', transition: 'transform 0.2s', cursor: 'pointer' }}>
@@ -622,30 +666,70 @@ export default function Dashboard() {
       </div>
 
       {/* ─── SEÇÃO DE METAS DE MAESTRIA ATIVAS E CONQUISTAS ─── */}
-      <div style={{ display: 'grid', gridTemplateColumns: '2fr 1fr', gap: '20px' }}>
+      <div className="dashboard-grid">
         <ActiveGoalsCard goals={goals} />
         <RecentSessionsCard sessions={sessions} />
       </div>
 
-      {/* ─── BANNER DE CONQUISTAS DESBLOQUEADAS (RODAPÉ) ─── */}
-      <div className="card" style={{ 
-        background: 'linear-gradient(135deg, hsla(38, 92%, 50%, 0.12), hsla(258, 90%, 66%, 0.08))',
-        border: '1px solid hsla(38, 92%, 50%, 0.25)',
-        padding: '16px 24px',
-        borderRadius: 'var(--radius-md)',
-        display: 'flex',
-        alignItems: 'center',
-        gap: '16px',
-        animation: 'slideUp 0.4s ease-out'
-      }}>
-        <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--warning-glow)', color: 'var(--warning)' }}>
-          <Sparkles size={24} />
+      {/* ─── BANNER DE CONQUISTAS OU DICAS DINÂMICAS (RODAPÉ) ─── */}
+      {completedGoals > 0 ? (
+        <div className="card" style={{ 
+          background: 'linear-gradient(135deg, hsla(38, 92%, 50%, 0.12), hsla(258, 90%, 66%, 0.08))',
+          border: '1px solid hsla(38, 92%, 50%, 0.25)',
+          padding: '16px 24px',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          animation: 'slideUp 0.4s ease-out'
+        }}>
+          <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--warning-glow)', color: 'var(--warning)' }}>
+            <Sparkles size={24} />
+          </div>
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Conquista Desbloqueada: Meta Alcançada! 🏆</h4>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Parabéns! Você bateu a sua primeira meta de maestria do edital.</p>
+          </div>
         </div>
-        <div>
-          <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Conquista Desbloqueada: Foco Absoluto!</h4>
-          <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Você completou 3 sessões consecutivas de Pomodoro sem interrupções hoje.</p>
+      ) : sessions.length > 0 ? (
+        <div className="card" style={{ 
+          background: 'linear-gradient(135deg, hsla(258, 90%, 66%, 0.12), hsla(162, 72%, 45%, 0.08))',
+          border: '1px solid hsla(258, 90%, 66%, 0.25)',
+          padding: '16px 24px',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          animation: 'slideUp 0.4s ease-out'
+        }}>
+          <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)' }}>
+            <Clock size={24} />
+          </div>
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Conquista Desbloqueada: Primeiro Passo! 🚀</h4>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Parabéns por iniciar sua jornada de foco e registrar sua primeira sessão de estudos.</p>
+          </div>
         </div>
-      </div>
+      ) : (
+        <div className="card" style={{ 
+          background: 'var(--bg-secondary)',
+          border: '1px solid var(--border-color)',
+          padding: '16px 24px',
+          borderRadius: 'var(--radius-md)',
+          display: 'flex',
+          alignItems: 'center',
+          gap: '16px',
+          animation: 'slideUp 0.4s ease-out'
+        }}>
+          <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)' }}>
+            <Award size={24} />
+          </div>
+          <div>
+            <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Primeiros Passos</h4>
+            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Crie uma nova matéria, defina sua meta de domínio e inicie uma sessão de foco para começar a registrar suas conquistas!</p>
+          </div>
+        </div>
+      )}
       
       {/* ─── MODAL DE COMPARTILHAMENTO DE EXAME ─── */}
       {shareModalOpen && (
@@ -677,7 +761,7 @@ export default function Dashboard() {
       )}
 
       {/* ─── CHAT FLUTUANTE DO TUTOR INTELIGENTE ─── */}
-      <div style={{ position: 'fixed', bottom: '34px', right: '34px', zIndex: 999 }}>
+      <div className="chat-tutor-container">
         {!chatOpen ? (
           <button 
             onClick={() => setChatOpen(true)}
@@ -703,7 +787,7 @@ export default function Dashboard() {
             <span>Perguntar ao Tutor</span>
           </button>
         ) : (
-          <div className="card animate-fadeIn" style={{ width: '380px', height: '480px', display: 'flex', flexDirection: 'column', padding: 0, boxShadow: 'var(--shadow-lg)', border: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', overflow: 'hidden' }}>
+          <div className="card animate-fadeIn chat-tutor-card">
             {/* Header */}
             <div style={{ padding: '16px', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center', backgroundColor: 'var(--bg-tertiary)' }}>
               <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>

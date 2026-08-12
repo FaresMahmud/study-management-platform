@@ -25,17 +25,12 @@ import org.springframework.transaction.annotation.Transactional;
 public class SubjectService {
 
     private final SubjectRepository subjectRepository;
-    private final UserRepository userRepository;
     private final SubjectMapper subjectMapper;
     private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
+    private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
-        String email = SecurityContextHolder.getContext()
-                .getAuthentication()
-                .getName();
-
-        return userRepository.findByEmail(email)
-                .orElseThrow(() -> new ResourceNotFoundException("Usuário autenticado não encontrado"));
+        return securityService.getAuthenticatedUser();
     }
 
 
