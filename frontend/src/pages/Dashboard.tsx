@@ -229,6 +229,16 @@ export default function Dashboard() {
                 <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} disabled={chatLoading} />
                 <span>📷</span>
               </label>
+              {selectedImage && (
+                <button
+                  type="button"
+                  onClick={() => { setSelectedImage(null); setSelectedImageBase64(null); setSelectedImageMimeType(null); }}
+                  style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontSize: '14px', padding: '0 4px', display: 'flex', alignItems: 'center' }}
+                  title="Remover Imagem Anexada"
+                >
+                  ✕
+                </button>
+              )}
               <input
                 type="text"
                 placeholder={selectedImage ? `📷 ${selectedImage.name}` : "Pergunte algo sobre seus estudos..."}
