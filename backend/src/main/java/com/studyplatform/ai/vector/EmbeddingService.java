@@ -6,7 +6,7 @@ import java.util.Random;
 
 import org.springframework.stereotype.Service;
 
-import com.studyplatform.ai.GeminiService;
+
 
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -20,10 +20,10 @@ import lombok.extern.slf4j.Slf4j;
 @RequiredArgsConstructor
 public class EmbeddingService {
 
-    private final GeminiService geminiService;
+    private final EmbeddingGenerator embeddingGenerator;
 
     public boolean isConfigured() {
-        return geminiService.isConfigured();
+        return embeddingGenerator.isConfigured();
     }
 
     public List<Double> getEmbedding(String text) {
@@ -33,7 +33,7 @@ public class EmbeddingService {
         }
 
         try {
-            return geminiService.getEmbedding(text);
+            return embeddingGenerator.getEmbedding(text);
         } catch (Exception e) {
             log.error("Falha ao obter embedding do Gemini. Fazendo fallback para mock local.", e);
             return generateMockEmbedding(text);
