@@ -18,6 +18,13 @@ export default function Dashboard() {
   const [timerInterval, setTimerInterval] = useState<any | null>(null);
   const [selectedSubject, setSelectedSubject] = useState<number | ''>('');
 
+  const [showGoalBanner, setShowGoalBanner] = useState(() => {
+    return localStorage.getItem('studyflow_achievement_goal_dismissed') !== 'true';
+  });
+  const [showSessionBanner, setShowSessionBanner] = useState(() => {
+    return localStorage.getItem('studyflow_achievement_session_dismissed') !== 'true';
+  });
+
   // ─── Queries ───
   const { data: sessions = [] } = useQuery<StudySession[]>({
     queryKey: ['sessions'],
@@ -690,7 +697,7 @@ export default function Dashboard() {
       </div>
 
       {/* ─── BANNER DE CONQUIPSTAS OU DICAS DINÂMICAS (RODAPÉ) ─── */}
-      {completedGoals > 0 ? (
+      {completedGoals > 0 && showGoalBanner ? (
         <div className="card" style={{ 
           background: 'linear-gradient(135deg, hsla(38, 92%, 50%, 0.12), hsla(258, 90%, 66%, 0.08))',
           border: '1px solid hsla(38, 92%, 50%, 0.25)',
@@ -698,18 +705,42 @@ export default function Dashboard() {
           borderRadius: 'var(--radius-md)',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: '16px',
           animation: 'slideUp 0.4s ease-out'
         }}>
-          <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--warning-glow)', color: 'var(--warning)' }}>
-            <Sparkles size={24} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--warning-glow)', color: 'var(--warning)' }}>
+              <Sparkles size={24} />
+            </div>
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Conquista Desbloqueada: Meta Alcançada! 🏆</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Parabéns! Você bateu a sua primeira meta de maestria do edital.</p>
+            </div>
           </div>
-          <div>
-            <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Conquista Desbloqueada: Meta Alcançada! 🏆</h4>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Parabéns! Você bateu a sua primeira meta de maestria do edital.</p>
-          </div>
+          <button 
+            onClick={() => {
+              setShowGoalBanner(false);
+              localStorage.setItem('studyflow_achievement_goal_dismissed', 'true');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              padding: '4px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+            aria-label="Fechar"
+          >
+            <X size={18} />
+          </button>
         </div>
-      ) : sessions.length > 0 ? (
+      ) : sessions.length > 0 && showSessionBanner ? (
         <div className="card" style={{ 
           background: 'linear-gradient(135deg, hsla(258, 90%, 66%, 0.12), hsla(162, 72%, 45%, 0.08))',
           border: '1px solid hsla(258, 90%, 66%, 0.25)',
@@ -717,16 +748,40 @@ export default function Dashboard() {
           borderRadius: 'var(--radius-md)',
           display: 'flex',
           alignItems: 'center',
+          justifyContent: 'space-between',
           gap: '16px',
           animation: 'slideUp 0.4s ease-out'
         }}>
-          <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)' }}>
-            <Clock size={24} />
+          <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
+            <div style={{ display: 'flex', padding: '8px', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)' }}>
+              <Clock size={24} />
+            </div>
+            <div>
+              <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Conquista Desbloqueada: Primeiro Passo! 🚀</h4>
+              <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Parabéns por iniciar sua jornada de foco e registrar sua primeira sessão de estudos.</p>
+            </div>
           </div>
-          <div>
-            <h4 style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-primary)' }}>Conquista Desbloqueada: Primeiro Passo! 🚀</h4>
-            <p style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>Parabéns por iniciar sua jornada de foco e registrar sua primeira sessão de estudos.</p>
-          </div>
+          <button 
+            onClick={() => {
+              setShowSessionBanner(false);
+              localStorage.setItem('studyflow_achievement_session_dismissed', 'true');
+            }}
+            style={{
+              background: 'none',
+              border: 'none',
+              color: 'var(--text-secondary)',
+              cursor: 'pointer',
+              display: 'flex',
+              padding: '4px',
+              borderRadius: '4px',
+              transition: 'all 0.2s'
+            }}
+            onMouseOver={(e) => { e.currentTarget.style.color = 'var(--text-primary)'; e.currentTarget.style.backgroundColor = 'var(--bg-secondary)'; }}
+            onMouseOut={(e) => { e.currentTarget.style.color = 'var(--text-secondary)'; e.currentTarget.style.backgroundColor = 'transparent'; }}
+            aria-label="Fechar"
+          >
+            <X size={18} />
+          </button>
         </div>
       ) : (
         <div className="card" style={{ 

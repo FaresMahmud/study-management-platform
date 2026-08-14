@@ -160,7 +160,7 @@ export default function Analytics() {
   const isLoading = loadingSessions || loadingSubjects || loadingFlashcards;
 
   // Auto-detect se precisa forçar mock
-  const temDadosReais = flashcards && flashcards.length > 0;
+  const temDadosReais = (flashcards && flashcards.length > 0) || (sessions && sessions.length > 0);
   const exibirMock = useMock || !temDadosReais;
 
   // Se carregar e não tiver dados, inicia mostrando o mock para não ficar em branco

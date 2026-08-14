@@ -108,84 +108,121 @@ export default function Navbar() {
             <span>Metas</span>
           </Link>
 
-          {/* Perfil e Streak duplicados no Mobile Menu (Exibido apenas em mobile em CSS) */}
-          <div className="navbar-menu-user">
-            {streak > 0 && (
-              <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
-                <Flame size={18} className="flame-icon animate-pulse" />
-                <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
-              </div>
-            )}
-            <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-              <User size={18} />
-              <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{(!userName || userName === 'undefined') ? 'Estudante' : userName}</span>
-            </div>
-            <button 
-              onClick={() => {
-                window.dispatchEvent(new CustomEvent('open-onboarding'));
-                setIsMenuOpen(false);
-              }}
-              className="btn btn-secondary btn-sm"
-              style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', justifyContent: 'center' }}
-            >
-              <HelpCircle size={18} />
-              <span>Ver Tutorial</span>
-            </button>
-            <button 
-              onClick={logout} 
-              className="btn btn-secondary btn-sm"
-              style={{ padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', justifyContent: 'center' }}
-            >
-              <LogOut size={14} />
-              <span>Sair</span>
-            </button>
-          </div>
+          {/* Perfil e Streak no Mobile Menu (Exibido apenas em mobile em CSS) */}
+          <UserProfile 
+            userName={userName}
+            logout={logout}
+            streak={streak}
+            isMobile={true}
+            onCloseMobileMenu={() => setIsMenuOpen(false)}
+          />
         </div>
 
         {/* Perfil e Ações do Usuário (Oculto em Mobile por CSS) */}
-        <div className="navbar-user">
-          {streak > 0 && (
-            <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
-              <Flame size={18} className="flame-icon animate-pulse" />
-              <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
-            </div>
-          )}
-
-          <button
-            onClick={() => window.dispatchEvent(new CustomEvent('open-onboarding'))}
-            style={{
-              display: 'inline-flex',
-              alignItems: 'center',
-              justifyContent: 'center',
-              padding: '6px',
-              border: 'none',
-              background: 'transparent',
-              cursor: 'pointer',
-              color: 'var(--text-secondary)',
-              borderRadius: '50%',
-              transition: 'background-color 0.2s'
-            }}
-            onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
-            onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
-            title="Ver Tutorial de Onboarding"
-          >
-            <HelpCircle size={18} />
-          </button>
-
-          <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
-            <User size={18} />
-            <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{(!userName || userName === 'undefined') ? 'Estudante' : userName}</span>
-          </div>
-          <button
-            onClick={logout}
-            className="btn btn-secondary btn-sm"
-            style={{ padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
-          >
-            <LogOut size={14} />
-            <span>Sair</span>
-          </button>
-        </div>
+        <UserProfile 
+          userName={userName}
+          logout={logout}
+          streak={streak}
+          isMobile={false}
+        />
       </div>
     </nav>
+  );
+}
+
+interface UserProfileProps {
+  userName: string | null | undefined;
+  logout: () => void;
+  streak: number;
+  isMobile: boolean;
+  onCloseMobileMenu?: () => void;
+}
+
+function UserProfile({ userName, logout, streak, isMobile, onCloseMobileMenu }: UserProfileProps) {
+  const openTutorial = () => {
+    window.dispatchEvent(new CustomEvent('open-onboarding'));
+    if (onCloseMobileMenu) {
+      onCloseMobileMenu();
+    }
+  };
+
+  const nameDisplay = (!userName || userName === 'undefined') ? 'Estudante' : userName;
+
+  if (isMobile) {
+    return (
+      <div className="navbar-menu-user">
+        {streak > 0 && (
+          <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
+            <Flame size={18} className="flame-icon animate-pulse" />
+            <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
+          </div>
+        )}
+        <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+          <User size={18} />
+          <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{nameDisplay}</span>
+        </div>
+        <button 
+          onClick={openTutorial}
+          className="btn btn-secondary btn-sm"
+          style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', justifyContent: 'center' }}
+        >
+          <HelpCircle size={18} />
+          <span>Ver Tutorial</span>
+        </button>
+        <button 
+          onClick={logout} 
+          className="btn btn-secondary btn-sm"
+          style={{ padding: '0.6rem 1rem', display: 'flex', alignItems: 'center', gap: '0.35rem', width: '100%', justifyContent: 'center' }}
+        >
+          <LogOut size={14} />
+          <span>Sair</span>
+        </button>
+      </div>
+    );
+  }
+
+  return (
+    <div className="navbar-user">
+      {streak > 0 && (
+        <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
+          <Flame size={18} className="flame-icon animate-pulse" />
+          <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
+        </div>
+      )}
+
+      <button
+        onClick={openTutorial}
+        style={{
+          display: 'inline-flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          padding: '6px',
+          border: 'none',
+          background: 'transparent',
+          cursor: 'pointer',
+          color: 'var(--text-secondary)',
+          borderRadius: '50%',
+          transition: 'background-color 0.2s'
+        }}
+        onMouseOver={(e) => e.currentTarget.style.backgroundColor = 'var(--bg-tertiary)'}
+        onMouseOut={(e) => e.currentTarget.style.backgroundColor = 'transparent'}
+        title="Ver Tutorial de Onboarding"
+      >
+        <HelpCircle size={18} />
+      </button>
+
+      <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
+        <User size={18} />
+        <span style={{ fontSize: '0.875rem', fontWeight: 500 }}>{nameDisplay}</span>
+      </div>
+      <button
+        onClick={logout}
+        className="btn btn-secondary btn-sm"
+        style={{ padding: '0.4rem 0.75rem', display: 'flex', alignItems: 'center', gap: '0.35rem' }}
+      >
+        <LogOut size={14} />
+        <span>Sair</span>
+      </button>
+    </div>
   );
 }
