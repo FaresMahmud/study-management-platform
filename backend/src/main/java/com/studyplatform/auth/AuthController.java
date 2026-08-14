@@ -3,7 +3,6 @@ import com.studyplatform.auth.AuthService;
 import com.studyplatform.auth.dto.AuthResponseDTO;
 import com.studyplatform.auth.dto.LoginRequestDTO;
 import com.studyplatform.auth.dto.RegisterRequestDTO;
-import com.studyplatform.shared.config.OpenApiConfig;
 import com.studyplatform.shared.exception.ErrorResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.media.Content;

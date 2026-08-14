@@ -1,6 +1,4 @@
 package com.studyplatform.session.dto;
-import com.studyplatform.session.StudySession;
-import com.studyplatform.subject.Subject;
 import com.studyplatform.subject.dto.SubjectResponseDTO;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;

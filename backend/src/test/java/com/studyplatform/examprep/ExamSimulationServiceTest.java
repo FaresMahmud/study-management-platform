@@ -1,8 +1,9 @@
 package com.studyplatform.examprep;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.studyplatform.ai.GeminiService;
-import com.studyplatform.file.PdfChunkRepository;
+
+import com.studyplatform.examprep.QuestionGenerator;
+import com.studyplatform.examprep.StudyContextService;
 import com.studyplatform.shared.exception.BusinessException;
 import com.studyplatform.user.User;
 import com.studyplatform.user.UserRepository;
@@ -36,13 +37,15 @@ public class ExamSimulationServiceTest {
     private ExamPrepRepository examPrepRepository;
 
     @Mock
-    private PdfChunkRepository pdfChunkRepository;
+    private StudyContextService studyContextService;
 
     @Mock
     private UserRepository userRepository;
 
     @Mock
-    private GeminiService geminiService;
+    private QuestionGenerator questionGenerator;
+
+
 
     @Mock
     private QuizAttemptService quizAttemptService;
@@ -80,7 +83,7 @@ public class ExamSimulationServiceTest {
     void testStartSimulationOfflineFallback() {
         when(securityService.getAuthenticatedUser()).thenReturn(user);
         when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
-        when(pdfChunkRepository.findByExamPrepId(eq(1L))).thenReturn(Collections.emptyList());
+        when(studyContextService.getContextTextForExamPrep(eq(1L))).thenReturn("");
 
         when(examSimulationRepository.save(any(ExamSimulation.class))).thenAnswer(invocation -> invocation.getArgument(0));
 

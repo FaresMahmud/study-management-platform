@@ -5,6 +5,7 @@ import com.studyplatform.goal.GoalRepository;
 import com.studyplatform.goal.dto.GoalRequestDTO;
 import com.studyplatform.goal.dto.GoalResponseDTO;
 import com.studyplatform.session.StudySessionRepository;
+import com.studyplatform.session.StudySessionChangedEvent;
 import com.studyplatform.shared.exception.BusinessException;
 import com.studyplatform.shared.exception.ResourceNotFoundException;
 import com.studyplatform.subject.Subject;
@@ -21,6 +22,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.event.EventListener;
 
 @Service
 @RequiredArgsConstructor
@@ -201,5 +203,28 @@ public class GoalService {
             goal.updateMastery(finalMastery);
             goalRepository.save(goal);
         }
+    }
+
+    /**
+     * Remove de forma síncrona todas as metas (Goals) vinculadas a uma matéria (Subject) deletada.
+     * Executa na mesma transação da deleção original.
+     */
+    @EventListener
+    @Transactional
+    public void handleSubjectDeleted(com.studyplatform.subject.SubjectDeletedEvent event) {
+        // Justificativa: Listener síncrono rodando na mesma transação. Se falhar, faz rollback da deleção principal.
+        List<Goal> goals = goalRepository.findBySubjectId(event.subjectId());
+        goalRepository.deleteAll(goals);
+    }
+
+    /**
+     * Recalcula o progresso de metas de estudo síncronamente quando uma sessão de estudo muda.
+     * Executa na mesma transação.
+     */
+    @EventListener
+    @Transactional
+    public void handleStudySessionChanged(StudySessionChangedEvent event) {
+        // Justificativa: Listener síncrono rodando na mesma transação.
+        recalcularMetasDoUsuarioNoPeriodo(event.userId(), event.sessionDate());
     }
 }

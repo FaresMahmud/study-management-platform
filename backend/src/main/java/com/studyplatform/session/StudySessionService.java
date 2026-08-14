@@ -1,5 +1,5 @@
 package com.studyplatform.session;
-import com.studyplatform.goal.GoalService;
+import org.springframework.context.ApplicationEventPublisher;
 import com.studyplatform.session.StudySession;
 import com.studyplatform.session.StudySessionMapper;
 import com.studyplatform.session.StudySessionRepository;
@@ -20,6 +20,7 @@ import org.springframework.data.domain.Sort;
 import org.springframework.security.core.context.SecurityContextHolder;
 import org.springframework.stereotype.Service;
 import org.springframework.transaction.annotation.Transactional;
+import org.springframework.context.event.EventListener;
 
 // O ownership é verificado sempre via Subject (session → subject → user),
 // pois StudySession não tem user_id diretamente.
@@ -30,7 +31,7 @@ public class StudySessionService {
     private final StudySessionRepository studySessionRepository;
     private final SubjectRepository subjectRepository;
     private final StudySessionMapper studySessionMapper;
-    private final GoalService goalService;
+    private final ApplicationEventPublisher eventPublisher;
     private final com.studyplatform.shared.security.SecurityService securityService;
 
     private User getAuthenticatedUser() {
@@ -81,8 +82,8 @@ public class StudySessionService {
         StudySession session = studySessionMapper.toEntity(request, subject);
         StudySession savedSession = studySessionRepository.save(session);
 
-        // Recalcula metas do usuário para o dia da sessão
-        goalService.recalcularMetasDoUsuarioNoPeriodo(user.getId(), savedSession.getSessionDate());
+        // Recalcula metas do usuário para o dia da sessão via evento
+        eventPublisher.publishEvent(new StudySessionChangedEvent(user.getId(), savedSession.getSessionDate()));
 
         return studySessionMapper.toResponseDTO(savedSession);
     }
@@ -108,11 +109,11 @@ public class StudySessionService {
         studySessionMapper.updateEntityFromDTO(session, request, subject);
         StudySession updatedSession = studySessionRepository.save(session);
 
-        // Recalcula metas para a data antiga (caso tenha mudado a data da sessão)
-        goalService.recalcularMetasDoUsuarioNoPeriodo(user.getId(), dataSessaoAntiga);
+        // Recalcula metas para a data antiga via evento
+        eventPublisher.publishEvent(new StudySessionChangedEvent(user.getId(), dataSessaoAntiga));
         // E para a nova data
         if (!dataSessaoAntiga.equals(updatedSession.getSessionDate())) {
-            goalService.recalcularMetasDoUsuarioNoPeriodo(user.getId(), updatedSession.getSessionDate());
+            eventPublisher.publishEvent(new StudySessionChangedEvent(user.getId(), updatedSession.getSessionDate()));
         }
 
         return studySessionMapper.toResponseDTO(updatedSession);
@@ -134,7 +135,19 @@ public class StudySessionService {
         java.time.LocalDate dataSessao = session.getSessionDate();
         studySessionRepository.delete(session);
 
-        // Recalcula metas
-        goalService.recalcularMetasDoUsuarioNoPeriodo(user.getId(), dataSessao);
+        // Recalcula metas via evento
+        eventPublisher.publishEvent(new StudySessionChangedEvent(user.getId(), dataSessao));
+    }
+
+    /**
+     * Remove de forma síncrona todas as sessões de estudo (StudySessions) vinculadas a uma matéria (Subject) deletada.
+     * Executa na mesma transação da deleção original.
+     */
+    @EventListener
+    @Transactional
+    public void handleSubjectDeleted(com.studyplatform.subject.SubjectDeletedEvent event) {
+        // Justificativa: Listener síncrono rodando na mesma transação. Se falhar, faz rollback da deleção principal.
+        List<StudySession> sessions = studySessionRepository.findBySubjectId(event.subjectId());
+        studySessionRepository.deleteAll(sessions);
     }
 }

@@ -1,5 +1,4 @@
 package com.studyplatform.session.dto;
-import com.studyplatform.session.StudySession;
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;

@@ -38,6 +38,7 @@ class SubjectServiceTest {
     @Mock private SecurityContext securityContext;
     @Mock private Authentication authentication;
     @Mock private com.studyplatform.shared.security.SecurityService securityService;
+    @Mock private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @InjectMocks
     private SubjectService subjectService;
@@ -193,7 +194,8 @@ class SubjectServiceTest {
         // ACT
         subjectService.delete(1L);
 
-        // ASSERT — verifica que delete foi chamado com o subject correto
+        // ASSERT — verifica que delete e publishEvent foram chamados com o subject correto
+        verify(eventPublisher).publishEvent(new com.studyplatform.subject.SubjectDeletedEvent(1L));
         verify(subjectRepository).delete(subject);
     }
 

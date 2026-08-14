@@ -1,5 +1,4 @@
 package com.studyplatform.subject.dto;
-import com.studyplatform.subject.Subject;
 import com.studyplatform.user.User;
 import lombok.AllArgsConstructor;
 import lombok.Builder;

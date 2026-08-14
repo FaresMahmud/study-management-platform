@@ -4,6 +4,7 @@ import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.studyplatform.file.PdfChunk;
 import com.studyplatform.file.PdfChunkRepository;
+import com.studyplatform.file.VectorIndexer;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.beans.factory.annotation.Value;
@@ -23,7 +24,7 @@ import java.util.*;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class VectorStoreService {
+public class VectorStoreService implements VectorIndexer {
 
     private final EmbeddingService embeddingService;
     private final PdfChunkRepository pdfChunkRepository;

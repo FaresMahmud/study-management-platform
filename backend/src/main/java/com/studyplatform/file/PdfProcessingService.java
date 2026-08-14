@@ -12,7 +12,7 @@ import java.util.ArrayList;
 import java.util.Arrays;
 import java.util.List;
 
-import com.studyplatform.ai.vector.VectorStoreService;
+
 
 @Slf4j
 @Service
@@ -20,7 +20,7 @@ import com.studyplatform.ai.vector.VectorStoreService;
 public class PdfProcessingService {
 
     private final PdfChunkRepository pdfChunkRepository;
-    private final VectorStoreService vectorStoreService;
+    private final VectorIndexer vectorIndexer;
 
     public String extractText(InputStream inputStream) throws Exception {
         Tika tika = new Tika();
@@ -77,7 +77,7 @@ public class PdfProcessingService {
             }
 
             List<PdfChunk> savedChunks = pdfChunkRepository.saveAll(chunksToSave);
-            vectorStoreService.storeChunks(savedChunks);
+            vectorIndexer.storeChunks(savedChunks);
             log.info("Sucesso no processamento de OCR e indexação vetorial. Salvo e indexado {} chunks para arquivo ID: {}", savedChunks.size(), file.getId());
         } catch (Exception ex) {
             log.error("Erro no processamento assíncrono de OCR para arquivo ID: {}", file.getId(), ex);

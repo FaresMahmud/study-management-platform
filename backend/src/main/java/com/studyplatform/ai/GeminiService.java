@@ -14,13 +14,14 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.studyplatform.shared.exception.BusinessException;
 
+import com.studyplatform.examprep.QuestionGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GeminiService {
+public class GeminiService implements QuestionGenerator {
 
     private final ObjectMapper objectMapper;
 

@@ -1,6 +1,4 @@
 package com.studyplatform.goal.dto;
-import com.studyplatform.goal.Goal;
-import com.studyplatform.subject.Subject;
 import com.studyplatform.subject.dto.SubjectResponseDTO;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;

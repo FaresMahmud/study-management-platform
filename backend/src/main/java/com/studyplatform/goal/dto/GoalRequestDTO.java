@@ -1,5 +1,5 @@
 package com.studyplatform.goal.dto;
-import com.studyplatform.goal.Goal;
+
 import jakarta.validation.constraints.*;
 import java.time.LocalDate;
 import lombok.AllArgsConstructor;

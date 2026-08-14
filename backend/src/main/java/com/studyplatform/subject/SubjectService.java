@@ -1,6 +1,7 @@
 package com.studyplatform.subject;
 import com.studyplatform.shared.exception.BusinessException;
 import com.studyplatform.shared.exception.ResourceNotFoundException;
+import org.springframework.context.ApplicationEventPublisher;
 import com.studyplatform.subject.Subject;
 import com.studyplatform.subject.SubjectMapper;
 import com.studyplatform.subject.SubjectRepository;
@@ -28,6 +29,7 @@ public class SubjectService {
     private final SubjectMapper subjectMapper;
     private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
     private final com.studyplatform.shared.security.SecurityService securityService;
+    private final ApplicationEventPublisher eventPublisher;
 
     private User getAuthenticatedUser() {
         return securityService.getAuthenticatedUser();
@@ -106,7 +108,9 @@ public class SubjectService {
                 .orElseThrow(() -> new ResourceNotFoundException(
                         "Matéria não encontrada com o id: " + id));
 
-        // CascadeType.ALL na entidade cuida de deletar sessions e goals junto
+        // Publica o evento para que outros pacotes limpem seus dados
+        eventPublisher.publishEvent(new SubjectDeletedEvent(id));
+
         subjectRepository.delete(subject);
     }
 }

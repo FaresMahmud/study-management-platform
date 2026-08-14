@@ -1,6 +1,4 @@
 package com.studyplatform.subject;
-import com.studyplatform.goal.Goal;
-import com.studyplatform.session.StudySession;
 import com.studyplatform.user.User;
 import jakarta.persistence.*;
 import java.time.LocalDateTime;
@@ -22,7 +20,7 @@ import org.springframework.data.jpa.domain.support.AuditingEntityListener;
 @Getter
 @Setter
 @EqualsAndHashCode(onlyExplicitlyIncluded = true)
-@ToString(exclude = {"user", "examPrep", "studySessions", "goals"})
+@ToString(exclude = {"user", "examPrep"})
 @Builder
 @NoArgsConstructor
 @AllArgsConstructor
@@ -65,11 +63,4 @@ public class Subject {
     @Column(name = "updated_at", nullable = true)
     private LocalDateTime updatedAt;
 
-    @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<StudySession> studySessions = new ArrayList<>();
-
-    @OneToMany(mappedBy = "subject", cascade = CascadeType.ALL, orphanRemoval = true)
-    @Builder.Default
-    private List<Goal> goals = new ArrayList<>();
 }

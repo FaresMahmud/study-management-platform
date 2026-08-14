@@ -2,9 +2,8 @@ package com.studyplatform.examprep;
 
 import com.fasterxml.jackson.core.type.TypeReference;
 import com.fasterxml.jackson.databind.ObjectMapper;
-import com.studyplatform.ai.GeminiService;
-import com.studyplatform.file.PdfChunk;
-import com.studyplatform.file.PdfChunkRepository;
+
+
 import com.studyplatform.shared.exception.BusinessException;
 import com.studyplatform.shared.exception.ResourceNotFoundException;
 import com.studyplatform.user.User;
@@ -31,8 +30,8 @@ public class ExamSimulationService {
 
     private final ExamSimulationRepository examSimulationRepository;
     private final ExamPrepRepository examPrepRepository;
-    private final PdfChunkRepository pdfChunkRepository;
-    private final GeminiService geminiService;
+    private final StudyContextService studyContextService;
+    private final QuestionGenerator questionGenerator;
     private final QuizAttemptService quizAttemptService;
     private final ObjectMapper objectMapper;
     private final ApplicationEventPublisher eventPublisher;
@@ -51,15 +50,11 @@ public class ExamSimulationService {
         ExamPrep examPrep = examPrepRepository.findByIdAndUserId(examPrepId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Preparação de prova não encontrada"));
 
-        // Busca o contexto de estudos correspondente
-        List<PdfChunk> chunks = pdfChunkRepository.findByExamPrepId(examPrepId);
-        String contextText = chunks.stream()
-                .limit(5) // Limitado a 5 blocos para não estourar contexto do prompt em dev
-                .map(PdfChunk::getChunkText)
-                .collect(Collectors.joining("\n\n"));
+        // Busca o contexto de estudos correspondente via interface desacoplada
+        String contextText = studyContextService.getContextTextForExamPrep(examPrepId);
 
         String questionsJson;
-        if (!geminiService.isConfigured() || contextText.trim().isEmpty()) {
+        if (!questionGenerator.isConfigured() || contextText.trim().isEmpty()) {
             questionsJson = generateMockSimulationQuestions();
         } else {
             try {
@@ -82,7 +77,7 @@ public class ExamSimulationService {
                         "  }\n" +
                         "]";
 
-                questionsJson = geminiService.generateContent(prompt);
+                questionsJson = questionGenerator.generateContent(prompt);
             } catch (Exception e) {
                 log.error("Falha ao obter questões do Gemini. Utilizando fallback local.", e);
                 questionsJson = generateMockSimulationQuestions();
