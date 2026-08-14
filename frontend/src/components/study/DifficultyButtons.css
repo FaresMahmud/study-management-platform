@@ -1,0 +1,27 @@
+.difficulty-buttons {
+  display: flex;
+  gap: 12px;
+  width: 100%;
+}
+
+.diff-btn {
+  flex: 1;
+}
+
+.diff-btn.easy:hover {
+  border-color: var(--success);
+  color: var(--success);
+  background: rgba(34, 197, 94, 0.05);
+}
+
+.diff-btn.good:hover {
+  border-color: var(--warning);
+  color: var(--warning);
+  background: rgba(245, 158, 11, 0.05);
+}
+
+.diff-btn.hard:hover {
+  border-color: var(--danger);
+  color: var(--danger);
+  background: rgba(239, 68, 68, 0.05);
+}

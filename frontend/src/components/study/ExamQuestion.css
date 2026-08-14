@@ -1,0 +1,80 @@
+.exam-question-card {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  width: 100%;
+}
+
+.exam-question-text {
+  font-size: 18px;
+  font-weight: 700;
+  color: var(--text-primary);
+  line-height: 1.5;
+  margin: 0;
+  letter-spacing: -0.3px;
+}
+
+.exam-options-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.exam-option {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.2s ease;
+}
+
+.exam-option:hover {
+  border-color: rgba(255, 255, 255, 0.12);
+  background: var(--bg-hover);
+}
+
+.exam-option.selected {
+  border-color: var(--accent);
+}
+
+.radio-circle {
+  width: 20px;
+  height: 20px;
+  border-radius: 50%;
+  border: 2px solid var(--text-muted);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  flex-shrink: 0;
+  transition: border-color 0.2s ease;
+}
+
+.exam-option.selected .radio-circle {
+  border-color: var(--accent);
+}
+
+.radio-inner {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: transparent;
+  transition: background-color 0.2s ease;
+}
+
+.exam-option.selected .radio-inner {
+  background: var(--accent);
+}
+
+.exam-opt-letter {
+  font-weight: 700;
+  color: var(--text-secondary);
+}
+
+.exam-opt-text {
+  font-size: 14px;
+  color: var(--text-primary);
+}

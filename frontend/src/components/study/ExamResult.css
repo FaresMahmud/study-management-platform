@@ -1,0 +1,86 @@
+.exam-result-view {
+  display: flex;
+  flex-direction: column;
+  gap: 24px;
+}
+
+.result-header {
+  text-align: center;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 8px;
+}
+
+.result-emoji {
+  font-size: 48px;
+}
+
+.result-title {
+  font-size: 22px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.result-grade {
+  font-size: 14px;
+  color: var(--text-secondary);
+  margin: 0;
+}
+
+.result-grade strong {
+  color: var(--accent);
+  font-size: 18px;
+}
+
+.result-actions {
+  display: flex;
+  gap: 12px;
+}
+
+.result-actions .btn {
+  flex: 1;
+}
+
+.gabarito-list {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+  margin-top: 16px;
+  max-height: 300px;
+  overflow-y: auto;
+  padding-right: 4px;
+}
+
+.gabarito-card {
+  padding: 16px !important;
+  text-align: left;
+}
+
+.gabarito-card h4 {
+  font-size: 14px;
+  font-weight: 700;
+  margin: 0 0 10px 0;
+}
+
+.gabarito-card p {
+  font-size: 13px;
+  color: var(--text-secondary);
+  margin: 4px 0;
+}
+
+.text-success {
+  color: var(--success);
+}
+
+.text-danger {
+  color: var(--danger);
+}
+
+@media (max-width: 480px) {
+  .result-actions {
+    flex-direction: column;
+  }
+}

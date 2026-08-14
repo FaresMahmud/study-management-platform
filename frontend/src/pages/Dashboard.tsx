@@ -15,20 +15,18 @@ import { mockActivities } from '../components/dashboard/mocks';
 import './Dashboard.css';
 
 interface DashboardProps {
-  onContinue: () => void;
+  onSelectScreen: (screen: 'dashboard' | 'study' | 'flashcards' | 'exam') => void;
   onOpenWizard: () => void;
 }
 
-export default function Dashboard({ onContinue, onOpenWizard }: DashboardProps) {
+export default function Dashboard({ onSelectScreen, onOpenWizard }: DashboardProps) {
   const [activeTab, setActiveTab] = useState('dashboard');
   const userName = useAuthStore(state => state.userName) || 'Estudante';
 
-  // 1. Fetching Real API Data
   const { data: subjects, loading: loadSub, error: errSub, refetch: refSub } = useApi<any[]>('/api/subjects');
   const { data: sessions, loading: loadSes, error: errSes, refetch: refSes } = useApi<any[]>('/api/study-sessions');
   const { data: goals, loading: loadGoals, error: errGoals, refetch: refGoals } = useApi<any[]>('/api/goals');
 
-  // 2. Gamification Calculations
   const gamification = useGamification(sessions || [], goals || []);
 
   const loading = loadSub || loadSes || loadGoals;
@@ -36,35 +34,49 @@ export default function Dashboard({ onContinue, onOpenWizard }: DashboardProps) 
 
   const handleRefetch = () => { refSub(); refSes(); refGoals(); };
 
+  const handleTabChange = (tab: string) => {
+    setActiveTab(tab);
+    if (tab === 'flashcards') onSelectScreen('flashcards');
+    if (tab === 'subjects') onSelectScreen('study');
+    if (tab === 'analytics') onSelectScreen('exam');
+  };
+
   if (loading) return <LoadingSpinner />;
   if (error) return <ErrorMessage message="Erro ao conectar com o servidor local" onRetry={handleRefetch} />;
 
-  // 3. Mapped Subjects Progress Data
-  const mappedSubjects = (subjects || []).map(sub => {
-    const masteryObj = gamification.masteryBySubject.find(m => m.subjectId === sub.id);
-    return {
-      name: sub.subjectName,
-      progress: masteryObj ? masteryObj.mastery : 40,
-      color: sub.color || '#6366f1',
-      topicsCount: 10,
-      studyTime: '4h 20m',
-    };
-  });
+  const mappedSubjects = (subjects || []).map(sub => ({
+    name: sub.subjectName,
+    progress: gamification.masteryBySubject.find(m => m.subjectId === sub.id)?.mastery || 40,
+    color: sub.color || '#6366f1',
+    topicsCount: 10,
+    studyTime: '4h 20m',
+  }));
 
   const latestGoal = goals && goals.length > 0 ? goals[goals.length - 1] : null;
+  let daysRemaining = 0;
+  let isSoon = false;
+  if (latestGoal?.endDateGoal) {
+    const diff = new Date(latestGoal.endDateGoal).getTime() - new Date().setHours(0, 0, 0, 0);
+    daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    isSoon = daysRemaining >= 0 && daysRemaining < 7;
+  }
+
+  const activities = [
+    { ...mockActivities[0], title: 'Texto Inteligente', description: 'Leitura e quiz rápido', onClick: () => onSelectScreen('study') },
+    { ...mockActivities[1], title: 'Simulado', description: 'Modo prova completo', onClick: () => onSelectScreen('exam') },
+    { ...mockActivities[2], title: 'Revisar', description: 'Revisar material teórico', onClick: () => onSelectScreen('study') },
+    { ...mockActivities[3], title: 'Flashcards', description: 'Revisar cards de hoje', onClick: () => onSelectScreen('flashcards') },
+  ];
 
   return (
     <div className="dashboard-layout">
-      <Sidebar activeTab={activeTab} setActiveTab={setActiveTab} />
+      <Sidebar activeTab={activeTab} setActiveTab={handleTabChange} />
       <main className="dashboard-main">
         <header className="dashboard-header">
           <div className="header-top-row">
             <div>
               <h1 className="dashboard-title">Olá, {userName} 👋</h1>
-              <p className="dashboard-subtitle">
-                Seu progresso diário está ativo.
-                <span className={`zone-badge ${gamification.zone}`}>{gamification.zone}</span>
-              </p>
+              <p className="dashboard-subtitle">Zona: <span className={`zone-badge ${gamification.zone}`}>{gamification.zone}</span></p>
             </div>
             <div className="header-actions">
               <span className="streak-badge">🔥 {gamification.streakDays} dias</span>
@@ -80,17 +92,17 @@ export default function Dashboard({ onContinue, onOpenWizard }: DashboardProps) 
             <section className="dashboard-section">
               <HeroSession
                 subject={latestGoal.subject?.subjectName || 'MATÉRIA GERAL'}
-                topic={latestGoal.title || 'Preparação para Prova'}
+                topic={isSoon ? `Sua prova de ${latestGoal.subject?.subjectName || 'Matéria'} é em ${daysRemaining} dias! 🚨` : latestGoal.title}
                 timeRemaining="30m"
                 quizzesPending={1}
                 targetScore={latestGoal.targetMastery || 80}
-                onContinue={onContinue}
+                onContinue={() => onSelectScreen(isSoon ? 'exam' : 'study')}
               />
             </section>
 
             <section className="dashboard-section">
               <h2 className="section-title">Ações Rápidas</h2>
-              <ActivityGrid activities={mockActivities.map(act => ({ ...act, onClick: onContinue }))} />
+              <ActivityGrid activities={activities} />
             </section>
 
             <section className="dashboard-section dashboard-grid-two">

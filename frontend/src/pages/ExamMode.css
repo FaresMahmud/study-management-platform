@@ -1,0 +1,45 @@
+.exam-mode-page {
+  display: flex;
+  flex-direction: column;
+  min-height: 100vh;
+  background: var(--bg-primary);
+  padding: 60px 40px;
+  gap: 32px;
+  align-items: center;
+  width: 100%;
+}
+
+.exam-header-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  width: 100%;
+  max-width: 550px;
+  font-size: 14px;
+  color: var(--text-secondary);
+  font-weight: 600;
+}
+
+.exam-card {
+  width: 100%;
+  max-width: 550px;
+  padding: 32px !important;
+}
+
+.exam-footer {
+  display: flex;
+  justify-content: space-between;
+  width: 100%;
+  max-width: 550px;
+  gap: 16px;
+}
+
+.exam-footer .btn {
+  flex: 1;
+}
+
+@media (max-width: 480px) {
+  .exam-mode-page {
+    padding: 40px 16px;
+  }
+}
