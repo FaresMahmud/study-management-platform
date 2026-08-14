@@ -45,7 +45,12 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
         endDateGoal: date, 
         title: `Meta de Estudo - ${score}%` 
       });
-      await apiClient.post('/api/study-sessions', { subjectId, duration: 30, observations: 'Sessão de estudo inicial gerada pelo Planejamento de Provas.' });
+      await apiClient.post('/api/study-sessions', { 
+        subjectId, 
+        duration: 30, 
+        sessionDate: todayStr, 
+        observations: 'Sessão de estudo inicial gerada pelo Planejamento de Provas.' 
+      });
       
       if (matType === 'pdf' && file) {
         const formData = new FormData();
