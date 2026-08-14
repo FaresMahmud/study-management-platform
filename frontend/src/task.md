@@ -1,0 +1,47 @@
+# Tarefas: Redesenho do Frontend, Fluxo de Estudo e Modo Prova (StudyFlow)
+
+- `[x]` 1. Mapear e switch para a branch frontend-redesign (feito)
+- `[x]` 2. Criar Design System (theme.css + global.css)
+- `[x]` 3. Criar Componentes de UI Atômicos e Auxiliares:
+  - `[x]` Card.tsx + Card.css
+  - `[x]` Button.tsx + Button.css
+  - `[x]` ProgressBar.tsx + ProgressBar.css
+  - `[x]` LoadingSpinner.tsx + LoadingSpinner.css
+  - `[x]` ErrorMessage.tsx + ErrorMessage.css
+  - `[x]` EmptyState.tsx + EmptyState.css
+- `[x]` 4. Criar Componentes de Layout e Dashboard:
+  - `[x]` Sidebar.tsx + Sidebar.css
+  - `[x]` HeroSession.tsx + HeroSession.css
+  - `[x]` ActivityGrid.tsx + ActivityGrid.css
+  - `[x]` SubjectProgress.tsx + SubjectProgress.css
+- `[x]` 5. Criar Mocks de estudo (studyMocks.ts)
+- `[x]` 6. Criar Hook de tempo (useTimer.ts, < 20 linhas)
+- `[x]` 7. Criar Componentes de Estudo:
+  - `[x]` QuizOption.tsx + QuizOption.css
+  - `[x]` QuizPanel.tsx + QuizPanel.css
+  - `[x]` QuizResult.tsx + QuizResult.css
+- `[x]` 8. Criar Tela de Sessão de Estudo (StudySession.tsx + StudySession.css)
+- `[x]` 9. Criar Hook genérico de API (useApi.ts)
+- `[x]` 10. Criar Assistente de Provas (Exam Wizard)
+- `[x]` 11. Integrar Dashboard com API real e gamificação
+- `[x]` 12. Criar Hook de Gamificação (useGamification.ts, < 50 linhas)
+- `[x]` 13. Criar Componentes de Flashcards:
+  - `[x]` ProgressRingSmall.tsx (< 15 linhas)
+  - `[x]` DifficultyButtons.tsx (< 20 linhas)
+  - `[x]` FlashcardCard.tsx (< 35 linhas, com animação flip)
+  - `[x]` Flashcards.tsx (< 50 linhas, com swipe e API real)
+- `[x]` 14. Criar Componentes de Modo Prova (Simulado):
+  - `[x]` ExamTimer.tsx (< 25 linhas, com aviso visual)
+  - `[x]` ExamProgressBar.tsx (< 10 linhas)
+  - `[x]` ExamQuestion.tsx (< 30 linhas, com radios customizados)
+  - `[x]` ExamResult.tsx (< 40 linhas, com gabarito expansível)
+  - `[x]` ExamMode.tsx (< 60 linhas, orquestrador completo)
+- `[x]` 15. Atualizar App.tsx com novos estados de tela
+- `[x]` 16. Validar build com npm run build (Sucesso completo)
+- `[x]` 17. Migrar Sidebar para layout global persistente (SaaS style) em App.tsx
+- `[x]` 18. Integrar chat flutuante RAG do Tutor IA no novo Dashboard redesenhado
+- `[x]` 19. Integrar ScoreSlider SVG circular no onboarding do edital no Dashboard
+- `[x]` 20. Adicionar gerador automático de Flashcards por IA ("Gerar com IA") conectando a API do Gemini
+- `[x]` 21. Habilitar upload de PDF real e colagem de texto no Passo 4 do ExamWizard integrado à API do Spring
+- `[x]` 22. Integrar todas as telas clássicas do projeto principal (Workspace de PDFs, Editor de resumos, Podcasts gerados por IA, FocusMode) sob a barra lateral persistente usando navegação por rotas estruturadas
+- `[x]` 23. Validar e compilar build final (Sucesso completo: 0 erros do TS/Vite)

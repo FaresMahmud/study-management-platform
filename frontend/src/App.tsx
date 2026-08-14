@@ -1,68 +1,120 @@
-import React, { useState } from 'react';
-import { BrowserRouter, Routes, Route, Navigate } from 'react-router-dom';
+import React, { useState, useEffect } from 'react';
+import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
+import { Sidebar } from './components/layout/Sidebar';
+import OnboardingModal from './components/OnboardingModal';
 import Login from './pages/Login';
 import Register from './pages/Register';
 import Dashboard from './pages/Dashboard';
+import Subjects from './pages/Subjects';
+import StudySessions from './pages/StudySessions';
+import Goals from './pages/Goals';
+import Summaries from './pages/Summaries';
+import Analytics from './pages/Analytics';
+import Flashcards from './pages/Flashcards';
+import StudyWorkspace from './pages/StudyWorkspace';
+import Quiz from './pages/Quiz';
+import Simulation from './pages/Simulation';
+import PublicShareView from './pages/PublicShareView';
+import Podcast from './pages/Podcast';
+import FocusMode from './pages/FocusMode';
 import StudySession from './pages/StudySession';
-import FlashcardsPage from './pages/Flashcards';
 import ExamMode from './pages/ExamMode';
-import { Sidebar } from './components/layout/Sidebar';
-import ExamWizard from './components/wizard/ExamWizard';
 import './styles/theme.css';
 import './styles/global.css';
 
-type Screen = 'dashboard' | 'study' | 'flashcards' | 'exam';
+const queryClient = new QueryClient({
+  defaultOptions: {
+    queries: {
+      refetchOnWindowFocus: false,
+      retry: 1,
+    },
+  },
+});
 
-function AppContent() {
-  const isAuthenticated = useAuthStore(state => state.isAuthenticated);
-  const [screen, setScreen] = useState<Screen>('dashboard');
-  const [showWizard, setShowWizard] = useState(false);
+function ProtectedLayout() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const navigate = useNavigate();
+  const location = useLocation();
+
+  useEffect(() => {
+    const onboarded = localStorage.getItem('study_onboarded');
+    if (isAuthenticated && onboarded !== 'true') {
+      setOnboardingOpen(true);
+    }
+  }, [isAuthenticated]);
 
   if (!isAuthenticated) {
     return <Navigate to="/login" replace />;
   }
 
-  const handleTabChange = (tab: string) => {
-    if (tab === 'dashboard') setScreen('dashboard');
-    if (tab === 'flashcards') setScreen('flashcards');
-    if (tab === 'subjects') setScreen('study');
-    if (tab === 'analytics') setScreen('exam');
+  const getActiveTab = () => {
+    const path = location.pathname;
+    if (path === '/') return 'dashboard';
+    if (path.startsWith('/workspace') || path.startsWith('/subjects')) return 'subjects';
+    if (path.startsWith('/flashcards')) return 'flashcards';
+    if (path.startsWith('/analytics')) return 'analytics';
+    return 'settings';
   };
 
-  const getActiveTab = () => {
-    if (screen === 'dashboard') return 'dashboard';
-    if (screen === 'flashcards') return 'flashcards';
-    if (screen === 'study') return 'subjects';
-    if (screen === 'exam') return 'analytics';
-    return 'dashboard';
+  const handleTabChange = (tab: string) => {
+    if (tab === 'dashboard') navigate('/');
+    if (tab === 'subjects') navigate('/workspace');
+    if (tab === 'flashcards') navigate('/flashcards');
+    if (tab === 'analytics') navigate('/analytics');
+    if (tab === 'settings') navigate('/focus');
   };
 
   return (
     <div className="dashboard-layout">
       <Sidebar activeTab={getActiveTab()} setActiveTab={handleTabChange} />
       <main className="dashboard-main">
-        {screen === 'dashboard' && <Dashboard onSelectScreen={setScreen} onOpenWizard={() => setShowWizard(true)} />}
-        {screen === 'study' && <StudySession onFinish={() => setScreen('dashboard')} />}
-        {screen === 'flashcards' && <FlashcardsPage />}
-        {screen === 'exam' && <ExamMode onFinish={() => setScreen('dashboard')} />}
+        <Outlet />
       </main>
-      
-      {showWizard && (
-        <ExamWizard onClose={() => setShowWizard(false)} onFinished={() => { setShowWizard(false); window.location.reload(); }} />
-      )}
+      <OnboardingModal isOpen={onboardingOpen} onClose={() => setOnboardingOpen(false)} />
     </div>
   );
 }
 
+function PublicLayout() {
+  const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
+  if (isAuthenticated) {
+    return <Navigate to="/" replace />;
+  }
+  return <Outlet />;
+}
+
 export default function App() {
   return (
-    <BrowserRouter>
-      <Routes>
-        <Route path="/login" element={<Login />} />
-        <Route path="/register" element={<Register />} />
-        <Route path="*" element={<AppContent />} />
-      </Routes>
-    </BrowserRouter>
+    <QueryClientProvider client={queryClient}>
+      <BrowserRouter>
+        <Routes>
+          <Route path="/public/share/:token" element={<PublicShareView />} />
+          <Route element={<PublicLayout />}>
+            <Route path="/login" element={<Login />} />
+            <Route path="/register" element={<Register />} />
+          </Route>
+          <Route element={<ProtectedLayout />}>
+            <Route path="/" element={<Dashboard />} />
+            <Route path="/subjects" element={<Subjects />} />
+            <Route path="/sessions" element={<StudySessions />} />
+            <Route path="/goals" element={<Goals />} />
+            <Route path="/summaries" element={<Summaries />} />
+            <Route path="/analytics" element={<Analytics />} />
+            <Route path="/flashcards" element={<Flashcards />} />
+            <Route path="/workspace" element={<StudyWorkspace />} />
+            <Route path="/quiz" element={<Quiz />} />
+            <Route path="/simulation" element={<Simulation />} />
+            <Route path="/podcast" element={<Podcast />} />
+            <Route path="/focus" element={<FocusMode />} />
+            <Route path="/study" element={<StudySession onFinish={() => window.location.href = '/'} />} />
+            <Route path="/exam" element={<ExamMode onFinish={() => window.location.href = '/'} />} />
+          </Route>
+          <Route path="*" element={<Navigate to="/" replace />} />
+        </Routes>
+      </BrowserRouter>
+    </QueryClientProvider>
   );
 }

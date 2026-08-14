@@ -1,17 +1,21 @@
 .card {
   background: var(--bg-card);
+  backdrop-filter: blur(12px);
+  -webkit-backdrop-filter: blur(12px);
   border: 1px solid var(--border);
   border-radius: var(--radius);
   padding: 24px;
+  box-shadow: var(--shadow-card);
+  transition: all 0.3s cubic-bezier(0.4, 0, 0.2, 1);
 }
 
 .card-clickable {
   cursor: pointer;
-  transition: all 0.2s ease;
 }
 
 .card-clickable:hover {
-  transform: translateY(-2px);
-  border-color: rgba(99, 102, 241, 0.3);
+  transform: translateY(-4px);
+  background: rgba(255, 255, 255, 0.06);
+  border-color: rgba(255, 255, 255, 0.12);
   box-shadow: var(--shadow-hover);
 }

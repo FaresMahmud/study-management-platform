@@ -1,5 +1,5 @@
 import React, { useState } from 'react';
-import { Sidebar } from '../components/layout/Sidebar';
+import { useNavigate } from 'react-router-dom';
 import { HeroSession } from '../components/dashboard/HeroSession';
 import { ActivityGrid } from '../components/dashboard/ActivityGrid';
 import { SubjectProgress } from '../components/dashboard/SubjectProgress';
@@ -14,16 +14,13 @@ import { useGamification } from '../hooks/useGamification';
 import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../api/client';
 import { mockActivities } from '../components/dashboard/mocks';
+import ExamWizard from '../components/wizard/ExamWizard';
 import './Dashboard.css';
 
-interface DashboardProps {
-  onSelectScreen: (screen: 'dashboard' | 'study' | 'flashcards' | 'exam') => void;
-  onOpenWizard: () => void;
-}
-
-export default function Dashboard({ onSelectScreen, onOpenWizard }: DashboardProps) {
-  const [activeTab, setActiveTab] = useState('dashboard');
+export default function Dashboard() {
+  const navigate = useNavigate();
   const userName = useAuthStore(state => state.userName) || 'Estudante';
+  const [showWizard, setShowWizard] = useState(false);
 
   // Chat states
   const [chatOpen, setChatOpen] = useState(false);
@@ -41,13 +38,6 @@ export default function Dashboard({ onSelectScreen, onOpenWizard }: DashboardPro
   const error = errSub || errSes || errGoals;
 
   const handleRefetch = () => { refSub(); refSes(); refGoals(); };
-
-  const handleTabChange = (tab: string) => {
-    setActiveTab(tab);
-    if (tab === 'flashcards') onSelectScreen('flashcards');
-    if (tab === 'subjects') onSelectScreen('study');
-    if (tab === 'analytics') onSelectScreen('exam');
-  };
 
   const handleSendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -87,10 +77,10 @@ export default function Dashboard({ onSelectScreen, onOpenWizard }: DashboardPro
   }
 
   const activities = [
-    { ...mockActivities[0], title: 'Texto Inteligente', description: 'Leitura e quiz rápido', onClick: () => onSelectScreen('study') },
-    { ...mockActivities[1], title: 'Simulado', description: 'Modo prova completo', onClick: () => onSelectScreen('exam') },
-    { ...mockActivities[2], title: 'Revisar', description: 'Revisar material teórico', onClick: () => onSelectScreen('study') },
-    { ...mockActivities[3], title: 'Flashcards', description: 'Revisar cards de hoje', onClick: () => onSelectScreen('flashcards') },
+    { ...mockActivities[0], title: 'Texto Inteligente', description: 'Leitura e quiz rápido', onClick: () => navigate('/study') },
+    { ...mockActivities[1], title: 'Simulado', description: 'Modo prova completo', onClick: () => navigate('/exam') },
+    { ...mockActivities[2], title: 'Revisar', description: 'Revisar material teórico', onClick: () => navigate('/workspace') },
+    { ...mockActivities[3], title: 'Flashcards', description: 'Revisar cards de hoje', onClick: () => navigate('/flashcards') },
   ];
 
   return (
@@ -103,13 +93,13 @@ export default function Dashboard({ onSelectScreen, onOpenWizard }: DashboardPro
           </div>
           <div className="header-actions">
             <span className="streak-badge">🔥 {gamification.streakDays} dias</span>
-            <Button variant="primary" onClick={onOpenWizard}>+ Nova Prova</Button>
+            <Button variant="primary" onClick={() => setShowWizard(true)}>+ Nova Prova</Button>
           </div>
         </div>
       </header>
 
       {(!goals || goals.length === 0) ? (
-        <EmptyState icon="🎯" text="Você ainda não definiu nenhuma meta de prova. Planeje seu primeiro objetivo!" cta="Configurar Objetivo" onCta={onOpenWizard} />
+        <EmptyState icon="🎯" text="Você ainda não definiu nenhuma meta de prova. Planeje seu primeiro objetivo!" cta="Configurar Objetivo" onCta={() => setShowWizard(true)} />
       ) : (
         <>
           <section className="dashboard-section">
@@ -119,7 +109,7 @@ export default function Dashboard({ onSelectScreen, onOpenWizard }: DashboardPro
               timeRemaining="30m"
               quizzesPending={1}
               targetScore={latestGoal.targetMastery || 80}
-              onContinue={() => onSelectScreen(isSoon ? 'exam' : 'study')}
+              onContinue={() => navigate(isSoon ? '/exam' : '/study')}
             />
           </section>
 
@@ -196,6 +186,10 @@ export default function Dashboard({ onSelectScreen, onOpenWizard }: DashboardPro
           </div>
         )}
       </div>
+
+      {showWizard && (
+        <ExamWizard onClose={() => setShowWizard(false)} onFinished={() => { setShowWizard(false); handleRefetch(); }} />
+      )}
     </>
   );
 }

@@ -6,7 +6,8 @@ body {
   margin: 0;
   padding: 0;
   font-family: 'Inter', system-ui, -apple-system, sans-serif;
-  background: var(--bg-primary);
+  background: radial-gradient(circle at top, #0f1016 0%, #030305 100%);
+  background-attachment: fixed;
   color: var(--text-primary);
   line-height: 1.5;
 }
