@@ -29,6 +29,26 @@ export default function Dashboard() {
   const [chatLoading, setChatLoading] = useState(false);
   const [socraticMode, setSocraticMode] = useState(false);
 
+  // Multimodal image states
+  const [selectedImage, setSelectedImage] = useState<File | null>(null);
+  const [selectedImageBase64, setSelectedImageBase64] = useState<string | null>(null);
+  const [selectedImageMimeType, setSelectedImageMimeType] = useState<string | null>(null);
+
+  const handleImageChange = (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (e.target.files && e.target.files.length > 0) {
+      const file = e.target.files[0];
+      setSelectedImage(file);
+      setSelectedImageMimeType(file.type);
+      const reader = new FileReader();
+      reader.onloadend = () => {
+        const base64String = reader.result as string;
+        const base64Data = base64String.split(',')[1];
+        setSelectedImageBase64(base64Data);
+      };
+      reader.readAsDataURL(file);
+    }
+  };
+
   const { data: subjects, loading: loadSub, error: errSub, refetch: refSub } = useApi<any[]>('/api/subjects');
   const { data: sessions, loading: loadSes, error: errSes, refetch: refSes } = useApi<any[]>('/api/study-sessions');
   const { data: goals, loading: loadGoals, error: errGoals, refetch: refGoals } = useApi<any[]>('/api/goals');
@@ -43,10 +63,12 @@ export default function Dashboard() {
 
   const handleSendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!chatInput.trim() || chatLoading) return;
+    if ((!chatInput.trim() && !selectedImage) || chatLoading) return;
     const userText = chatInput;
-    setChatMessages(prev => [...prev, { sender: 'user', text: userText }]);
+    const currentImg = selectedImage;
+    setChatMessages(prev => [...prev, { sender: 'user', text: userText ? userText : `[Imagem: ${currentImg?.name}]` }]);
     setChatInput('');
+    setSelectedImage(null);
     setChatLoading(true);
 
     const preps = prepsData?.content || [];
@@ -56,20 +78,26 @@ export default function Dashboard() {
     if (!activeExamPrepId) {
       setChatMessages(prev => [...prev, { sender: 'tutor', text: 'Olá! Para usar o Tutor Inteligente, crie um plano de estudos ("+ Nova Prova") ou faça upload de PDF associado a uma matéria primeiro.' }]);
       setChatLoading(false);
+      setSelectedImageBase64(null);
+      setSelectedImageMimeType(null);
       return;
     }
 
     try {
       const response = await apiClient.post('/api/v1/chat/ask', {
         examPrepId: activeExamPrepId,
-        question: userText,
-        socratic: socraticMode
+        question: userText || "O que está nesta imagem?",
+        socratic: socraticMode,
+        imageMimeType: selectedImageMimeType,
+        imageBase64: selectedImageBase64
       });
       setChatMessages(prev => [...prev, { sender: 'tutor', text: response.data.answer, sources: response.data.sources }]);
     } catch (err) {
       setChatMessages(prev => [...prev, { sender: 'tutor', text: 'Desculpe, ocorreu um erro ao obter resposta do tutor de estudos.' }]);
     } finally {
       setChatLoading(false);
+      setSelectedImageBase64(null);
+      setSelectedImageMimeType(null);
     }
   };
 
@@ -196,15 +224,19 @@ export default function Dashboard() {
               {chatLoading && <div className="chat-message tutor loading">Digitando...</div>}
             </div>
 
-            <form onSubmit={handleSendChatMessage} className="chat-input-form">
+            <form onSubmit={handleSendChatMessage} className="chat-input-form" style={{ position: 'relative' }}>
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: selectedImage ? 'var(--success)' : 'var(--text-muted)', fontSize: '16px', padding: '0 4px' }} title="Anexar Imagem para Resolução">
+                <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} disabled={chatLoading} />
+                <span>📷</span>
+              </label>
               <input
                 type="text"
-                placeholder="Pergunte algo sobre seus estudos..."
+                placeholder={selectedImage ? `📷 ${selectedImage.name}` : "Pergunte algo sobre seus estudos..."}
                 value={chatInput}
                 onChange={e => setChatInput(e.target.value)}
                 disabled={chatLoading}
               />
-              <button type="submit" disabled={!chatInput.trim() || chatLoading}>Enviar</button>
+              <button type="submit" disabled={(!chatInput.trim() && !selectedImage) || chatLoading}>Enviar</button>
             </form>
           </div>
         )}

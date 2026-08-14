@@ -137,4 +137,55 @@ public class GeminiService implements QuestionGenerator, EmbeddingGenerator {
 
         return (List<Double>) embedding.get("values");
     }
+
+    public String generateMultimodalContent(String prompt, String mimeType, String base64Data) throws IOException, InterruptedException {
+        if (geminiApiKey == null || geminiApiKey.trim().isEmpty() || geminiApiKey.equals("SUA_CHAVE_GEMINI_AQUI")) {
+            throw new IllegalStateException("Chave de API do Gemini não configurada.");
+        }
+
+        Map<String, Object> partText = Map.of("text", prompt);
+        Map<String, Object> partImage = Map.of("inlineData", Map.of(
+                "mimeType", mimeType,
+                "data", base64Data
+        ));
+
+        Map<String, Object> requestBody = Map.of(
+                "contents", List.of(
+                        Map.of("parts", List.of(partText, partImage))
+                )
+        );
+
+        String jsonPayload = objectMapper.writeValueAsString(requestBody);
+
+        HttpClient client = HttpClient.newHttpClient();
+        URI uri = URI.create("https://generativelanguage.googleapis.com/v1beta/models/" + textModel + ":generateContent?key=" + geminiApiKey);
+
+        HttpRequest request = HttpRequest.newBuilder()
+                .uri(uri)
+                .header("Content-Type", "application/json")
+                .POST(HttpRequest.BodyPublishers.ofString(jsonPayload))
+                .build();
+
+        log.info("Enviando requisição multimodal para a API Gemini...");
+        HttpResponse<String> response = client.send(request, HttpResponse.BodyHandlers.ofString());
+
+        if (response.statusCode() != 200) {
+            throw new BusinessException("Erro na resposta da API Gemini: HTTP " + response.statusCode());
+        }
+
+        // Faz o parsing da resposta do Gemini
+        Map<String, Object> responseMap = objectMapper.readValue(response.body(), Map.class);
+        List<Map<String, Object>> candidates = (List<Map<String, Object>>) responseMap.get("candidates");
+        if (candidates == null || candidates.isEmpty()) {
+            throw new BusinessException("Nenhum candidato retornado pelo Gemini.");
+        }
+
+        Map<String, Object> content = (Map<String, Object>) candidates.get(0).get("content");
+        List<Map<String, Object>> parts = (List<Map<String, Object>>) content.get("parts");
+        if (parts == null || parts.isEmpty()) {
+            throw new BusinessException("Nenhuma parte de texto retornada pelo Gemini.");
+        }
+
+        return ((String) parts.get(0).get("text")).trim();
+    }
 }

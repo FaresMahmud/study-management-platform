@@ -26,7 +26,13 @@ public class ChatController {
     )
     @PostMapping("/ask")
     public ResponseEntity<ChatResponseDTO> ask(@RequestBody ChatRequestDTO request) {
-        ChatResponseDTO response = ragChatService.askQuestion(request.getExamPrepId(), request.getQuestion(), request.getSocratic());
+        ChatResponseDTO response = ragChatService.askQuestion(
+                request.getExamPrepId(), 
+                request.getQuestion(), 
+                request.getSocratic(),
+                request.getImageMimeType(),
+                request.getImageBase64()
+        );
         return ResponseEntity.ok(response);
     }
 }

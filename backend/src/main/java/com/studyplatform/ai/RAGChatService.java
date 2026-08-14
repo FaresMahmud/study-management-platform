@@ -21,8 +21,8 @@ public class RAGChatService {
     private final VectorStoreService vectorStoreService;
     private final GeminiService geminiService;
 
-    public ChatResponseDTO askQuestion(Long examPrepId, String question, Boolean socratic) {
-        log.info("Processando pergunta RAG para o examPrepId: {}. Pergunta: {}. Modo Socrático: {}", examPrepId, question, socratic);
+    public ChatResponseDTO askQuestion(Long examPrepId, String question, Boolean socratic, String imageMimeType, String imageBase64) {
+        log.info("Processando pergunta RAG para o examPrepId: {}. Pergunta: {}. Modo Socrático: {}. Imagem: {}", examPrepId, question, socratic, imageMimeType);
 
         // Busca os 5 chunks mais relevantes no ChromaDB correspondentes ao exame ativo
         List<PdfChunkSimilarity> similarities = vectorStoreService.searchSimilar(examPrepId, question, 5);
@@ -71,9 +71,29 @@ public class RAGChatService {
             systemPrompt += "\n4. MODO SOCRÁTICO ATIVO: Não entregue a resposta pronta nem a resolução direta da questão do estudante. Em vez disso, explique teoricamente o conceito por trás da dúvida de forma simplificada e faça uma ou mais perguntas que provoquem a reflexão ou orientem o raciocínio do aluno para que ele consiga deduzir e chegar à resposta correta por conta própria.";
         }
 
+        // Mock Fallback se a API Key do Gemini não estiver configurada
+        if (!geminiService.isConfigured()) {
+            String mockAnswer = "Olá! Eu sou o seu Tutor Inteligente StudyFlow (Modo Demonstração). \n\n" +
+                    "Recebi sua dúvida: \"" + question + "\"\n\n" +
+                    (imageBase64 != null ? "Análise Visual de Imagem: Recebi a imagem do exercício/fórmula enviada. " : "") +
+                    "Com base no contexto do material que você enviou, este tópico é de extrema relevância nos seus estudos. \n\n" +
+                    "Como estou em modo de simulação no backend (chave de API do Gemini não configurada), aqui vai uma orientação conceitual geral sobre o tópico. Continue estudando os resumos e revise seus flashcards! Se quiser que eu resolva e explique detalhadamente de forma real, basta configurar a propriedade `gemini.api.key` nas configurações do backend.";
+            if (Boolean.TRUE.equals(socratic)) {
+                mockAnswer += "\n\n(Instrução Socrática): Que tal tentar formular o conceito básico dessa questão com suas próprias palavras para testar o entendimento?";
+            }
+            return ChatResponseDTO.builder()
+                    .answer(mockAnswer)
+                    .sources(sources)
+                    .build();
+        }
+
         try {
-            // Chama a API do Gemini com o prompt montado
-            String answer = geminiService.generateContent(systemPrompt);
+            String answer;
+            if (imageBase64 != null && !imageBase64.trim().isEmpty()) {
+                answer = geminiService.generateMultimodalContent(systemPrompt, imageMimeType, imageBase64);
+            } else {
+                answer = geminiService.generateContent(systemPrompt);
+            }
             return ChatResponseDTO.builder()
                     .answer(answer)
                     .sources(sources)

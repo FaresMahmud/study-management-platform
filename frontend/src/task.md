@@ -44,4 +44,6 @@
 - `[x]` 20. Adicionar gerador automático de Flashcards por IA ("Gerar com IA") conectando a API do Gemini
 - `[x]` 21. Habilitar upload de PDF real e colagem de texto no Passo 4 do ExamWizard integrado à API do Spring
 - `[x]` 22. Integrar todas as telas clássicas do projeto principal (Workspace de PDFs, Editor de resumos, Podcasts gerados por IA, FocusMode) sob a barra lateral persistente usando navegação por rotas estruturadas
-- `[x]` 23. Validar e compilar build final (Sucesso completo: 0 erros do TS/Vite)
+- `[x]` 23. Implementar o Modo Socrático no Tutor de IA (RAG) no backend e no frontend (checkbox de ativação no chat)
+- `[x]` 24. Implementar Player de Podcast Global contínuo (Zustand store + audio instance global) na Sidebar persistente
+- `[x]` 25. Validar e compilar build final (Sucesso completo: 0 erros do TS/Vite)

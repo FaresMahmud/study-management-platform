@@ -14,4 +14,6 @@ public class ChatRequestDTO {
     private Long examPrepId;
     private String question;
     private Boolean socratic;
+    private String imageMimeType;
+    private String imageBase64;
 }
