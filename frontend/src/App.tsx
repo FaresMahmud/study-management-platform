@@ -8,7 +8,7 @@ import StudySession from './pages/StudySession';
 import FlashcardsPage from './pages/Flashcards';
 import ExamMode from './pages/ExamMode';
 import { Sidebar } from './components/layout/Sidebar';
-import { ExamWizard } from './components/wizard/ExamWizard';
+import ExamWizard from './components/wizard/ExamWizard';
 import './styles/theme.css';
 import './styles/global.css';
 

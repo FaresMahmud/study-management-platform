@@ -15,7 +15,7 @@ interface ExamWizardProps {
   onFinished: () => void;
 }
 
-export function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
+export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
   const [step, setStep] = useState(1);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [subjectId, setSubjectId] = useState<number | null>(null);
@@ -23,6 +23,7 @@ export function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
   const [score, setScore] = useState(70);
   const [matType, setMatType] = useState<'pdf' | 'text' | 'scratch'>('scratch');
   const [text, setText] = useState('');
+  const [file, setFile] = useState<File | null>(null);
 
   const loadSubjects = () => apiClient.get<Subject[]>('/api/subjects').then(r => setSubjects(r.data));
   useEffect(() => { loadSubjects(); }, []);
@@ -33,6 +34,22 @@ export function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
     if (!subjectId) return;
     await apiClient.post('/api/goals', { subjectId, targetMastery: score, endDateGoal: date, title: `Meta de Estudo - ${score}%` });
     await apiClient.post('/api/study-sessions', { subjectId, duration: 30, observations: 'Sessão de estudo inicial gerada pelo Planejamento de Provas.' });
+    
+    if (matType === 'pdf' && file) {
+      const formData = new FormData();
+      formData.append('file', file);
+      formData.append('subjectId', String(subjectId));
+      await apiClient.post('/api/files/upload', formData, {
+        headers: { 'Content-Type': 'multipart/form-data' }
+      });
+    } else if (matType === 'text' && text.trim()) {
+      await apiClient.post('/api/summaries', {
+        title: 'Material Teórico - Onboarding',
+        content: text,
+        subjectId
+      });
+    }
+    
     onFinished();
   };
 
@@ -49,7 +66,7 @@ export function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
           {step === 1 && <SubjectSelector subjects={subjects} selectedId={subjectId} onSelect={id => setSubjectId(Number(id))} onCreateSubject={createSubject} />}
           {step === 2 && <DatePicker selectedDate={date} onSelectDate={setDate} />}
           {step === 3 && <ScoreSlider score={score} onChangeScore={setScore} />}
-          {step === 4 && <MaterialUpload materialType={matType} onSelectType={setMatType} textData={text} onChangeText={setText} />}
+          {step === 4 && <MaterialUpload materialType={matType} onSelectType={setMatType} textData={text} onChangeText={setText} selectedFile={file} onChangeFile={setFile} />}
         </div>
 
         <footer className="wizard-footer-actions">

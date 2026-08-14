@@ -7,9 +7,11 @@ interface MaterialProps {
   onSelectType: (type: 'pdf' | 'text' | 'scratch') => void;
   textData: string;
   onChangeText: (text: string) => void;
+  selectedFile: File | null;
+  onChangeFile: (file: File | null) => void;
 }
 
-export function MaterialUpload({ materialType, onSelectType, textData, onChangeText }: MaterialProps) {
+export function MaterialUpload({ materialType, onSelectType, textData, onChangeText, selectedFile, onChangeFile }: MaterialProps) {
   return (
     <div className="material-step">
       <h3>Adicione o material de estudo</h3>
@@ -20,7 +22,8 @@ export function MaterialUpload({ materialType, onSelectType, textData, onChangeT
       </div>
       {materialType === 'pdf' && (
         <div className="pdf-upload-box">
-          <input type="file" accept=".pdf" className="file-input" />
+          <input type="file" accept=".pdf" className="file-input" onChange={e => onChangeFile(e.target.files?.[0] || null)} />
+          {selectedFile && <p className="file-name-hint">📄 {selectedFile.name}</p>}
         </div>
       )}
       {materialType === 'text' && (
