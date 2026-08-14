@@ -1,0 +1,38 @@
+.date-picker-step {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+  align-items: center;
+}
+
+.date-input {
+  width: 100%;
+  max-width: 300px;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 12px 16px;
+  color: var(--text-primary);
+  font-size: 15px;
+  font-family: inherit;
+  outline: none;
+  transition: border-color 0.2s ease;
+}
+
+.date-input:focus {
+  border-color: var(--accent);
+}
+
+.days-counter {
+  font-size: 14px;
+  color: var(--text-secondary);
+  background: var(--accent-glow);
+  padding: 12px 20px;
+  border-radius: var(--radius-sm);
+  border: 1px solid rgba(99, 102, 241, 0.2);
+}
+
+.days-counter strong {
+  color: var(--accent);
+  font-size: 16px;
+}

@@ -1,0 +1,51 @@
+.option {
+  background: var(--bg-card);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 16px 20px;
+  display: flex;
+  align-items: center;
+  gap: 12px;
+  cursor: pointer;
+  transition: all 0.15s ease;
+}
+
+.option:hover:not(.disabled):not(.correct):not(.wrong) {
+  border-color: rgba(99, 102, 241, 0.4);
+}
+
+.option.correct {
+  border-color: var(--success);
+  background: rgba(34, 197, 94, 0.08);
+}
+
+.option.wrong {
+  border-color: var(--danger);
+  background: rgba(239, 68, 68, 0.08);
+}
+
+.option.disabled {
+  opacity: 0.4;
+  pointer-events: none;
+}
+
+.option-letter {
+  width: 28px;
+  height: 28px;
+  border-radius: 50%;
+  background: rgba(255, 255, 255, 0.06);
+  display: flex;
+  align-items: center;
+  justify-content: center;
+  font-size: 12px;
+  font-weight: 700;
+  flex-shrink: 0;
+}
+
+.option.correct .option-letter { background: var(--success); color: white; }
+.option.wrong .option-letter { background: var(--danger); color: white; }
+
+.option-text {
+  font-size: 14px;
+  color: var(--text-primary);
+}

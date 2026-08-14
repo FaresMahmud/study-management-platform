@@ -1,0 +1,55 @@
+.subject-progress-list {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.subject-progress-row {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.subject-row-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.subject-row-title {
+  display: flex;
+  align-items: center;
+  gap: 10px;
+}
+
+.subject-dot {
+  width: 8px;
+  height: 8px;
+  border-radius: 50%;
+  flex-shrink: 0;
+}
+
+.subject-name {
+  font-size: 14px;
+  font-weight: 700;
+  color: var(--text-primary);
+}
+
+.subject-info {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+
+.subject-row-bar-section {
+  display: flex;
+  align-items: center;
+  gap: 12px;
+}
+
+.subject-percentage {
+  font-size: 13px;
+  font-weight: 600;
+  color: var(--text-primary);
+  min-width: 32px;
+  text-align: right;
+}

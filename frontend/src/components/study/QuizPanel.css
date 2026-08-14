@@ -1,0 +1,70 @@
+.quiz-panel {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+}
+
+.quiz-progress {
+  display: flex;
+  gap: 8px;
+}
+
+.progress-dot {
+  width: 12px;
+  height: 12px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  transition: all 0.2s ease;
+}
+
+.progress-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.progress-dot.correct {
+  background: var(--success);
+  border-color: var(--success);
+}
+
+.progress-dot.wrong {
+  background: var(--danger);
+  border-color: var(--danger);
+}
+
+.quiz-question {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+  line-height: 1.5;
+}
+
+.quiz-options {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+
+.quiz-footer {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.next-btn {
+  width: 100%;
+}
+
+.explanation {
+  margin-top: 12px;
+  padding: 14px 18px;
+  background: rgba(99, 102, 241, 0.06);
+  border-left: 3px solid var(--accent);
+  border-radius: 0 var(--radius-sm) var(--radius-sm) 0;
+  font-size: 14px;
+  line-height: 1.6;
+  color: var(--text-secondary);
+}

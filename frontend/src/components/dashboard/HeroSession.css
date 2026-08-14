@@ -1,0 +1,63 @@
+.hero-session {
+  background: linear-gradient(135deg, var(--accent-glow), rgba(99, 102, 241, 0.03));
+  border: 1px solid rgba(99, 102, 241, 0.15);
+  border-radius: var(--radius);
+  padding: 32px;
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+  gap: 24px;
+  box-shadow: var(--shadow-card);
+}
+
+.hero-content {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+}
+
+.hero-tag {
+  color: var(--accent);
+  font-size: 12px;
+  font-weight: 700;
+  text-transform: uppercase;
+  letter-spacing: 1px;
+}
+
+.hero-title {
+  font-size: 24px;
+  font-weight: 800;
+  color: var(--text-primary);
+  margin: 0;
+  letter-spacing: -0.5px;
+}
+
+.hero-meta {
+  display: flex;
+  align-items: center;
+  gap: 16px;
+  flex-wrap: wrap;
+  margin-top: 4px;
+}
+
+.hero-meta-item {
+  color: var(--text-secondary);
+  font-size: 13px;
+  display: inline-flex;
+  align-items: center;
+}
+
+.hero-btn {
+  white-space: nowrap;
+  padding: 14px 28px;
+}
+
+@media (max-width: 768px) {
+  .hero-session {
+    flex-direction: column;
+    align-items: flex-start;
+  }
+  .hero-btn {
+    width: 100%;
+  }
+}

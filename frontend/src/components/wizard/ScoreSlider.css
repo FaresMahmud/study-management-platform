@@ -1,0 +1,63 @@
+.score-slider-step {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  gap: 16px;
+}
+
+.svg-container {
+  position: relative;
+  display: inline-flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.progress-svg {
+  transform: rotate(-90deg);
+}
+
+.progress-circle {
+  transition: stroke-dashoffset 0.1s ease;
+}
+
+.svg-text {
+  position: absolute;
+  font-size: 18px;
+  font-weight: 800;
+  color: var(--text-primary);
+  letter-spacing: -0.5px;
+}
+
+.range-slider {
+  width: 100%;
+  max-width: 250px;
+  -webkit-appearance: none;
+  background: var(--border);
+  height: 6px;
+  border-radius: var(--radius-sm);
+  outline: none;
+}
+
+.range-slider::-webkit-slider-thumb {
+  -webkit-appearance: none;
+  width: 18px;
+  height: 18px;
+  border-radius: 50%;
+  background: var(--accent);
+  cursor: pointer;
+  box-shadow: 0 0 10px var(--accent-glow);
+  transition: transform 0.1s ease;
+}
+
+.range-slider::-webkit-slider-thumb:hover {
+  transform: scale(1.2);
+}
+
+.motivational-phrase {
+  font-size: 13px;
+  color: var(--text-secondary);
+  font-weight: 600;
+  text-align: center;
+  margin: 0;
+  min-height: 20px;
+}

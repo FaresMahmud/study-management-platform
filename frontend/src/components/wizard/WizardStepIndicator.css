@@ -1,0 +1,26 @@
+.wizard-indicators {
+  display: flex;
+  gap: 8px;
+  justify-content: center;
+  margin-bottom: 24px;
+}
+
+.indicator-dot {
+  width: 10px;
+  height: 10px;
+  border-radius: 50%;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  transition: all 0.25s ease;
+}
+
+.indicator-dot.active {
+  background: var(--accent);
+  border-color: var(--accent);
+  box-shadow: 0 0 8px var(--accent-glow);
+}
+
+.indicator-dot.completed {
+  background: var(--success);
+  border-color: var(--success);
+}

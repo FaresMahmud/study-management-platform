@@ -1,0 +1,47 @@
+.subject-selector {
+  display: flex;
+  flex-direction: column;
+  gap: 16px;
+}
+
+.subjects-grid {
+  display: grid;
+  grid-template-columns: repeat(auto-fill, minmax(130px, 1fr));
+  gap: 10px;
+}
+
+.sub-card {
+  padding: 16px !important;
+  text-align: center;
+  font-size: 13px;
+  font-weight: 600;
+  display: flex;
+  justify-content: center;
+  align-items: center;
+}
+
+.sub-card.selected {
+  border-color: var(--accent);
+  background: var(--accent-glow);
+}
+
+.inline-add {
+  display: flex;
+  gap: 8px;
+}
+
+.new-sub-input {
+  flex: 1;
+  background: var(--bg-hover);
+  border: 1px solid var(--border);
+  border-radius: var(--radius-sm);
+  padding: 8px 12px;
+  color: var(--text-primary);
+  font-size: 13px;
+  font-family: inherit;
+}
+
+.new-sub-input:focus {
+  outline: none;
+  border-color: var(--accent);
+}
