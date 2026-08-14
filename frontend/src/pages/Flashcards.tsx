@@ -1,5 +1,5 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X } from 'lucide-react';
+import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X, Sparkles } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
 import type { Flashcard, Subject } from '../types';
@@ -19,6 +19,33 @@ export default function Flashcards() {
   const [formBack, setFormBack] = useState('');
   const [formSubjectId, setFormSubjectId] = useState<number | ''>('');
   const [formError, setFormError] = useState('');
+
+  // AI Generation States
+  const [iaModalOpen, setIaModalOpen] = useState(false);
+  const [iaSubjectId, setIaSubjectId] = useState<number | ''>('');
+  const [iaText, setIaText] = useState('');
+  const [iaLoading, setIaLoading] = useState(false);
+
+  const handleGenerateIa = async (e: React.FormEvent) => {
+    e.preventDefault();
+    if (!iaSubjectId || !iaText.trim()) return;
+    setIaLoading(true);
+    try {
+      await apiClient.post('/api/v1/ai/generate-flashcards', {
+        text: iaText,
+        subjectId: Number(iaSubjectId)
+      });
+      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
+      setIaModalOpen(false);
+      setIaText('');
+      alert('Flashcards gerados com sucesso!');
+    } catch (err) {
+      alert('Erro ao gerar flashcards com IA.');
+    } finally {
+      setIaLoading(false);
+    }
+  };
 
   const normalizeListResponse = <T,>(data: unknown): T[] => {
     if (Array.isArray(data)) {
@@ -412,10 +439,16 @@ export default function Flashcards() {
         <div style={{ display: 'flex', flexDirection: 'column', gap: '13px' }}>
           <div className="flex-between">
             <h2 style={{ fontSize: '16px', fontWeight: 600 }}>Banco de Flashcards</h2>
-            <button className="btn btn-primary btn-sm" onClick={abrirCriar}>
-              <Plus size={16} />
-              Criar Flashcard
-            </button>
+            <div style={{ display: 'flex', gap: '8px' }}>
+              <button className="btn btn-secondary btn-sm" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
+                <Sparkles size={14} style={{ marginRight: '4px' }} />
+                Gerar com IA
+              </button>
+              <button className="btn btn-primary btn-sm" onClick={abrirCriar}>
+                <Plus size={16} />
+                Criar Flashcard
+              </button>
+            </div>
           </div>
 
           {loadingAll ? (
@@ -514,6 +547,41 @@ export default function Flashcards() {
               <div className="modal-actions">
                 <button type="button" className="btn btn-secondary" onClick={fecharModal}>Cancelar</button>
                 <button type="submit" className="btn btn-primary">{editingCard ? 'Salvar' : 'Criar'}</button>
+              </div>
+            </form>
+          </div>
+        </div>
+      )}
+
+      {/* AI Generation Modal */}
+      {iaModalOpen && (
+        <div className="modal-overlay">
+          <div className="modal-content">
+            <button className="modal-close" onClick={() => setIaModalOpen(false)}><X size={20} /></button>
+            <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <Sparkles size={20} style={{ color: 'var(--accent)' }} />
+              Gerar Flashcards com IA
+            </h2>
+
+            <form onSubmit={handleGenerateIa}>
+              <div className="form-group">
+                <label className="form-label" htmlFor="ia-card-subject">Matéria Associada</label>
+                <select id="ia-card-subject" className="form-input" value={iaSubjectId} onChange={e => setIaSubjectId(e.target.value ? Number(e.target.value) : '')} required>
+                  <option value="" disabled>Selecione uma matéria</option>
+                  {subjects.map(sub => <option key={sub.id} value={sub.id}>{sub.subjectName}</option>)}
+                </select>
+              </div>
+
+              <div className="form-group">
+                <label className="form-label" htmlFor="ia-card-text">Material de Estudo / Resumo</label>
+                <textarea id="ia-card-text" className="form-input" style={{ minHeight: '140px' }} placeholder="Cole aqui um resumo ou anotações para que a IA gere automaticamente de 3 a 5 flashcards..." value={iaText} onChange={e => setIaText(e.target.value)} maxLength={3000} required />
+              </div>
+
+              <div className="modal-actions">
+                <button type="button" className="btn btn-secondary" onClick={() => setIaModalOpen(false)} disabled={iaLoading}>Cancelar</button>
+                <button type="submit" className="btn btn-primary" disabled={iaLoading}>
+                  {iaLoading ? 'Gerando Flashcards...' : 'Gerar com IA'}
+                </button>
               </div>
             </form>
           </div>
