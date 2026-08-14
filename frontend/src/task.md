@@ -46,4 +46,5 @@
 - `[x]` 22. Integrar todas as telas clássicas do projeto principal (Workspace de PDFs, Editor de resumos, Podcasts gerados por IA, FocusMode) sob a barra lateral persistente usando navegação por rotas estruturadas
 - `[x]` 23. Implementar o Modo Socrático no Tutor de IA (RAG) no backend e no frontend (checkbox de ativação no chat)
 - `[x]` 24. Implementar Player de Podcast Global contínuo (Zustand store + audio instance global) na Sidebar persistente
-- `[x]` 25. Validar e compilar build final (Sucesso completo: 0 erros do TS/Vite)
+- `[x]` 25. Implementar Snap & Solve no Chat do Tutor IA (Envio de Imagem + Processamento Multimodal do Gemini no Backend)
+- `[x]` 26. Validar e compilar build final (Sucesso completo: 0 erros do TS/Vite)
