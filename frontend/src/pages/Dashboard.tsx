@@ -122,8 +122,8 @@ export default function Dashboard() {
   }
 
   const activities = [
-    { ...mockActivities[0], title: 'Texto Inteligente', description: 'Leitura e quiz rápido', onClick: () => navigate('/study') },
-    { ...mockActivities[1], title: 'Simulado', description: 'Modo prova completo', onClick: () => navigate('/exam') },
+    { ...mockActivities[0], title: 'Área de Estudos', description: 'Leitura e resumos de PDFs', onClick: () => navigate('/workspace') },
+    { ...mockActivities[1], title: 'Simulados', description: 'Simulado de prova completo', onClick: () => navigate('/simulation') },
     { ...mockActivities[2], title: 'Revisar', description: 'Revisar material teórico', onClick: () => navigate('/workspace') },
     { ...mockActivities[3], title: 'Flashcards', description: 'Revisar cards de hoje', onClick: () => navigate('/flashcards') },
   ];
@@ -154,7 +154,7 @@ export default function Dashboard() {
               timeRemaining="30m"
               quizzesPending={1}
               targetScore={latestGoal.targetMastery || 80}
-              onContinue={() => navigate(isSoon ? '/exam' : '/study')}
+              onContinue={() => navigate(isSoon ? '/simulation' : '/workspace')}
             />
           </section>
 
