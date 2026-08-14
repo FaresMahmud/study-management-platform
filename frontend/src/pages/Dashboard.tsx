@@ -27,17 +27,19 @@ export default function Dashboard() {
   const [chatInput, setChatInput] = useState('');
   const [chatMessages, setChatMessages] = useState<{ sender: 'user' | 'tutor'; text: string; sources?: string[] }[]>([]);
   const [chatLoading, setChatLoading] = useState(false);
+  const [socraticMode, setSocraticMode] = useState(false);
 
   const { data: subjects, loading: loadSub, error: errSub, refetch: refSub } = useApi<any[]>('/api/subjects');
   const { data: sessions, loading: loadSes, error: errSes, refetch: refSes } = useApi<any[]>('/api/study-sessions');
   const { data: goals, loading: loadGoals, error: errGoals, refetch: refGoals } = useApi<any[]>('/api/goals');
+  const { data: prepsData, loading: loadPreps, error: errPreps, refetch: refPreps } = useApi<any>('/api/v1/exam-preps');
 
   const gamification = useGamification(sessions || [], goals || []);
 
-  const loading = loadSub || loadSes || loadGoals;
-  const error = errSub || errSes || errGoals;
+  const loading = loadSub || loadSes || loadGoals || loadPreps;
+  const error = errSub || errSes || errGoals || errPreps;
 
-  const handleRefetch = () => { refSub(); refSes(); refGoals(); };
+  const handleRefetch = () => { refSub(); refSes(); refGoals(); refPreps(); };
 
   const handleSendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -46,11 +48,26 @@ export default function Dashboard() {
     setChatMessages(prev => [...prev, { sender: 'user', text: userText }]);
     setChatInput('');
     setChatLoading(true);
+
+    const preps = prepsData?.content || [];
+    const activePrep = preps.length > 0 ? preps[0] : null;
+    const activeExamPrepId = activePrep?.id || null;
+
+    if (!activeExamPrepId) {
+      setChatMessages(prev => [...prev, { sender: 'tutor', text: 'Olá! Para usar o Tutor Inteligente, crie um plano de estudos ("+ Nova Prova") ou faça upload de PDF associado a uma matéria primeiro.' }]);
+      setChatLoading(false);
+      return;
+    }
+
     try {
-      const response = await apiClient.post('/api/v1/ai/tutor', { message: userText });
-      setChatMessages(prev => [...prev, { sender: 'tutor', text: response.data.response, sources: response.data.sources }]);
+      const response = await apiClient.post('/api/v1/chat/ask', {
+        examPrepId: activeExamPrepId,
+        question: userText,
+        socratic: socraticMode
+      });
+      setChatMessages(prev => [...prev, { sender: 'tutor', text: response.data.answer, sources: response.data.sources }]);
     } catch (err) {
-      setChatMessages(prev => [...prev, { sender: 'tutor', text: 'Desculpe, ocorreu um erro ao processar sua pergunta.' }]);
+      setChatMessages(prev => [...prev, { sender: 'tutor', text: 'Desculpe, ocorreu um erro ao obter resposta do tutor de estudos.' }]);
     } finally {
       setChatLoading(false);
     }
@@ -151,7 +168,13 @@ export default function Dashboard() {
                   <span>Suporte 24/7 de Estudos</span>
                 </div>
               </div>
-              <button onClick={() => setChatOpen(false)} className="chat-close-btn"><X size={16} /></button>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+                <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', cursor: 'pointer', color: socraticMode ? 'var(--accent-light)' : 'var(--text-muted)' }}>
+                  <input type="checkbox" checked={socraticMode} onChange={e => setSocraticMode(e.target.checked)} style={{ width: '12px', height: '12px' }} />
+                  <span>Socrático</span>
+                </label>
+                <button onClick={() => setChatOpen(false)} className="chat-close-btn"><X size={16} /></button>
+              </div>
             </div>
 
             <div className="chat-messages-container">

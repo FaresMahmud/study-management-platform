@@ -13,4 +13,5 @@ import lombok.NoArgsConstructor;
 public class ChatRequestDTO {
     private Long examPrepId;
     private String question;
+    private Boolean socratic;
 }

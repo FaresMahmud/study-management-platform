@@ -21,8 +21,8 @@ public class RAGChatService {
     private final VectorStoreService vectorStoreService;
     private final GeminiService geminiService;
 
-    public ChatResponseDTO askQuestion(Long examPrepId, String question) {
-        log.info("Processando pergunta RAG para o examPrepId: {}. Pergunta: {}", examPrepId, question);
+    public ChatResponseDTO askQuestion(Long examPrepId, String question, Boolean socratic) {
+        log.info("Processando pergunta RAG para o examPrepId: {}. Pergunta: {}. Modo Socrático: {}", examPrepId, question, socratic);
 
         // Busca os 5 chunks mais relevantes no ChromaDB correspondentes ao exame ativo
         List<PdfChunkSimilarity> similarities = vectorStoreService.searchSimilar(examPrepId, question, 5);
@@ -66,6 +66,10 @@ public class RAGChatService {
                 "1. Responda de forma clara, didática e estruturada.\n" +
                 "2. Baseie sua resposta apenas no Contexto de Estudos fornecido. Não invente fatos ou traga informações externas que contradigam o contexto.\n" +
                 "3. Se as informações fornecidas no contexto não forem suficientes para responder à pergunta de forma completa, diga educadamente que o material carregado não tem detalhes suficientes sobre esse ponto específico, mas responda o que for possível com base no contexto.";
+
+        if (Boolean.TRUE.equals(socratic)) {
+            systemPrompt += "\n4. MODO SOCRÁTICO ATIVO: Não entregue a resposta pronta nem a resolução direta da questão do estudante. Em vez disso, explique teoricamente o conceito por trás da dúvida de forma simplificada e faça uma ou mais perguntas que provoquem a reflexão ou orientem o raciocínio do aluno para que ele consiga deduzir e chegar à resposta correta por conta própria.";
+        }
 
         try {
             // Chama a API do Gemini com o prompt montado
