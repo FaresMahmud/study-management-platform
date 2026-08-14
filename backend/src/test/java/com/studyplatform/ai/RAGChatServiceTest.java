@@ -46,7 +46,7 @@ public class RAGChatServiceTest {
         when(vectorStoreService.searchSimilar(anyLong(), anyString(), anyInt()))
                 .thenReturn(Collections.emptyList());
 
-        ChatResponseDTO response = ragChatService.askQuestion(examPrepId, question);
+        ChatResponseDTO response = ragChatService.askQuestion(examPrepId, question, false, null, null);
 
         assertNotNull(response);
         assertTrue(response.getAnswer().contains("não encontramos nenhum material de estudo"));
@@ -76,10 +76,12 @@ public class RAGChatServiceTest {
         when(vectorStoreService.searchSimilar(eq(examPrepId), eq(question), eq(5)))
                 .thenReturn(List.of(similarity));
 
+        when(geminiService.isConfigured()).thenReturn(true);
+
         when(geminiService.generateContent(anyString()))
                 .thenReturn("A fotossíntese é o processo de produção de energia das plantas.");
 
-        ChatResponseDTO response = ragChatService.askQuestion(examPrepId, question);
+        ChatResponseDTO response = ragChatService.askQuestion(examPrepId, question, false, null, null);
 
         assertNotNull(response);
         assertEquals("A fotossíntese é o processo de produção de energia das plantas.", response.getAnswer());
