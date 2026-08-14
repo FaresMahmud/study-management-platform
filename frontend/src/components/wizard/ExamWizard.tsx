@@ -24,6 +24,8 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
   const [matType, setMatType] = useState<'pdf' | 'text' | 'scratch'>('scratch');
   const [text, setText] = useState('');
   const [file, setFile] = useState<File | null>(null);
+  const [loading, setLoading] = useState(false);
+  const [errorMsg, setErrorMsg] = useState('');
 
   const loadSubjects = () => apiClient.get<Subject[]>('/api/subjects').then(r => setSubjects(r.data));
   useEffect(() => { loadSubjects(); }, []);
@@ -32,25 +34,41 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
 
   const handleSubmit = async () => {
     if (!subjectId) return;
-    await apiClient.post('/api/goals', { subjectId, targetMastery: score, endDateGoal: date, title: `Meta de Estudo - ${score}%` });
-    await apiClient.post('/api/study-sessions', { subjectId, duration: 30, observations: 'Sessão de estudo inicial gerada pelo Planejamento de Provas.' });
-    
-    if (matType === 'pdf' && file) {
-      const formData = new FormData();
-      formData.append('file', file);
-      formData.append('subjectId', String(subjectId));
-      await apiClient.post('/api/files/upload', formData, {
-        headers: { 'Content-Type': 'multipart/form-data' }
+    setLoading(true);
+    setErrorMsg('');
+    try {
+      const todayStr = new Date().toISOString().split('T')[0];
+      await apiClient.post('/api/goals', { 
+        subjectId, 
+        targetMastery: score, 
+        startDateGoal: todayStr, 
+        endDateGoal: date, 
+        title: `Meta de Estudo - ${score}%` 
       });
-    } else if (matType === 'text' && text.trim()) {
-      await apiClient.post('/api/summaries', {
-        title: 'Material Teórico - Onboarding',
-        content: text,
-        subjectId
-      });
+      await apiClient.post('/api/study-sessions', { subjectId, duration: 30, observations: 'Sessão de estudo inicial gerada pelo Planejamento de Provas.' });
+      
+      if (matType === 'pdf' && file) {
+        const formData = new FormData();
+        formData.append('file', file);
+        formData.append('subjectId', String(subjectId));
+        await apiClient.post('/api/files/upload', formData, {
+          headers: { 'Content-Type': 'multipart/form-data' }
+        });
+      } else if (matType === 'text' && text.trim()) {
+        await apiClient.post('/api/summaries', {
+          title: 'Material Teórico - Onboarding',
+          content: text,
+          subjectId
+        });
+      }
+      
+      onFinished();
+    } catch (err: any) {
+      console.error('Erro no onboarding:', err);
+      setErrorMsg(err.response?.data?.message || 'Erro ao criar plano de estudos. Verifique se os dados estão corretos.');
+    } finally {
+      setLoading(false);
     }
-    
-    onFinished();
   };
 
   return (
@@ -58,9 +76,15 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
       <Card className="wizard-modal">
         <header className="wizard-header">
           <h2>Planeje seu Objetivo</h2>
-          <button className="close-btn" onClick={onClose}>×</button>
+          <button className="close-btn" onClick={onClose} disabled={loading}>×</button>
         </header>
         <WizardStepIndicator currentStep={step} totalSteps={4} />
+
+        {errorMsg && (
+          <div style={{ padding: '8px 12px', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--danger)', margin: '0 24px 12px 24px', borderRadius: '8px', fontSize: '13px' }}>
+            {errorMsg}
+          </div>
+        )}
 
         <div className="wizard-step-content">
           {step === 1 && <SubjectSelector subjects={subjects} selectedId={subjectId} onSelect={id => setSubjectId(Number(id))} onCreateSubject={createSubject} />}
@@ -70,11 +94,13 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
         </div>
 
         <footer className="wizard-footer-actions">
-          {step > 1 && <Button variant="secondary" onClick={() => setStep(step - 1)}>Voltar</Button>}
+          {step > 1 && <Button variant="secondary" onClick={() => setStep(step - 1)} disabled={loading}>Voltar</Button>}
           {step < 4 ? (
             <Button variant="primary" onClick={() => setStep(step + 1)} disabled={step === 1 ? !subjectId : step === 2 ? !date : false} className="next-btn-wizard">Continuar</Button>
           ) : (
-            <Button variant="primary" onClick={handleSubmit} className="next-btn-wizard">Criar plano de estudos</Button>
+            <Button variant="primary" onClick={handleSubmit} className="next-btn-wizard" disabled={loading}>
+              {loading ? 'Salvando...' : 'Criar plano de estudos'}
+            </Button>
           )}
         </footer>
       </Card>
