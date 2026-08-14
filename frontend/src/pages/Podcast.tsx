@@ -1,24 +1,32 @@
-import React, { useState, useRef, useEffect } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { ExamPrep } from '../types';
 import { Play, Pause, Volume2, VolumeX, Download, Sparkles, Clock, Radio, ArrowLeft, Headphones, Check } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { triggerConfetti } from '../utils/confetti';
+import { usePodcastStore, globalAudio } from '../store/podcastStore';
 
 export default function Podcast() {
   const [selectedExamPrepId, setSelectedExamPrepId] = useState<number | ''>('');
   const [difficultyLevel, setDifficultyLevel] = useState<'BASIC' | 'MEDIUM' | 'ADVANCED'>('MEDIUM');
   
-  // Estados do Player de Áudio
-  const [isPlaying, setIsPlaying] = useState(false);
-  const [currentTime, setCurrentTime] = useState(0);
-  const [duration, setDuration] = useState(0);
+  // Get global store state
+  const {
+    currentTrackUrl,
+    currentTrackTitle,
+    isPlaying,
+    currentTime,
+    duration,
+    playTrack,
+    pauseTrack,
+    resumeTrack,
+    setProgress
+  } = usePodcastStore();
+
   const [playbackRate, setPlaybackRate] = useState(1.0);
   const [volume, setVolume] = useState(0.8);
   const [isMuted, setIsMuted] = useState(false);
-
-  const audioRef = useRef<HTMLAudioElement | null>(null);
 
   // Queries
   const { data: examPreps = [] } = useQuery<ExamPrep[]>({
@@ -48,23 +56,17 @@ export default function Podcast() {
     },
     onSuccess: (data) => {
       triggerConfetti();
-      // Reinicia o player caso estivesse tocando
-      if (audioRef.current) {
-        audioRef.current.pause();
-        audioRef.current.src = `${apiClient.defaults.baseURL || 'http://localhost:8080'}${data.playUrl}`;
-        audioRef.current.load();
-        setIsPlaying(false);
-        setCurrentTime(0);
-      }
+      const trackUrl = `${apiClient.defaults.baseURL || 'http://localhost:8080'}${data.playUrl}`;
+      const trackTitle = examPreps.find(e => e.id === selectedExamPrepId)?.title || 'Briefing de Estudos';
+      playTrack(trackUrl, trackTitle);
     }
   });
 
   // Query para buscar podcast existente
-  const { data: currentPodcast, isLoading: isPodcastLoading, refetch: refetchPodcast } = useQuery<any>({
+  const { data: currentPodcast, isLoading: isPodcastLoading } = useQuery<any>({
     queryKey: ['podcast', selectedExamPrepId, difficultyLevel],
     queryFn: async () => {
       if (!selectedExamPrepId) return null;
-      // Fazemos o POST para verificar se já existe ou obter o script (sem forçar nova regeneração se não necessário)
       const res = await apiClient.post<any>('/api/v1/ai/podcast/generate', {
         examPrepId: selectedExamPrepId,
         difficultyLevel
@@ -74,82 +76,49 @@ export default function Podcast() {
     enabled: !!selectedExamPrepId,
   });
 
-  useEffect(() => {
-    if (currentPodcast?.playUrl && audioRef.current) {
-      audioRef.current.src = `${apiClient.defaults.baseURL || 'http://localhost:8080'}${currentPodcast.playUrl}`;
-      audioRef.current.load();
-      setIsPlaying(false);
-      setCurrentTime(0);
-    }
-  }, [currentPodcast]);
-
-  // Configura listeners do áudio
-  useEffect(() => {
-    const audio = audioRef.current;
-    if (!audio) return;
-
-    const onTimeUpdate = () => setCurrentTime(audio.currentTime);
-    const onDurationChange = () => setDuration(audio.duration || 0);
-    const onEnded = () => setIsPlaying(false);
-
-    audio.addEventListener('timeupdate', onTimeUpdate);
-    audio.addEventListener('durationchange', onDurationChange);
-    audio.addEventListener('ended', onEnded);
-
-    return () => {
-      audio.removeEventListener('timeupdate', onTimeUpdate);
-      audio.removeEventListener('durationchange', onDurationChange);
-      audio.removeEventListener('ended', onEnded);
-    };
-  }, []);
+  const podcastAudioUrl = currentPodcast?.playUrl 
+    ? `${apiClient.defaults.baseURL || 'http://localhost:8080'}${currentPodcast.playUrl}`
+    : '';
 
   // Handlers do Player
   const togglePlay = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
+    if (!podcastAudioUrl) return;
 
-    if (isPlaying) {
-      audio.pause();
-      setIsPlaying(false);
+    if (currentTrackUrl === podcastAudioUrl) {
+      if (isPlaying) {
+        pauseTrack();
+      } else {
+        resumeTrack();
+      }
     } else {
-      audio.play().catch(err => console.log('Erro ao tocar áudio:', err));
-      setIsPlaying(true);
+      const trackTitle = examPreps.find(e => e.id === selectedExamPrepId)?.title || 'Briefing de Estudos';
+      playTrack(podcastAudioUrl, trackTitle);
     }
   };
 
   const handleTimeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    const newTime = Number(e.target.value);
-    audio.currentTime = newTime;
-    setCurrentTime(newTime);
+    setProgress(Number(e.target.value));
   };
 
   const handleSpeedToggle = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
     let nextRate = 1.0;
     if (playbackRate === 1.0) nextRate = 1.25;
     else if (playbackRate === 1.25) nextRate = 1.5;
     else if (playbackRate === 1.5) nextRate = 2.0;
     
-    audio.playbackRate = nextRate;
+    globalAudio.playbackRate = nextRate;
     setPlaybackRate(nextRate);
   };
 
   const handleVolumeChange = (e: React.ChangeEvent<HTMLInputElement>) => {
-    const audio = audioRef.current;
-    if (!audio) return;
     const v = Number(e.target.value);
-    audio.volume = v;
+    globalAudio.volume = v;
     setVolume(v);
     setIsMuted(v === 0);
   };
 
   const toggleMute = () => {
-    const audio = audioRef.current;
-    if (!audio) return;
-    audio.muted = !isMuted;
+    globalAudio.muted = !isMuted;
     setIsMuted(!isMuted);
   };
 
@@ -167,10 +136,6 @@ export default function Podcast() {
       difficultyLevel
     });
   };
-
-  const podcastAudioUrl = currentPodcast?.playUrl 
-    ? `${apiClient.defaults.baseURL || 'http://localhost:8080'}${currentPodcast.playUrl}`
-    : '';
 
   return (
     <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px' }}>
@@ -266,7 +231,6 @@ export default function Podcast() {
         {/* COLUNA DIREITA: PLAYER E ROTEIRO */}
         <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '21px', border: '1px solid var(--border-color)', minHeight: '380px', position: 'relative' }}>
           
-          <audio ref={audioRef} style={{ display: 'none' }} />
 
           {isPodcastLoading || generatePodcastMutation.isPending ? (
             <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '16px' }}>
