@@ -1,4 +1,5 @@
 import React from 'react';
+import { pluralize } from '../../utils/format';
 import './DatePicker.css';
 
 interface DatePickerProps {
@@ -24,7 +25,7 @@ export function DatePicker({ selectedDate, onSelectDate }: DatePickerProps) {
       />
       {selectedDate && (
         <div className="days-counter">
-          Faltam <strong>{getDaysRemaining()}</strong> dias para o seu objetivo.
+          Faltam <strong>{pluralize(getDaysRemaining(), 'dia')}</strong> para o seu objetivo.
         </div>
       )}
     </div>

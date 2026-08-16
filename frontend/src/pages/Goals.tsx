@@ -2,6 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import axios from 'axios';
 import { Calendar, Edit2, Plus, Target, Trash2, X } from 'lucide-react';
 import React, { useState } from 'react';
+import { pluralize } from '../utils/format';
 import { apiClient, normalizeListResponse } from '../api/client';
 import type { Goal, SpringPage, Subject } from '../types';
 
@@ -221,8 +222,7 @@ export default function Goals() {
 
     if (diffDays < 0) return 'Expirada';
     if (diffDays === 0) return 'Termina hoje';
-    if (diffDays === 1) return '1 dia restante';
-    return `${diffDays} dias restantes`;
+    return `${pluralize(diffDays, 'dia')} restante${diffDays === 1 ? '' : 's'}`;
   };
 
   const isLoading = isLoadingGoals || isLoadingSubjects;

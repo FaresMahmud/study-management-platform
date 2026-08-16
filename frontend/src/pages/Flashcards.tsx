@@ -3,6 +3,7 @@ import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X, Sparkles } fr
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
 import type { Flashcard, Subject } from '../types';
+import { pluralize } from '../utils/format';
 
 export default function Flashcards() {
   const queryClient = useQueryClient();
@@ -299,9 +300,13 @@ export default function Flashcards() {
         </div>
 
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
-          <button className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setActiveTab('review')}>
+          <button 
+            className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'} btn-sm`} 
+            onClick={() => setActiveTab('review')}
+            disabled={dueCards.length === 0}
+          >
             <Layers size={16} style={{ marginRight: '4px' }} />
-            Revisar ({dueCards.length})
+            {dueCards.length === 0 ? 'Revisões em dia ✅' : `Revisar (${dueCards.length})`}
           </button>
           <button className={`btn ${activeTab === 'manage' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setActiveTab('manage')}>
             Gerenciar Todos ({allCards.length})
@@ -363,7 +368,7 @@ export default function Flashcards() {
             <div className="card empty-state" style={{ textAlign: 'center', padding: '34px' }}>
               <Check size={48} style={{ color: 'var(--success)', marginBottom: '13px' }} />
               <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Sessão Concluída!</h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '21px' }}>Você revisou {reviewedCount} cartões nesta rodada.</p>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '21px' }}>Você revisou {pluralize(reviewedCount, 'cartão', 'cartões')} nesta rodada.</p>
               <button className="btn btn-primary" onClick={reiniciarRevisoes}>Reiniciar Sessão</button>
             </div>
           ) : (
@@ -409,15 +414,15 @@ export default function Flashcards() {
                     </button>
                     <button className="fsrs-btn hard" onClick={() => handleReview('hard')}>
                       <span>Difícil (2)</span>
-                      <small style={{ fontSize: '10px', opacity: 0.8 }}>2 dias</small>
+                      <small style={{ fontSize: '10px', opacity: 0.8 }}>{pluralize(2, 'dia')}</small>
                     </button>
                     <button className="fsrs-btn good" onClick={() => handleReview('good')}>
                       <span>Bom (3)</span>
-                      <small style={{ fontSize: '10px', opacity: 0.8 }}>5 dias</small>
+                      <small style={{ fontSize: '10px', opacity: 0.8 }}>{pluralize(5, 'dia')}</small>
                     </button>
                     <button className="fsrs-btn easy" onClick={() => handleReview('easy')}>
                       <span>Fácil (4)</span>
-                      <small style={{ fontSize: '10px', opacity: 0.8 }}>12 dias</small>
+                      <small style={{ fontSize: '10px', opacity: 0.8 }}>{pluralize(12, 'dia')}</small>
                     </button>
                   </>
                 )}
@@ -434,7 +439,7 @@ export default function Flashcards() {
                 return (
                   <div key={subj.id} className="card" style={{ padding: '16px', borderLeft: `4px solid ${subj.color}` }}>
                     <h4 style={{ fontSize: '14px', fontWeight: 700 }}>{subj.subjectName}</h4>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{count} cartões carregados</p>
+                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{pluralize(count, 'cartão', 'cartões')} carregados</p>
 
                     <button
                       onClick={() => { setActiveTab('review'); reiniciarRevisoes(); }}

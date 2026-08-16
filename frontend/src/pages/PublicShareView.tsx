@@ -4,6 +4,7 @@ import { useQuery } from '@tanstack/react-query';
 import axios from 'axios';
 import { Calendar, Target, Clock, Sparkles, BookOpen, AlertCircle, ArrowRight } from 'lucide-react';
 import type { ExamPrep } from '../types';
+import { pluralize } from '../utils/format';
 
 export default function PublicShareView() {
   const { token } = useParams<{ token: string }>();
@@ -96,7 +97,7 @@ export default function PublicShareView() {
 
           {/* TIMER DE CONTAGEM REGRESSIVA */}
           <div style={{ fontSize: '56px', fontWeight: 900, fontFamily: 'monospace', color: 'var(--text-primary)', margin: '13px 0' }}>
-            {isPast ? `${absDias}d Atrás` : `${diasRestantes} Dias`}
+            {isPast ? `${pluralize(absDias, 'dia')} atrás` : pluralize(diasRestantes, 'dia')}
           </div>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', margin: 0 }}>
             {isPast ? 'Este exame já ocorreu.' : 'Restantes para a data da prova. Mantenha o foco!'}

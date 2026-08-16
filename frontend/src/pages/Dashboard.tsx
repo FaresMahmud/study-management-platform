@@ -15,6 +15,7 @@ import { useAuthStore } from '../store/authStore';
 import { apiClient } from '../api/client';
 import { mockActivities } from '../components/dashboard/mocks';
 import ExamWizard from '../components/wizard/ExamWizard';
+import { pluralize } from '../utils/format';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -137,7 +138,7 @@ export default function Dashboard() {
             <p className="dashboard-subtitle">Zona: <span className={`zone-badge ${gamification.zone}`}>{gamification.zone}</span></p>
           </div>
           <div className="header-actions">
-            <span className="streak-badge">🔥 {gamification.streakDays} dias</span>
+            <span className="streak-badge">🔥 {pluralize(gamification.streakDays, 'dia')}</span>
             <Button variant="primary" onClick={() => setShowWizard(true)}>+ Nova Prova</Button>
           </div>
         </div>
@@ -156,7 +157,7 @@ export default function Dashboard() {
           <section className="dashboard-section">
             <HeroSession
               subject={latestGoal.subject?.subjectName || 'MATÉRIA GERAL'}
-              topic={isSoon ? `Sua prova de ${latestGoal.subject?.subjectName || 'Matéria'} é em ${daysRemaining} dias! 🚨` : latestGoal.title}
+              topic={isSoon ? `Sua prova de ${latestGoal.subject?.subjectName || 'Matéria'} é em ${pluralize(daysRemaining, 'dia')}! 🚨` : latestGoal.title}
               timeRemaining="30m"
               quizzesPending={1}
               targetScore={latestGoal.targetMastery || 80}

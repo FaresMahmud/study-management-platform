@@ -18,6 +18,7 @@ import {
   X
 } from 'lucide-react';
 import { Link, useLocation } from 'react-router-dom';
+import { pluralize } from '../utils/format';
 import { apiClient, normalizeListResponse } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import type { SpringPage, StudySession } from '../types';
@@ -152,9 +153,9 @@ function UserProfile({ userName, logout, streak, isMobile, onCloseMobileMenu }: 
     return (
       <div className="navbar-menu-user">
         {streak > 0 && (
-          <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
+          <div className="streak-badge" title={`${pluralize(streak, 'dia', 'dias')} seguidos de estudo!`}>
             <Flame size={18} className="flame-icon animate-pulse" />
-            <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
+            <span>{pluralize(streak, 'Dia', 'Dias')}</span>
           </div>
         )}
         <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', color: 'var(--text-secondary)' }}>
@@ -184,9 +185,9 @@ function UserProfile({ userName, logout, streak, isMobile, onCloseMobileMenu }: 
   return (
     <div className="navbar-user">
       {streak > 0 && (
-        <div className="streak-badge" title={`${streak} dias seguidos de estudo!`}>
+        <div className="streak-badge" title={`${pluralize(streak, 'dia', 'dias')} seguidos de estudo!`}>
           <Flame size={18} className="flame-icon animate-pulse" />
-          <span>{streak} {streak === 1 ? 'Dia' : 'Dias'}</span>
+          <span>{pluralize(streak, 'Dia', 'Dias')}</span>
         </div>
       )}
 

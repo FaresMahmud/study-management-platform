@@ -1,6 +1,7 @@
 import React from 'react';
 import { Target, Play } from 'lucide-react';
 import { Button } from '../ui/Button';
+import { pluralize } from '../../utils/format';
 import './HeroSession.css';
 
 interface HeroSessionProps {
@@ -20,7 +21,7 @@ export function HeroSession({ subject, topic, timeRemaining, quizzesPending, tar
         <h2 className="hero-title">{topic}</h2>
         <div className="hero-meta">
           <span className="hero-meta-item">⏱️ {timeRemaining} restante</span>
-          <span className="hero-meta-item">📝 {quizzesPending} quizzes</span>
+          <span className="hero-meta-item">📝 {pluralize(quizzesPending, 'quiz', 'quizzes')}</span>
           <span className="hero-meta-item"><Target size={14} style={{ marginRight: '4px' }} /> Meta: {targetScore}%</span>
         </div>
       </div>
