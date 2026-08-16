@@ -39,6 +39,7 @@ public class AiService {
     private final GeminiService geminiService;
     private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
     private final com.studyplatform.file.PdfChunkRepository pdfChunkRepository;
+    private final com.studyplatform.file.UploadedFileRepository uploadedFileRepository;
     private final AiGeneratedContentRepository aiGeneratedContentRepository;
     private final TtsService ttsService;
     private final com.studyplatform.shared.security.SecurityService securityService;
@@ -47,10 +48,6 @@ public class AiService {
         return securityService.getAuthenticatedUser();
     }
 
-    @org.springframework.cache.annotation.Cacheable(
-        value = "aiContent",
-        key = "T(org.springframework.util.DigestUtils).md5DigestAsHex(#text.getBytes()) + '_' + #subjectId"
-    )
     @Transactional
     public List<FlashcardResponseDTO> generateFlashcards(String text, Long subjectId) {
         User user = getAuthenticatedUser();
@@ -61,17 +58,50 @@ public class AiService {
             throw new BusinessException("upgrade_required");
         }
 
-        if (text == null || text.trim().isEmpty()) {
-            throw new BusinessException("O texto para geração de flashcards não pode ser vazio.");
+        String sourceText = text;
+        if (sourceText == null || sourceText.trim().isEmpty()) {
+            List<com.studyplatform.file.UploadedFile> files = uploadedFileRepository.findByUserIdAndSubjectId(user.getId(), subjectId);
+            if (files.isEmpty()) {
+                throw new BusinessException("Você ainda não fez upload de nenhum arquivo PDF nesta matéria. Faça upload de pelo menos um arquivo na Área de Estudos antes de gerar flashcards com IA.");
+            }
+
+            StringBuilder sb = new StringBuilder();
+            for (com.studyplatform.file.UploadedFile file : files) {
+                List<com.studyplatform.file.PdfChunk> chunks = pdfChunkRepository.findByUploadedFileId(file.getId());
+                for (com.studyplatform.file.PdfChunk chunk : chunks) {
+                    sb.append(chunk.getChunkText()).append("\n");
+                    if (sb.length() > 20000) break;
+                }
+                if (sb.length() > 20000) break;
+            }
+
+            if (sb.isEmpty()) {
+                throw new BusinessException("Nenhum texto pôde ser extraído dos PDFs desta matéria. Certifique-se de que os PDFs contêm texto legível.");
+            }
+            sourceText = sb.toString();
+        } else if (sourceText.trim().length() < 100) {
+            List<com.studyplatform.file.UploadedFile> files = uploadedFileRepository.findByUserIdAndSubjectId(user.getId(), subjectId);
+            StringBuilder sb = new StringBuilder();
+            for (com.studyplatform.file.UploadedFile file : files) {
+                List<com.studyplatform.file.PdfChunk> chunks = pdfChunkRepository.findByUploadedFileId(file.getId());
+                for (com.studyplatform.file.PdfChunk chunk : chunks) {
+                    sb.append(chunk.getChunkText()).append("\n");
+                    if (sb.length() > 20000) break;
+                }
+                if (sb.length() > 20000) break;
+            }
+            if (!sb.isEmpty()) {
+                sourceText = "Instrução Especial do Usuário: " + text.trim() + "\n\nMaterial Teórico:\n" + sb.toString();
+            }
         }
 
         // Se a chave não estiver configurada, gera perguntas simuladas (mock inteligente) para não quebrar a experiência
         if (!geminiService.isConfigured()) {
-            return generateMockFlashcards(text, user, subject);
+            return generateMockFlashcards(sourceText, user, subject);
         }
 
         try {
-            List<Map<String, String>> cardsData = callGeminiApi(text);
+            List<Map<String, String>> cardsData = callGeminiApi(sourceText);
             List<FlashcardResponseDTO> responseDTOs = new ArrayList<>();
 
             for (Map<String, String> card : cardsData) {
@@ -96,7 +126,7 @@ public class AiService {
             return responseDTOs;
         } catch (Exception e) {
             // Em caso de falha de conexão ou cota na API do Gemini, faz o fallback para o mock inteligente
-            return generateMockFlashcards(text, user, subject);
+            return generateMockFlashcards(sourceText, user, subject);
         }
     }
 

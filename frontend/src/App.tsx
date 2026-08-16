@@ -53,7 +53,8 @@ function ProtectedLayout() {
   const getActiveTab = () => {
     const path = location.pathname;
     if (path === '/') return 'dashboard';
-    if (path.startsWith('/workspace') || path.startsWith('/subjects')) return 'subjects';
+    if (path.startsWith('/workspace')) return 'workspace';
+    if (path.startsWith('/subjects')) return 'subjects';
     if (path.startsWith('/flashcards')) return 'flashcards';
     if (path.startsWith('/analytics')) return 'analytics';
     return 'settings';
@@ -61,7 +62,8 @@ function ProtectedLayout() {
 
   const handleTabChange = (tab: string) => {
     if (tab === 'dashboard') navigate('/');
-    if (tab === 'subjects') navigate('/workspace');
+    if (tab === 'workspace') navigate('/workspace');
+    if (tab === 'subjects') navigate('/subjects');
     if (tab === 'flashcards') navigate('/flashcards');
     if (tab === 'analytics') navigate('/analytics');
     if (tab === 'settings') navigate('/focus');

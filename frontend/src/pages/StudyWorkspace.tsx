@@ -75,6 +75,7 @@ export default function StudyWorkspace() {
       return (await apiClient.post<Summary>('/api/summaries', newSummary)).data;
     },
     onSuccess: (data) => {
+      queryClient.setQueryData<Summary[]>(['summaries-by-subject', selectedSubjectId], (old = []) => [...old, data]);
       queryClient.invalidateQueries({ queryKey: ['summaries-by-subject', selectedSubjectId] });
       setActiveSummaryId(data.id); // Foca no resumo recém-criado
     }

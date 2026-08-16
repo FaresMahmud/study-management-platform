@@ -28,7 +28,7 @@ export default function Flashcards() {
 
   const handleGenerateIa = async (e: React.FormEvent) => {
     e.preventDefault();
-    if (!iaSubjectId || !iaText.trim()) return;
+    if (!iaSubjectId) return;
     setIaLoading(true);
     try {
       await apiClient.post('/api/v1/ai/generate-flashcards', {
@@ -298,13 +298,24 @@ export default function Flashcards() {
           <p className="subtitle" style={{ fontSize: '13px' }}>Memorização ativa e repetição espaçada usando FSRS</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px' }}>
+        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setActiveTab('review')}>
-            <Layers size={16} />
+            <Layers size={16} style={{ marginRight: '4px' }} />
             Revisar ({dueCards.length})
           </button>
           <button className={`btn ${activeTab === 'manage' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setActiveTab('manage')}>
             Gerenciar Todos ({allCards.length})
+          </button>
+          
+          <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 8px' }} />
+          
+          <button className="btn btn-secondary btn-sm" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ background: 'linear-gradient(to right, var(--primary), var(--secondary))', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <Sparkles size={14} />
+            Gerar com IA
+          </button>
+          <button className="btn btn-secondary btn-sm" onClick={() => { setEditingCard(null); setFormFront(''); setFormBack(''); setFormSubjectId(subjects.length > 0 ? subjects[0].id : ''); setModalOpen(true); }}>
+            <Plus size={14} style={{ marginRight: '4px' }} />
+            Criar Manual
           </button>
         </div>
       </div>
@@ -340,7 +351,13 @@ export default function Flashcards() {
               <Check size={48} style={{ color: 'var(--success)', marginBottom: '13px' }} />
               <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Nada para revisar hoje! 🎉</h2>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '21px' }}>Suas revisões estão em dia. Que tal carregar novos arquivos e PDFs?</p>
-              <button className="btn btn-primary" onClick={() => setActiveTab('manage')}>Criar Flashcard Manual</button>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+                <button className="btn btn-primary" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ background: 'linear-gradient(to right, var(--primary), var(--secondary))', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+                  <Sparkles size={16} />
+                  Gerar Flashcards com IA
+                </button>
+                <button className="btn btn-secondary" onClick={() => { setEditingCard(null); setFormFront(''); setFormBack(''); setFormSubjectId(subjects.length > 0 ? subjects[0].id : ''); setModalOpen(true); }}>Criar Manualmente</button>
+              </div>
             </div>
           ) : currentIndex >= dueCards.length ? (
             <div className="card empty-state" style={{ textAlign: 'center', padding: '34px' }}>
@@ -573,8 +590,8 @@ export default function Flashcards() {
               </div>
 
               <div className="form-group">
-                <label className="form-label" htmlFor="ia-card-text">Material de Estudo / Resumo</label>
-                <textarea id="ia-card-text" className="form-input" style={{ minHeight: '140px' }} placeholder="Cole aqui um resumo ou anotações para que a IA gere automaticamente de 3 a 5 flashcards..." value={iaText} onChange={e => setIaText(e.target.value)} maxLength={3000} required />
+                <label className="form-label" htmlFor="ia-card-text">Material de Estudo / Instruções Adicionais (Opcional)</label>
+                <textarea id="ia-card-text" className="form-input" style={{ minHeight: '140px' }} placeholder="Opcional: Digite observações ou instruções especiais (ex: 'Focar em fórmulas'). Se deixado em branco, a IA lerá todos os PDFs anexados à matéria escolhida para gerar os flashcards." value={iaText} onChange={e => setIaText(e.target.value)} maxLength={3000} />
               </div>
 
               <div className="modal-actions">

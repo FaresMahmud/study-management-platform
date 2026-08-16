@@ -35,6 +35,14 @@ export default function PdfViewer({
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
   const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
 
+  const [textInputModal, setTextInputModal] = useState<{
+    isOpen: boolean;
+    x: number;
+    y: number;
+    type: 'note' | 'textbox';
+  } | null>(null);
+  const [customInputValue, setCustomInputValue] = useState('');
+
   const canvasRef = useRef<HTMLCanvasElement | null>(null);
   const overlayCanvasRef = useRef<HTMLCanvasElement | null>(null);
   const currentPathRef = useRef<{ x: number; y: number }[]>([]);
@@ -276,33 +284,40 @@ export default function PdfViewer({
     if (!activeFileId) return;
     const pos = getMousePos(e);
     
-    if (annotationTool === 'note') {
-      const noteText = prompt('Digite sua anotação/comentário:');
-      if (!noteText || !noteText.trim()) return;
+    if (annotationTool === 'note' || annotationTool === 'textbox') {
+      setCustomInputValue('');
+      setTextInputModal({
+        isOpen: true,
+        x: pos.x,
+        y: pos.y,
+        type: annotationTool
+      });
+    }
+  };
 
+  const handleConfirmCustomInput = () => {
+    if (!textInputModal || !customInputValue.trim() || !activeFileId) return;
+
+    if (textInputModal.type === 'note') {
       const newNote: FileAnnotation = {
         fileId: activeFileId,
         pageNumber: pageNum,
         type: 'note',
-        content: JSON.stringify({ x: pos.x, y: pos.y, text: noteText })
+        content: JSON.stringify({ x: textInputModal.x, y: textInputModal.y, text: customInputValue.trim() })
       };
-
       saveAnnotationMutation.mutate(newNote);
-      setAnnotationTool('none');
-    } else if (annotationTool === 'textbox') {
-      const text = prompt('Digite o texto a ser posicionado no PDF:');
-      if (!text || !text.trim()) return;
-
+    } else if (textInputModal.type === 'textbox') {
       const newTextbox: FileAnnotation = {
         fileId: activeFileId,
         pageNumber: pageNum,
         type: 'textbox',
-        content: JSON.stringify({ x: pos.x, y: pos.y, text })
+        content: JSON.stringify({ x: textInputModal.x, y: textInputModal.y, text: customInputValue.trim() })
       };
-
       saveAnnotationMutation.mutate(newTextbox);
-      setAnnotationTool('none');
     }
+    
+    setTextInputModal(null);
+    setAnnotationTool('none');
   };
 
   const handleCiteInSummary = () => {
@@ -542,6 +557,79 @@ export default function PdfViewer({
 
             return null;
           })}
+
+          {textInputModal && textInputModal.isOpen && (
+            <div
+              style={{
+                position: 'absolute',
+                left: `${(textInputModal.x / (overlayCanvasRef.current?.width || 1)) * 100}%`,
+                top: `${(textInputModal.y / (overlayCanvasRef.current?.height || 1)) * 100}%`,
+                transform: 'translate(-50%, -100%) translateY(-10px)',
+                zIndex: 1000,
+                backgroundColor: 'var(--bg-secondary)',
+                border: '1px solid var(--border-color)',
+                borderRadius: 'var(--radius-md)',
+                padding: '12px',
+                boxShadow: '0 10px 30px rgba(0,0,0,0.3)',
+                display: 'flex',
+                flexDirection: 'column',
+                gap: '8px',
+                width: '260px'
+              }}
+            >
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+                <span style={{ fontSize: '0.8rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+                  {textInputModal.type === 'note' ? 'Nova Nota' : 'Novo Texto'}
+                </span>
+                <button 
+                  onClick={() => setTextInputModal(null)} 
+                  style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-muted)', display: 'flex', alignItems: 'center' }}
+                >
+                  <X size={14} />
+                </button>
+              </div>
+              <textarea
+                autoFocus
+                placeholder={textInputModal.type === 'note' ? 'Digite sua nota...' : 'Digite o texto...'}
+                value={customInputValue}
+                onChange={e => setCustomInputValue(e.target.value)}
+                style={{
+                  width: '100%',
+                  height: '60px',
+                  backgroundColor: 'var(--bg-tertiary)',
+                  border: '1px solid var(--border-color)',
+                  borderRadius: 'var(--radius-sm)',
+                  padding: '6px',
+                  color: 'var(--text-primary)',
+                  fontSize: '0.8rem',
+                  resize: 'none',
+                  outline: 'none'
+                }}
+                onKeyDown={(e) => {
+                  if (e.key === 'Enter' && !e.shiftKey) {
+                    e.preventDefault();
+                    handleConfirmCustomInput();
+                  }
+                }}
+              />
+              <div style={{ display: 'flex', justifyContent: 'flex-end', gap: '6px' }}>
+                <button 
+                  className="btn btn-secondary btn-sm" 
+                  onClick={() => setTextInputModal(null)}
+                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                >
+                  Cancelar
+                </button>
+                <button 
+                  className="btn btn-primary btn-sm" 
+                  onClick={handleConfirmCustomInput}
+                  style={{ padding: '4px 8px', fontSize: '0.75rem' }}
+                >
+                  Salvar
+                </button>
+              </div>
+            </div>
+          )}
         </div>
       </div>
     </div>

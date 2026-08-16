@@ -1,5 +1,5 @@
 import React from 'react';
-import { LayoutDashboard, BookOpen, Brain, TrendingUp, Settings, Play, Pause, Square } from 'lucide-react';
+import { LayoutDashboard, BookOpen, FolderOpen, Brain, TrendingUp, Settings, Play, Pause, Square } from 'lucide-react';
 import { usePodcastStore } from '../../store/podcastStore';
 import './Sidebar.css';
 
@@ -10,7 +10,8 @@ interface SidebarProps {
 
 const menuItems = [
   { id: 'dashboard', label: 'Dashboard', icon: LayoutDashboard },
-  { id: 'subjects', label: 'Matérias', icon: BookOpen },
+  { id: 'workspace', label: 'Área de Estudo', icon: BookOpen },
+  { id: 'subjects', label: 'Matérias', icon: FolderOpen },
   { id: 'flashcards', label: 'Flashcards', icon: Brain },
   { id: 'analytics', label: 'Estatísticas', icon: TrendingUp },
   { id: 'settings', label: 'Configurações', icon: Settings },
