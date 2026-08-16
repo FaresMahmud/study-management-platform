@@ -4,17 +4,23 @@ import './EmptyState.css';
 
 interface EmptyStateProps {
   icon: string;
-  text: string;
-  cta?: string;
-  onCta?: () => void;
+  title: string;
+  description?: string;
+  ctaText?: string;
+  ctaAction?: () => void;
 }
 
-export function EmptyState({ icon, text, cta, onCta }: EmptyStateProps) {
+export function EmptyState({ icon, title, description, ctaText, ctaAction }: EmptyStateProps) {
   return (
     <div className="empty-state">
       <span className="empty-icon">{icon}</span>
-      <p className="empty-text">{text}</p>
-      {cta && onCta && <Button variant="primary" onClick={onCta} className="empty-cta">{cta}</Button>}
+      <h3 className="empty-title">{title}</h3>
+      {description && <p className="empty-description">{description}</p>}
+      {ctaText && ctaAction && (
+        <Button variant="primary" onClick={ctaAction} className="empty-cta">
+          {ctaText}
+        </Button>
+      )}
     </div>
   );
 }

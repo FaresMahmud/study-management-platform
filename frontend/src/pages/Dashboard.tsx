@@ -144,7 +144,13 @@ export default function Dashboard() {
       </header>
 
       {(!goals || goals.length === 0) ? (
-        <EmptyState icon="🎯" text="Você ainda não definiu nenhuma meta de prova. Planeje seu primeiro objetivo!" cta="Configurar Objetivo" onCta={() => setShowWizard(true)} />
+        <EmptyState 
+          icon="🎯" 
+          title="Sem Metas Definidas" 
+          description="Você ainda não definiu nenhuma meta de prova. Planeje seu primeiro objetivo!" 
+          ctaText="Configurar Objetivo" 
+          ctaAction={() => setShowWizard(true)} 
+        />
       ) : (
         <>
           <section className="dashboard-section">
