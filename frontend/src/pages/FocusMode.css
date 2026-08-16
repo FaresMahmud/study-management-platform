@@ -1,0 +1,20 @@
+.focus-option {
+  padding: 12px 24px;
+  border-radius: var(--radius-sm);
+  border: 1px solid var(--border);
+  background: transparent;
+  color: var(--text-secondary);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.focus-option:hover {
+  border-color: var(--accent);
+  color: var(--text-primary);
+}
+
+.focus-option--active {
+  background: var(--accent);
+  border-color: var(--accent);
+  color: white;
+}

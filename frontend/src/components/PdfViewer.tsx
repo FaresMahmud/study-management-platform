@@ -4,6 +4,7 @@ import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut,
 import { apiClient } from '../api/client';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { FileAnnotation, PDFFile } from '../types';
+import './PdfViewer.css';
 
 // Configura o worker do PDF.js para ser servido localmente
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
@@ -348,9 +349,9 @@ export default function PdfViewer({
   }
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden' }}>
+    <div className="workspace">
       {/* PDF CONTROLLER */}
-      <div className="flex-between" style={{ padding: '8px 12px', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-tertiary)', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="workspace__toolbar flex-between">
         <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
           <button 
             className="btn btn-secondary btn-sm" 
@@ -425,7 +426,7 @@ export default function PdfViewer({
       </div>
 
       {/* PDF VIEWER SCROLLPORT */}
-      <div style={{ flex: 1, overflow: 'auto', backgroundColor: '#334155', display: 'flex', justifyContent: 'center', padding: '16px', position: 'relative' }}>
+      <div className="workspace__pdf" style={{ backgroundColor: '#334155', display: 'flex', justifyContent: 'center', position: 'relative' }}>
         {pdfLoading && (
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', zIndex: 5 }}>
             Renderizando PDF...

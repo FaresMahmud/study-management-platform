@@ -16,6 +16,8 @@ import { apiClient } from '../api/client';
 import { mockActivities } from '../components/dashboard/mocks';
 import ExamWizard from '../components/wizard/ExamWizard';
 import { pluralize } from '../utils/format';
+import { DailyGoal } from '../components/dashboard/DailyGoal';
+import { FadeIn } from '../components/ui/FadeIn';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -155,33 +157,45 @@ export default function Dashboard() {
       ) : (
         <>
           <section className="dashboard-section">
-            <HeroSession
-              subject={latestGoal.subject?.subjectName || 'MATÉRIA GERAL'}
-              topic={isSoon ? `Sua prova de ${latestGoal.subject?.subjectName || 'Matéria'} é em ${pluralize(daysRemaining, 'dia')}! 🚨` : latestGoal.title}
-              timeRemaining="30m"
-              quizzesPending={1}
-              targetScore={latestGoal.targetMastery || 80}
-              onContinue={() => navigate(isSoon ? '/simulation' : '/workspace')}
-            />
+            <FadeIn>
+              <HeroSession
+                subject={latestGoal.subject?.subjectName || 'MATÉRIA GERAL'}
+                topic={isSoon ? `Sua prova de ${latestGoal.subject?.subjectName || 'Matéria'} é em ${pluralize(daysRemaining, 'dia')}! 🚨` : latestGoal.title}
+                timeRemaining="30m"
+                quizzesPending={1}
+                targetScore={latestGoal.targetMastery || 80}
+                onContinue={() => navigate(isSoon ? '/simulation' : '/workspace')}
+              />
+            </FadeIn>
           </section>
 
           <section className="dashboard-section">
-            <h2 className="section-title">Ações Rápidas</h2>
-            <ActivityGrid activities={activities} />
+            <FadeIn delay={100}>
+              <h2 className="section-title">Ações Rápidas</h2>
+              <ActivityGrid activities={activities} />
+            </FadeIn>
           </section>
 
           <section className="dashboard-section dashboard-grid-two">
-            <Card>
-              <h2 className="section-title" style={{ marginTop: 0 }}>Progresso por Matéria</h2>
-              {mappedSubjects.length === 0 ? <p className="empty-sub-text">Crie matérias para ver seu progresso.</p> : <SubjectProgress subjects={mappedSubjects} />}
-            </Card>
-            <Card className="summary-card">
-              <h2 className="section-title" style={{ marginTop: 0 }}>Meta Diária</h2>
-              <div className="daily-stats">
-                <div className="stat-box"><span className="stat-val">{gamification.totalStudyTime}m</span><span className="stat-lbl">Tempo Estudado</span></div>
-                <div className="stat-box"><span className="stat-val">{latestGoal.targetMastery}%</span><span className="stat-lbl">Nota Alvo</span></div>
-              </div>
-            </Card>
+            <FadeIn delay={200}>
+              <Card style={{ height: '100%' }}>
+                <h2 className="section-title" style={{ marginTop: 0 }}>Progresso por Matéria</h2>
+                {mappedSubjects.length === 0 ? <p className="empty-sub-text">Crie matérias para ver seu progresso.</p> : <SubjectProgress subjects={mappedSubjects} />}
+              </Card>
+            </FadeIn>
+            <FadeIn delay={300}>
+              <Card className="summary-card" style={{ height: '100%' }}>
+                <DailyGoal
+                  targetMinutes={60}
+                  studiedMinutes={gamification.totalStudyTime}
+                  tasks={[
+                    { id: '1', label: 'Revisar flashcards pendentes', done: true },
+                    { id: '2', label: 'Estudar material teórico (30m)', done: gamification.totalStudyTime >= 30 },
+                    { id: '3', label: 'Completar uma sessão de simulado', done: false },
+                  ]}
+                />
+              </Card>
+            </FadeIn>
           </section>
         </>
       )}

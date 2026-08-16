@@ -1,0 +1,54 @@
+.daily-goal-card {
+  display: flex;
+  flex-direction: column;
+  gap: 12px;
+}
+.daily-goal-header {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+.daily-goal-title {
+  font-size: 16px;
+  font-weight: 700;
+  color: var(--text-primary);
+  margin: 0;
+}
+.daily-goal-progress {
+  font-size: 12px;
+  color: var(--text-secondary);
+}
+.daily-goal-bar-container {
+  height: 6px;
+  background: var(--border);
+  border-radius: 3px;
+  overflow: hidden;
+}
+.daily-goal-bar-fill {
+  height: 100%;
+  background: var(--success);
+  border-radius: 3px;
+  transition: width 0.3s ease;
+}
+.daily-goal-tasks {
+  display: flex;
+  flex-direction: column;
+  gap: 8px;
+  margin-top: 4px;
+}
+.daily-goal-task {
+  display: flex;
+  align-items: center;
+  gap: 8px;
+  font-size: 13px;
+  color: var(--text-secondary);
+  cursor: pointer;
+}
+.daily-goal-task input {
+  accent-color: var(--success);
+  cursor: pointer;
+}
+.daily-goal-task.done {
+  text-decoration: line-through;
+  opacity: 0.5;
+}

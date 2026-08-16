@@ -5,6 +5,7 @@ import type { ExamPrep, Subject, Flashcard, Summary } from '../types';
 import { Play, Pause, X, Sparkles, Check, AlertTriangle, MessageSquare, BookOpen, Brain, RefreshCw, Headphones } from 'lucide-react';
 import { Link, useNavigate } from 'react-router-dom';
 import { triggerConfetti } from '../utils/confetti';
+import './FocusMode.css';
 
 export default function FocusMode() {
   const navigate = useNavigate();
@@ -316,22 +317,19 @@ export default function FocusMode() {
                 Tempo de Foco
               </label>
               <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
-                <button
-                  type="button"
-                  onClick={() => setSessionDuration(25)}
-                  className={`btn ${sessionDuration === 25 ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '12px', fontWeight: 700 }}
-                >
-                  25 min (Foco) + 5 min
-                </button>
-                <button
-                  type="button"
-                  onClick={() => setSessionDuration(50)}
-                  className={`btn ${sessionDuration === 50 ? 'btn-primary' : 'btn-secondary'}`}
-                  style={{ padding: '12px', fontWeight: 700 }}
-                >
-                  50 min (Foco) + 10 min
-                </button>
+                {[
+                  { label: '25 min (Foco) + 5 min', value: 25 },
+                  { label: '50 min (Foco) + 10 min', value: 50 },
+                ].map((opt) => (
+                  <button
+                    key={opt.value}
+                    type="button"
+                    className={`focus-option ${sessionDuration === opt.value ? 'focus-option--active' : ''}`}
+                    onClick={() => setSessionDuration(opt.value as 25 | 50)}
+                  >
+                    {opt.label}
+                  </button>
+                ))}
               </div>
             </div>
 

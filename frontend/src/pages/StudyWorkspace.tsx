@@ -4,6 +4,7 @@ import React, { useRef, useState } from 'react';
 import { apiClient, normalizeListResponse } from '../api/client';
 import type { PDFFile, SpringPage, Subject, Summary } from '../types';
 import { triggerConfetti } from '../utils/confetti';
+import { truncate } from '../utils/format';
 // Importando componentes refatorados
 import FlashcardCreatorModal from '../components/FlashcardCreatorModal';
 import PaywallModal from '../components/PaywallModal';
@@ -156,27 +157,29 @@ export default function StudyWorkspace() {
           <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
             {/* Seletor do PDF */}
             <select
-              className="form-input"
+              className="form-input dropdown-label"
               style={{ width: '200px', margin: 0 }}
               value={activeFileId || ''}
               onChange={(e) => setActiveFileId(e.target.value ? Number(e.target.value) : null)}
+              title={activeFileId ? String(pdfFiles.find(f => f.id === activeFileId)?.fileName) : "Nenhum PDF selecionado"}
             >
-              <option value="">Nenhum PDF selecionado</option>
+              <option value="" title="Nenhum PDF selecionado">Nenhum PDF selecionado</option>
               {pdfFiles.map(f => (
-                <option key={f.id} value={f.id}>{String(f.fileName)}</option>
+                <option key={f.id} value={f.id} title={String(f.fileName)}>{truncate(String(f.fileName), 22)}</option>
               ))}
             </select>
 
             {/* Seletor do Resumo */}
             <select
-              className="form-input"
+              className="form-input dropdown-label"
               style={{ width: '200px', margin: 0 }}
               value={activeSummaryId || ''}
               onChange={(e) => setActiveSummaryId(e.target.value ? Number(e.target.value) : null)}
+              title={activeSummaryId ? summaries.find(s => s.id === activeSummaryId)?.title : "Nenhum resumo selecionado"}
             >
-              <option value="">Nenhum resumo selecionado</option>
+              <option value="" title="Nenhum resumo selecionado">Nenhum resumo selecionado</option>
               {summaries.map(s => (
-                <option key={s.id} value={s.id}>{s.title}</option>
+                <option key={s.id} value={s.id} title={s.title}>{truncate(s.title, 22)}</option>
               ))}
             </select>
 
