@@ -17,7 +17,6 @@ public class SummaryRequestDTO {
     @Size(min = 1, max = 150, message = "O título deve ter entre 1 e 150 caracteres")
     private String title;
 
-    @NotBlank(message = "O conteúdo do resumo é obrigatório")
     private String content;
 
     @NotNull(message = "A matéria associada é obrigatória")
