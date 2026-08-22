@@ -4,179 +4,165 @@ Plataforma completa para gerenciamento de estudos com API REST (Spring Boot) e i
 
 ---
 
-## Estrutura do Projeto
+## Visão Geral
 
-O repositório está organizado da seguinte forma:
+O **Study Management Platform** é uma aplicação full-stack que ajuda estudantes a organizar matérias, preparar-se para exames, criar flashcards, acompanhar metas de estudo e gerar conteúdo por IA (resumos, quizzes, simulados, podcasts).
 
-- `/backend`: API REST desenvolvida em Spring Boot.
-- `/frontend`: Aplicação Single Page (SPA) desenvolvida em React + TypeScript + Vite.
+### Funcionalidades Principais
 
-Para mais informações sobre a estrutura do projeto, consulte [docs/estrutura.md](docs/estrutura.md).
+| Categoria | Funcionalidades |
+|---|---|
+| **Matérias** | Cadastro com cores, associação a provas e metas |
+| **Metas de Estudo** | Níveis de domínio alvo (0–100), rastreamento de progresso |
+| **Flashcards** | Sistema Leitner de revisão espaçada (caixas 1→5) |
+| **Pomodoro** | Cronômetro de foco integrado à preparação de exames |
+| **Exam Prep** | Plano de estudos com data da prova, pontuação alvo, compartilhamento público |
+| **Quizzes & Simulados** | Correção automática, scoring, tentativas cronometradas |
+| **Resumos** | Editor rico (HTML) associado a matérias |
+| **PDFs e Anotações** | Upload, indexação via RAG, anotações por página |
+| **Tutor RAG** | Perguntas ao material estudado via Gemini + ChromaDB |
+| **Podcasts** | Geração de áudio a partir de roteiros via Google Translate TTS |
+| **Analytics** | Zona de aprendizado (Comfort/Panic/Learning), streak, tópicos fortes/fracos |
+| **Premium** | Recursos avançados de IA liberados por flag de usuário |
 
 ---
 
 ## Stack Tecnológica
 
 ### Backend
-- **Java 21** com **Spring Boot 3.2**
-- **Spring Security** + **JWT** para autenticação stateless
-- **Spring Data JPA** com suporte a **MySQL** (Desenvolvimento) e **PostgreSQL / Neon Database** (Produção)
-- **HikariCP** para gerenciamento de pool de conexões
-- **Swagger/OpenAPI** para documentação automática em `/swagger-ui.html`
+- **Java 21** com **Spring Boot 3.2.4**
+- **Spring Security** + **JWT** (stateless, HS256)
+- **Spring Data JPA** com **MySQL** (dev) e **PostgreSQL/Neon** (prod)
+- **Flyway** para migrations (V1–V12)
+- **HikariCP** para pool de conexões
+- **Redis** (opcional, com fallback in-memory) para cache
+- **ChromaDB** para armazenamento vetorial (RAG)
+- **Google Gemini** (texto `gemini-2.5-flash`, embeddings `text-embedding-004`, multimodal)
+- **Google Translate TTS** para geração de podcasts
+- **Swagger/OpenAPI** em `/swagger-ui.html`
 
 ### Frontend
-- **React 19**
-- **Vite** (Build tool)
+- **React 19** + **TypeScript** + **Vite 8**
 - **Vanilla CSS** (Design system customizado com variáveis CSS e escala Fibonacci)
-- **Axios** (Consumo da API com interceptores de autenticação)
-- **Zustand** (Estado de autenticação persistido)
-- **Recharts** (Visualização de métricas e gráficos)
-- **pdfjs-dist** (Leitor de PDFs com annotations integrado)
+- **Axios** com interceptores (JWT, reescrita `/api` → `/api/v1`, desenvelope de paginação)
+- **Zustand** (estado global: autenticação, player de podcast)
+- **TanStack React Query** (server state, cache, invalidação)
+- **Recharts** (visualização de métricas)
+- **pdfjs-dist** (leitor de PDFs com anotações)
 
 ---
 
-## Configuração de Ambientes e Banco de Dados
+## Estrutura do Projeto
 
-O backend do projeto utiliza **Spring Profiles** para separar os ambientes de **Desenvolvimento** e **Produção**:
-
-- **Desenvolvimento (`dev`)**: Utiliza banco de dados MySQL local. Ativado por padrão caso nenhuma variável seja especificada.
-- **Produção (`prod`)**: Utiliza banco de dados PostgreSQL hospedado no **Neon Database** via conexão SSL exigida.
-
-### Variáveis de Ambiente (`.env`)
-
-Crie um arquivo `.env` na raiz do projeto ou dentro de `backend/` com base no arquivo `.env.example`:
-
-```bash
-# Na raiz ou em backend/
-cp .env.example .env
+```
+study-management-platform/
+├── backend/          # Spring Boot 3.2.4 + Java 21 (Vertical Slice por feature)
+├── frontend/         # React 19 + Vite 8 + TypeScript
+└── docs/             # Documentação técnica (6 arquivos)
 ```
 
-#### Principais Variáveis:
-
-| Variável | Perfil | Descrição | Exemplo |
-| :--- | :--- | :--- | :--- |
-| `SPRING_PROFILES_ACTIVE` | Todos | Perfil ativo do Spring Boot | `dev` ou `prod` |
-| `SERVER_PORT` | Todos | Porta de execução do backend | `8080` |
-| `DATABASE_URL` | `prod` | Connection String do Neon (PostgreSQL com SSL) | `jdbc:postgresql://ep-xxx.neon.tech/neondb?sslmode=require` |
-| `SPRING_DATASOURCE_USERNAME` | `prod` | Usuário do banco (caso não esteja na URL) | `seu_usuario_neon` |
-| `SPRING_DATASOURCE_PASSWORD` | `prod` | Senha do banco (caso não esteja na URL) | `sua_senha_neon` |
-| `DB_URL` | `dev` | URL do MySQL local | `jdbc:mysql://localhost:3306/studyplatform?...` |
-| `DB_USERNAME` | `dev` | Usuário do MySQL local | `root` |
-| `DB_PASSWORD` | `dev` | Senha do MySQL local | `sua_senha_local` |
-| `JWT_SECRET` | Todos | Chave secreta JWT (mín. 32 caracteres) | `sua_chave_secreta_com_pelo_menos_32_caracteres` |
-| `CORS_ALLOWED_ORIGINS` | Todos | Origens permitidas para requisições HTTP | `http://localhost:5173,http://localhost:5174` |
+Detalhamento completo em [`docs/structure.md`](docs/structure.md).
 
 ---
 
-## Como Configurar o Neon Database (Produção)
+## Documentação para Agentes de IA
 
-1. Acesse o console do **[Neon Database](https://neon.tech/)** e crie uma conta ou faça login.
-2. Crie um novo projeto (ex: `study-platform-prod`).
-3. No painel do projeto (Dashboard), vá até **Connection Details**.
-4. Selecione a opção **JDBC** ou copie a Connection String. Ela terá o seguinte formato:
-   ```text
-   postgresql://[user]:[password]@[ep-xxx-name].us-east-2.aws.neon.tech/[dbname]?sslmode=require
-   ```
-5. Para utilização com Spring Boot, formate com o prefixo JDBC:
-   ```text
-   jdbc:postgresql://[ep-xxx-name].us-east-2.aws.neon.tech/[dbname]?sslmode=require
-   ```
-6. Defina as seguintes variáveis no seu ambiente de hospedagem em nuvem (Render, Railway, Heroku, AWS, etc.):
-   ```bash
-   SPRING_PROFILES_ACTIVE=prod
-   DATABASE_URL=jdbc:postgresql://[user]:[password]@[ep-xxx-name].us-east-2.aws.neon.tech/[dbname]?sslmode=require
-   JWT_SECRET=sua_chave_secreta_de_producao
-   ```
+Este projeto possui documentação estruturada para agentes de IA:
+
+- **[`AGENTS.md`](AGENTS.md)** — Ponto de entrada obrigatório. Contexto arquitetural, funcional e técnico mínimo para trabalhar no sistema sem suposições.
+- **[`docs/`](docs/)** — Documentação técnica complementar (6 arquivos):
+  - [`project-overview.md`](docs/project-overview.md) — Visão de produto, fluxos de negócio, atores, conceitos centrais
+  - [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Arquitetura real implementada (camadas, dependências, pastas, padrões)
+  - [`configuration.md`](docs/configuration.md) — Setup local completo: prerequisites, env vars, serviços externos
+  - [`patterns.md`](docs/patterns.md) — Padrões de código reais com exemplos (backend + frontend)
+  - [`GLOSSARY.md`](docs/GLOSSARY.md) — Glossário unificado de domínio e técnico
+  - [`structure.md`](docs/structure.md) — Estrutura do projeto (vertical slice)
+
+---
+
+## Configuração
+
+### Pré-requisitos
+- Java 21 JDK
+- Node.js 20+ e npm
+- MySQL local (porta 3306, banco `studyplatform`)
+- ChromaDB (porta 8000, opcional para RAG)
+- Redis (opcional, para cache)
+
+### Variáveis de Ambiente
+Copie `.env.example` para `.env` na raiz ou em `backend/` e configure:
+
+```bash
+# Obrigatórios
+SPRING_PROFILES_ACTIVE=dev
+JWT_SECRET=sua_chave_secreta_com_pelo_menos_32_caracteres
+DB_URL=jdbc:mysql://localhost:3306/studyplatform?...
+DB_USERNAME=root
+DB_PASSWORD=sua_senha_local
+
+# Opcionais (IA/RAG)
+GEMINI_API_KEY=...
+CHROMA_URL=http://localhost:8000
+```
+
+Detalhes completos em [`docs/configuration.md`](docs/configuration.md).
 
 ---
 
 ## Como Executar Localmente
 
-### 1. Requisitos Prévios
-- Java 21 JDK instalado.
-- Node.js (v18+) e npm.
-- MySQL em execução localmente (porta 3306) com o banco `studyplatform` criado.
-
-### 2. Iniciar o Backend (Spring Boot)
-
-Em modo de desenvolvimento (Perfil `dev` por padrão):
+### Backend
 ```bash
 cd backend
 mvn spring-boot:run
 ```
+API em `http://localhost:8080` | Swagger em `http://localhost:8080/swagger-ui.html`
 
-Para testar localmente conectando ao Neon PostgreSQL (Perfil `prod`):
-```bash
-cd backend
-mvn spring-boot:run -Dspring-boot.run.profiles=prod -Dspring-boot.run.arguments="--DATABASE_URL=jdbc:postgresql://seu-neon-host/neondb?sslmode=require --SPRING_DATASOURCE_USERNAME=seu_user --SPRING_DATASOURCE_PASSWORD=sua_senha"
-```
-
-O backend estará disponível em `http://localhost:8080`.
-Documentação da API via Swagger: `http://localhost:8080/swagger-ui.html`.
-
-### 3. Iniciar o Frontend (React + Vite)
-
+### Frontend
 ```bash
 cd frontend
 npm install
 npm run dev
 ```
-
-O frontend estará disponível em `http://localhost:5173`.
-
----
-
-## Endpoints da API
-
-### Autenticação (`/api/auth`)
-- `POST /api/auth/register` - Registrar novo usuário
-- `POST /api/auth/login` - Login do usuário (retorna JWT e dados básicos)
-
-### Matérias (`/api/subjects`)
-- `GET /api/subjects` - Listar matérias do usuário
-- `GET /api/subjects/{id}` - Obter matéria por ID
-- `POST /api/subjects` - Criar nova matéria
-- `PUT /api/subjects/{id}` - Atualizar matéria
-- `DELETE /api/subjects/{id}` - Deletar matéria
-
-### Sessões de Estudo (`/api/study-sessions`)
-- `GET /api/study-sessions` - Listar todas as sessões
-- `POST /api/study-sessions` - Criar sessão (recalcula metas)
-- `PUT /api/study-sessions/{id}` - Atualizar sessão
-- `DELETE /api/study-sessions/{id}` - Deletar sessão
-
-### Metas (`/api/goals`)
-- `GET /api/goals` - Listar todas as metas
-- `POST /api/goals` - Criar meta
-- `PUT /api/goals/{id}` - Atualizar meta
-- `DELETE /api/goals/{id}` - Deletar meta
-
-### Resumos Notion-style (`/api/summaries`)
-- `GET /api/summaries` - Listar resumos
-- `POST /api/summaries` - Criar resumo
-- `PUT /api/summaries/{id}` - Atualizar resumo
-- `DELETE /api/summaries/{id}` - Deletar resumo
-
-### Spaced Repetition / Flashcards (`/api/flashcards`)
-- `GET /api/flashcards` - Listar todos os flashcards
-- `GET /api/flashcards/due` - Listar flashcards prontos para revisão
-- `POST /api/flashcards` - Criar flashcard
-- `POST /api/flashcards/{id}/review?quality={easy|good|hard}` - Submeter revisão
-- `DELETE /api/flashcards/{id}` - Deletar flashcard
+App em `http://localhost:5173`
 
 ---
 
 ## Testes
 
 ```bash
-# Executa os testes unitários e de integração do backend
+# Backend (JUnit 5 + Mockito + Testcontainers)
 cd backend
 mvn test
 ```
 
+> Não há testes automatizados no frontend no momento.
+
 ---
 
-## Observações de Segurança
+## Deploy
 
-- Nenhuma credencial ou chave secreta deve ser commitada no repositório.
-- Os arquivos `.env` e `.env.local` estão inclusos no `.gitignore`. Use `.env.example` como referência.
+### Backend
+- Build: `mvn clean package` (gera JAR)
+- Dockerfile disponível em `backend/Dockerfile`
+- Profile de produção: `prod` (PostgreSQL/Neon, HikariCP otimizado)
+- Actuator em `/actuator/health` e `/actuator/prometheus`
+
+### Frontend
+- Build: `npm run build` (gera `frontend/dist/`)
+- Dockerfile disponível em `frontend/Dockerfile`
+- SPA estática servida por qualquer servidor de arquivos/CDN
+- Variável de build: `VITE_API_URL`
+
+Diferenças dev vs prod em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#diferen%C3%A7as-dev-vs-prod).
+
+---
+
+## Segurança
+
+- Nenhuma credencial ou chave secreta deve ser commitada
+- Arquivos `.env` e `.env.local` estão no `.gitignore`
+- Use `.env.example` como referência
+- Autenticação JWT stateless com BCrypt
+- Rate limiting configurado via `RateLimitingFilter`
+- Rotas públicas explícitas em `SecurityConfig`
