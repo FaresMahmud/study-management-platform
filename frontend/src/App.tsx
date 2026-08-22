@@ -23,6 +23,7 @@ import StudySession from './pages/StudySession';
 import ExamMode from './pages/ExamMode';
 import './styles/theme.css';
 import './styles/global.css';
+import './index.css';
 
 const queryClient = new QueryClient({
   defaultOptions: {
@@ -36,6 +37,7 @@ const queryClient = new QueryClient({
 function ProtectedLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
+  const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -67,11 +69,24 @@ function ProtectedLayout() {
     if (tab === 'flashcards') navigate('/flashcards');
     if (tab === 'analytics') navigate('/analytics');
     if (tab === 'settings') navigate('/focus');
+    // Close mobile sidebar on navigation
+    setSidebarMobileOpen(false);
   };
 
   return (
     <div className="dashboard-layout">
-      <Sidebar activeTab={getActiveTab()} setActiveTab={handleTabChange} />
+      {/* Sidebar Overlay for Mobile */}
+      <div
+        className={`sidebar-overlay ${sidebarMobileOpen ? 'mobile-open' : ''}`}
+        onClick={() => setSidebarMobileOpen(false)}
+        aria-hidden="true"
+      />
+      <Sidebar
+        activeTab={getActiveTab()}
+        setActiveTab={handleTabChange}
+        isMobileOpen={sidebarMobileOpen}
+        onMobileClose={() => setSidebarMobileOpen(false)}
+      />
       <main className="dashboard-main">
         <Outlet />
       </main>

@@ -56,7 +56,7 @@ export default function Podcast() {
     },
     onSuccess: (data) => {
       triggerConfetti();
-      const trackUrl = `${apiClient.defaults.baseURL || 'http://localhost:8080'}${data.playUrl}`;
+      const trackUrl = `${apiClient.defaults.baseURL}${data.playUrl}`;
       const trackTitle = examPreps.find(e => e.id === selectedExamPrepId)?.title || 'Briefing de Estudos';
       playTrack(trackUrl, trackTitle);
     }
@@ -76,8 +76,8 @@ export default function Podcast() {
     enabled: !!selectedExamPrepId,
   });
 
-  const podcastAudioUrl = currentPodcast?.playUrl 
-    ? `${apiClient.defaults.baseURL || 'http://localhost:8080'}${currentPodcast.playUrl}`
+  const podcastAudioUrl = currentPodcast?.playUrl
+    ? `${apiClient.defaults.baseURL}${currentPodcast.playUrl}`
     : '';
 
   // Handlers do Player

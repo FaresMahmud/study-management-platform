@@ -591,7 +591,7 @@ export default function Analytics() {
                     Grave sessões de estudo para analisar a distribuição.
                   </div>
                 ) : (
-                  <div style={{ width: '100%', height: '320px' }}>
+                  <div style={{ width: '100%', height: '100%', minHeight: '320px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <BarChart data={dadosGrafico} margin={{ top: 8, right: 8, left: -28, bottom: 0 }}>
                         <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} tickLine={false} tick={{ fill: 'var(--text-secondary)' }} />
@@ -802,7 +802,7 @@ export default function Analytics() {
                     Crie e revise flashcards para analisar as zonas.
                   </div>
                 ) : (
-                  <div style={{ width: '100%', height: '320px' }}>
+                  <div style={{ width: '100%', height: '100%', minHeight: '320px' }}>
                     <ResponsiveContainer width="100%" height="100%">
                       <AreaChart data={areaData} margin={{ top: 10, right: 10, left: -20, bottom: 0 }}>
                         <XAxis dataKey="name" stroke="var(--text-muted)" fontSize={11} />

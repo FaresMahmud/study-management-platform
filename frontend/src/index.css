@@ -1708,6 +1708,59 @@ body.zen-mode-active .main-content {
 }
 
 /* ==========================================================================
+   SIDEBAR LAYOUT & RESPONSIVE
+   ========================================================================== */
+
+/* Dashboard Layout with Sidebar */
+.dashboard-layout {
+  display: flex;
+  min-height: 100vh;
+  background: var(--bg-primary);
+}
+
+.dashboard-main {
+  flex: 1;
+  margin-left: 260px;
+  min-width: 0;
+  transition: margin-left 0.3s ease;
+}
+
+/* Collapsed sidebar state (72px) */
+.dashboard-main.sidebar-collapsed {
+  margin-left: 72px;
+}
+
+/* Mobile Sidebar Drawer (≤1024px) */
+@media (max-width: 1024px) {
+  .dashboard-main {
+    margin-left: 0;
+  }
+
+  .sidebar {
+    transform: translateX(-100%);
+    transition: transform 0.3s ease;
+    box-shadow: 0 0 30px rgba(0, 0, 0, 0.5);
+  }
+
+  .sidebar.mobile-open {
+    transform: translateX(0);
+  }
+
+  .sidebar-overlay {
+    display: none;
+    position: fixed;
+    inset: 0;
+    background: rgba(0, 0, 0, 0.5);
+    z-index: 90;
+    backdrop-filter: blur(4px);
+  }
+
+  .sidebar-overlay.mobile-open {
+    display: block;
+  }
+}
+
+/* ==========================================================================
    RESPONSIVIDADE - AUDITORIA E CORREÇÕES (StudyFlow)
    ========================================================================== */
 
