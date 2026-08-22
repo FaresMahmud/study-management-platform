@@ -13,7 +13,7 @@ O **Study Management Platform** é uma aplicação full-stack que ajuda estudant
 | Categoria | Funcionalidades |
 |---|---|
 | **Matérias** | Cadastro com cores, associação a provas e metas |
-| **Metas de Estudo** | Níveis de domínio alvo (0–100), rastreamento de progresso |
+| **Metas de Estudo** | Níveis de domínio alvo (0–100), rastreamento de progresso, checklist diário |
 | **Flashcards** | Sistema Leitner de revisão espaçada (caixas 1→5) |
 | **Pomodoro** | Cronômetro de foco integrado à preparação de exames |
 | **Exam Prep** | Plano de estudos com data da prova, pontuação alvo, compartilhamento público |
@@ -40,6 +40,7 @@ O **Study Management Platform** é uma aplicação full-stack que ajuda estudant
 - **Google Gemini** (texto `gemini-2.5-flash`, embeddings `text-embedding-004`, multimodal)
 - **Google Translate TTS** para geração de podcasts
 - **Swagger/OpenAPI** em `/swagger-ui.html`
+- **SpringDoc OpenAPI** + **Testcontainers** para testes de integração
 
 ### Frontend
 - **React 19** + **TypeScript** + **Vite 8**
@@ -49,6 +50,7 @@ O **Study Management Platform** é uma aplicação full-stack que ajuda estudant
 - **TanStack React Query** (server state, cache, invalidação)
 - **Recharts** (visualização de métricas)
 - **pdfjs-dist** (leitor de PDFs com anotações)
+- **lucide-react** (ícones)
 
 ---
 
@@ -58,111 +60,134 @@ O **Study Management Platform** é uma aplicação full-stack que ajuda estudant
 study-management-platform/
 ├── backend/          # Spring Boot 3.2.4 + Java 21 (Vertical Slice por feature)
 ├── frontend/         # React 19 + Vite 8 + TypeScript
-└── docs/             # Documentação técnica (6 arquivos)
+├── docs/             # Documentação técnica (ver abaixo)
+├── .github/
+│   ├── workflows/ci.yml    # Pipeline CI/CD
+│   └── dependabot.yml      # Atualizações automáticas de dependências
+├── docker-compose.yml      # Stack de desenvolvimento
+└── docker-compose.prod.yml # Stack de produção
 ```
 
-Detalhamento completo em [`docs/structure.md`](docs/structure.md).
+---
+
+## Documentação
+
+### Para Agentes de IA
+- **[`AGENTS.md`](AGENTS.md)** — Ponto de entrada obrigatório. Contexto arquitetural, funcional e técnico mínimo.
+
+### Documentação Técnica [`docs/`](docs/)
+| Arquivo | Descrição |
+|---|---|
+| [`project-overview.md`](docs/project-overview.md) | Visão de produto, fluxos de negócio, atores, conceitos centrais |
+| [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) | Arquitetura real implementada (camadas, dependências, pastas, padrões) |
+| [`configuration.md`](docs/configuration.md) | Setup local completo: prerequisites, env vars, serviços externos |
+| [`patterns.md`](docs/patterns.md) | Padrões de código reais com exemplos (backend + frontend) |
+| [`GLOSSARY.md`](docs/GLOSSARY.md) | Glossário unificado de domínio e técnico |
+| [`structure.md`](docs/structure.md) | Estrutura do projeto (vertical slice) |
+| [`docker.md`](docs/docker.md) | Docker & Docker Compose (dev/prod, Dockerfiles, Nginx, troubleshooting) |
+| [`ci-cd.md`](docs/ci-cd.md) | Pipeline CI/CD completo (GitHub Actions, jobs, secrets, dependabot) |
+| [`production-readiness.md`](docs/production-readiness.md) | Checklist produção, arquitetura, APIs, auth, DB, ChromaDB, Gemini, env vars |
 
 ---
 
-## Documentação para Agentes de IA
-
-Este projeto possui documentação estruturada para agentes de IA:
-
-- **[`AGENTS.md`](AGENTS.md)** — Ponto de entrada obrigatório. Contexto arquitetural, funcional e técnico mínimo para trabalhar no sistema sem suposições.
-- **[`docs/`](docs/)** — Documentação técnica complementar (6 arquivos):
-  - [`project-overview.md`](docs/project-overview.md) — Visão de produto, fluxos de negócio, atores, conceitos centrais
-  - [`ARCHITECTURE.md`](docs/ARCHITECTURE.md) — Arquitetura real implementada (camadas, dependências, pastas, padrões)
-  - [`configuration.md`](docs/configuration.md) — Setup local completo: prerequisites, env vars, serviços externos
-  - [`patterns.md`](docs/patterns.md) — Padrões de código reais com exemplos (backend + frontend)
-  - [`GLOSSARY.md`](docs/GLOSSARY.md) — Glossário unificado de domínio e técnico
-  - [`structure.md`](docs/structure.md) — Estrutura do projeto (vertical slice)
-
----
-
-## Configuração
+## Configuração Rápida
 
 ### Pré-requisitos
 - Java 21 JDK
 - Node.js 20+ e npm
-- MySQL local (porta 3306, banco `studyplatform`)
-- ChromaDB (porta 8000, opcional para RAG)
-- Redis (opcional, para cache)
+- Docker e Docker Compose (recomendado)
 
 ### Variáveis de Ambiente
-Copie `.env.example` para `.env` na raiz ou em `backend/` e configure:
-
 ```bash
-# Obrigatórios
-SPRING_PROFILES_ACTIVE=dev
-JWT_SECRET=sua_chave_secreta_com_pelo_menos_32_caracteres
-DB_URL=jdbc:mysql://localhost:3306/studyplatform?...
-DB_USERNAME=root
-DB_PASSWORD=sua_senha_local
+# Backend
+cd backend && cp .env.example .env
 
-# Opcionais (IA/RAG)
-GEMINI_API_KEY=...
-CHROMA_URL=http://localhost:8000
+# Frontend
+cd frontend && cp .env.example .env
+# Defina VITE_API_URL (obrigatório no build de produção)
+
+# Produção
+cp .env.production.example .env.production
 ```
 
-Detalhes completos em [`docs/configuration.md`](docs/configuration.md).
+**Detalhes:** [`docs/configuration.md`](docs/configuration.md) | [`docs/docker.md`](docs/docker.md#variáveis-de-ambiente-obrigatórias-produção)
 
 ---
 
-## Como Executar Localmente
+## Como Executar
 
-### Backend
+### Com Docker (Recomendado)
 ```bash
-cd backend
-mvn spring-boot:run
-```
-API em `http://localhost:8080` | Swagger em `http://localhost:8080/swagger-ui.html`
+# Desenvolvimento
+docker-compose up -d
 
-### Frontend
-```bash
-cd frontend
-npm install
-npm run dev
+# Produção
+docker-compose -f docker-compose.prod.yml up -d
 ```
-App em `http://localhost:5173`
+
+### Manual
+```bash
+# Backend
+cd backend && mvn spring-boot:run
+# API: http://localhost:8080 | Swagger: http://localhost:8080/swagger-ui.html
+
+# Frontend
+cd frontend && npm install && npm run dev
+# App: http://localhost:5173
+```
 
 ---
 
 ## Testes
 
 ```bash
-# Backend (JUnit 5 + Mockito + Testcontainers)
-cd backend
-mvn test
-```
+# Backend
+cd backend && mvn test
 
-> Não há testes automatizados no frontend no momento.
+# Frontend
+cd frontend && npm run test
+```
 
 ---
 
-## Deploy
+## Deploy & CI/CD
 
-### Backend
-- Build: `mvn clean package` (gera JAR)
-- Dockerfile disponível em `backend/Dockerfile`
-- Profile de produção: `prod` (PostgreSQL/Neon, HikariCP otimizado)
-- Actuator em `/actuator/health` e `/actuator/prometheus`
-
-### Frontend
-- Build: `npm run build` (gera `frontend/dist/`)
-- Dockerfile disponível em `frontend/Dockerfile`
-- SPA estática servida por qualquer servidor de arquivos/CDN
-- Variável de build: `VITE_API_URL`
-
-Diferenças dev vs prod em [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md#diferen%C3%A7as-dev-vs-prod).
+- **Docker Images**: Multi-stage builds (`backend/Dockerfile`, `frontend/Dockerfile`)
+- **Pipeline**: `.github/workflows/ci.yml` — lint, test, build, docker push, deploy staging/prod
+- **Infraestrutura**: `docker-compose.yml` (dev) / `docker-compose.prod.yml` (prod)
+- **Documentação completa**: [`docs/ci-cd.md`](docs/ci-cd.md) | [`docs/docker.md`](docs/docker.md) | [`docs/production-readiness.md`](docs/production-readiness.md)
 
 ---
 
 ## Segurança
 
-- Nenhuma credencial ou chave secreta deve ser commitada
-- Arquivos `.env` e `.env.local` estão no `.gitignore`
-- Use `.env.example` como referência
-- Autenticação JWT stateless com BCrypt
-- Rate limiting configurado via `RateLimitingFilter`
-- Rotas públicas explícitas em `SecurityConfig`
+- Nenhuma credencial commitada (`.env*` no `.gitignore`)
+- JWT stateless HS256 + BCrypt (secret ≥ 256 bits)
+- Rate limiting, CORS configurável, rotas públicas explícitas
+- CSP no Nginx (frontend) com `connect-src` restrito à `VITE_API_URL`
+- `VITE_API_URL` **obrigatório** no build de produção (sem fallback localhost)
+
+**Detalhes:** [`docs/production-readiness.md#segurança`](docs/production-readiness.md#autenticação--segurança)
+
+---
+
+## Responsividade & Mobile Ready
+
+- Sidebar colapsível (72px/260px) + mobile drawer com overlay
+- Grid fluido `minmax(320px, 1fr)`, formulários `width: 100%` + `max-width` responsivo
+- Charts Recharts com `height: 100%` em containers flexíveis
+- Touch targets ≥ 44px, hover apenas em `(hover: hover) and (pointer: fine)`
+- Design tokens Fibonacci, preparados para Capacitor/React Native
+
+**Detalhes:** [`docs/responsiveness.md`](docs/responsiveness.md)
+
+---
+
+## Roadmap
+
+- [ ] Testes E2E (Playwright/Cypress) no CI
+- [ ] Kubernetes manifests (Helm charts)
+- [ ] Observabilidade: Grafana + Prometheus + Loki
+- [ ] Feature flags para rollout gradual Premium
+- [ ] PWA (Service Worker, offline-first flashcards)
+- [ ] App mobile nativo (Capacitor compartilhando design tokens)
