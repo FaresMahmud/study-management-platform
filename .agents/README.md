@@ -1,4 +1,5 @@
 # 🧠 Contexto de Arquitetura, Regras de Design e Engenharia (SaaS StudyFlow)
+
 > **Este arquivo foi criado especificamente para alimentar assistentes de Inteligência Artificial (LLMs)**, provendo um entendimento completo sobre as regras de negócio, stack técnica, decisões de design, requisitos funcionais, não funcionais e caminhos para evolução do projeto.
 
 ---
