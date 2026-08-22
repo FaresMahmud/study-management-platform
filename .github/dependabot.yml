@@ -1,0 +1,95 @@
+version: 2
+updates:
+  # Frontend npm dependencies
+  - package-ecosystem: "npm"
+    directory: "/frontend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "frontend"
+    commit-message:
+      prefix: "deps(frontend):"
+    groups:
+      development-dependencies:
+        patterns:
+          - "@types/*"
+          - "eslint*"
+          - "prettier*"
+          - "typescript*"
+          - "vite*"
+          - "@vitejs/*"
+      react-ecosystem:
+        patterns:
+          - "react*"
+          - "react-dom*"
+          - "@tanstack/react-query"
+          - "react-router*"
+      ui-libraries:
+        patterns:
+          - "lucide-react"
+          - "recharts"
+          - "pdfjs-dist"
+          - "axios"
+          - "zustand"
+      testing-tools:
+        patterns:
+          - "vitest*"
+          - "@testing-library/*"
+          - "jsdom*"
+
+  # Backend Maven dependencies
+  - package-ecosystem: "maven"
+    directory: "/backend"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 10
+    labels:
+      - "dependencies"
+      - "backend"
+    commit-message:
+      prefix: "deps(backend):"
+    groups:
+      spring-boot:
+        patterns:
+          - "org.springframework.boot:*"
+      spring-security:
+        patterns:
+          - "org.springframework.security:*"
+      database:
+        patterns:
+          - "org.postgresql:*"
+          - "com.mysql:*"
+          - "org.flywaydb:*"
+      testing:
+        patterns:
+          - "org.junit:*"
+          - "org.mockito:*"
+          - "org.testcontainers:*"
+      observability:
+        patterns:
+          - "io.micrometer:*"
+          - "org.springframework.boot:spring-boot-starter-actuator"
+      security:
+        patterns:
+          - "io.jsonwebtoken:*"
+          - "org.springframework.security:spring-security-oauth2-*"
+
+  # GitHub Actions dependencies
+  - package-ecosystem: "github-actions"
+    directory: "/"
+    schedule:
+      interval: "weekly"
+      day: "monday"
+      time: "09:00"
+    open-pull-requests-limit: 5
+    labels:
+      - "dependencies"
+      - "github-actions"
+    commit-message:
+      prefix: "deps(ci):"
