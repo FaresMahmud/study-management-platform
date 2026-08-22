@@ -33,15 +33,21 @@ export default function SummaryEditor({
   const [subindoArquivo, setSubindoArquivo] = useState(false);
 
   // Sync summary contents when activeSummary changes
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
-    if (activeSummary) {
+    // Only set state on first load or when summary actually changes
+    if (activeSummary && !hasInitialized.current) {
+      hasInitialized.current = true;
       setEditorTitle(activeSummary.title);
       if (editorRef.current) {
         editorRef.current.innerHTML = activeSummary.content;
       }
       setUltimoSalvo(new Date(activeSummary.lastModifiedDate || activeSummary.creationDate).toLocaleTimeString());
-    } else {
-      setEditorTitle('');
+    } else if (!activeSummaryId) {
+      // Reset when no summary is selected
+      hasInitialized.current = false;
+      setTimeout(() => setEditorTitle(''), 0);
       if (editorRef.current) {
         editorRef.current.innerHTML = '';
       }
@@ -93,13 +99,13 @@ export default function SummaryEditor({
     mutationFn: async (payload: { text: string; subjectId: number }) => {
       return (await apiClient.post('/api/ai/generate-flashcards', payload)).data;
     },
-    onSuccess: (data: any) => {
+    onSuccess: (data: Array<{ front: string; back: string }>) => {
       triggerConfetti();
       queryClient.invalidateQueries({ queryKey: ['flashcards'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
       alert(`Copiloto IA: Gerados com sucesso ${data.length} flashcards na sua pilha de revisões! 🧠✨`);
     },
-    onError: (err: any) => {
+    onError: (err: { response?: { data?: { message?: string } } }) => {
       if (err.response?.data?.message === 'upgrade_required') {
         onUpgradeRequired();
       } else {

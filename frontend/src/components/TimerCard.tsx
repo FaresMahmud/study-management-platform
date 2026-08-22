@@ -57,37 +57,48 @@ export default function TimerCard({ subjects, onSessionSaved }: TimerCardProps) 
   };
 
   // ─── Inicializa o timer a partir do localStorage ao montar ───────────
+  const hasInitializedTimer = useRef(false);
+
   useEffect(() => {
+    if (hasInitializedTimer.current) return;
+    hasInitializedTimer.current = true;
+
     const salvo = localStorage.getItem(TIMER_STORAGE_KEY);
     if (!salvo) return;
     try {
       const estado: EstadoTimerSalvo = JSON.parse(salvo);
-      setTimerSubjectId(estado.subjectId);
-      setTimerRodando(true);
-      setTimerPausado(estado.isPaused);
-      setTimerModo(estado.modo || 'livre');
-      setTimerTipoSessao(estado.tipoSessao || 'foco');
-      
+      // Defer setState calls to avoid synchronous setState in effect
+      setTimeout(() => {
+        setTimerSubjectId(estado.subjectId);
+        setTimerRodando(true);
+        setTimerPausado(estado.isPaused);
+        setTimerModo(estado.modo || 'livre');
+        setTimerTipoSessao(estado.tipoSessao || 'foco');
+      }, 0);
+
       let finalSegundos = 0;
       let finalSegundosRestantes = 0;
-      
+
       if (estado.isPaused) {
         finalSegundos = estado.elapsedAtPause;
         finalSegundosRestantes = estado.segundosRestantes;
       } else {
         const decorrido = Math.floor((Date.now() - estado.startTimestamp) / 1000);
         finalSegundos = Math.max(0, estado.elapsedAtPause + decorrido);
-        
+
         if (estado.modo !== 'livre') {
           finalSegundosRestantes = Math.max(0, estado.segundosRestantes - decorrido);
         }
       }
-      
-      setTimerSegundos(finalSegundos);
-      setTimerSegundosRestantes(finalSegundosRestantes);
+
+      // Defer setState to avoid synchronous setState in effect
+      setTimeout(() => {
+        setTimerSegundos(finalSegundos);
+        setTimerSegundosRestantes(finalSegundosRestantes);
+      }, 0);
       segundosRef.current = finalSegundos;
       segundosRestantesRef.current = finalSegundosRestantes;
-    } catch (e) {
+    } catch {
       localStorage.removeItem(TIMER_STORAGE_KEY);
     }
   }, []);
@@ -96,19 +107,21 @@ export default function TimerCard({ subjects, onSessionSaved }: TimerCardProps) 
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(titulo, { body: corpo });
-      } catch (e) {}
+      } catch {
+        // Ignore notification errors
+      }
     }
   };
 
   const requestNotificationPermission = () => {
     if ('Notification' in window && Notification.permission === 'default') {
-      Notification.requestPermission();
+      void Notification.requestPermission();
     }
   };
 
   const playBeep = () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioContextClass();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -120,7 +133,9 @@ export default function TimerCard({ subjects, onSessionSaved }: TimerCardProps) 
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 1.2);
       osc.start();
       osc.stop(ctx.currentTime + 1.2);
-    } catch (e) {}
+    } catch {
+      // Ignore audio errors
+    }
   };
 
   const handleTimerTerminado = () => {
@@ -163,7 +178,7 @@ export default function TimerCard({ subjects, onSessionSaved }: TimerCardProps) 
   // Sincroniza o cronômetro restante ao alterar o modo/sessão antes de rodar
   useEffect(() => {
     if (!timerRodando) {
-      setTimerSegundosRestantes(getSegundosIniciais(timerModo, timerTipoSessao));
+      setTimeout(() => setTimerSegundosRestantes(getSegundosIniciais(timerModo, timerTipoSessao)), 0);
     }
   }, [timerModo, timerTipoSessao, timerRodando]);
 
@@ -344,7 +359,7 @@ export default function TimerCard({ subjects, onSessionSaved }: TimerCardProps) 
               className="form-input"
               style={{ width: '100%' }}
               value={timerModo}
-              onChange={e => setTimerModo(e.target.value as any)}
+              onChange={e => setTimerModo(e.target.value as 'livre' | 'pomodoro' | 'rule5217' | 'ultradiano')}
               disabled={timerRodando}
             >
               <option value="livre">Modo Livre (Cronômetro)</option>
@@ -381,7 +396,9 @@ export default function TimerCard({ subjects, onSessionSaved }: TimerCardProps) 
                       segundosRestantes: sRem
                     })
                   );
-                } catch (e) {}
+                } catch {
+                  // Ignore localStorage errors
+                }
               }
             }}
             onFinished={handleTimerTerminado}
@@ -474,7 +491,7 @@ export default function TimerCard({ subjects, onSessionSaved }: TimerCardProps) 
                 <label className="form-label" htmlFor="timer-duracao">Duração (Minutos)</label>
                 <input id="timer-duracao" type="number" className="form-input" min="1" max="1440" value={modalDuracao} onChange={e => setModalDuracao(Number(e.target.value))} required />
                 <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', marginTop: '0.25rem', display: 'block' }}>
-                  Cronometrado: {formatarTimer(segundosRef.current)} → {Math.round(segundosRef.current / 60)} min
+                  Cronometrado: {formatarTimer(timerSegundos)} → {Math.round(timerSegundos / 60)} min
                 </span>
               </div>
 
@@ -529,8 +546,10 @@ function TimerVisor({
 
   // Sincroniza os estados quando o timer inicia/reinicia ou restaura do storage
   useEffect(() => {
-    setSegundos(initialSeconds);
-    setSegundosRestantes(initialSecondsRemaining);
+    setTimeout(() => {
+      setSegundos(initialSeconds);
+      setSegundosRestantes(initialSecondsRemaining);
+    }, 0);
   }, [initialSeconds, initialSecondsRemaining]);
 
   useEffect(() => {

@@ -1,4 +1,4 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X } from 'lucide-react';
 import { apiClient } from '../api/client';
@@ -11,7 +11,6 @@ pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
 
 interface PdfViewerProps {
   activeFileId: number | null;
-  selectedSubjectId: number | '';
   activeSummaryId: number | null;
   pdfFiles: PDFFile[];
   onCite: (text: string, fileName: string, pageNum: number) => void;
@@ -19,22 +18,22 @@ interface PdfViewerProps {
 
 export default function PdfViewer({
   activeFileId,
-  selectedSubjectId,
   activeSummaryId,
   pdfFiles,
   onCite
 }: PdfViewerProps) {
-  const [pdfDoc, setPdfDoc] = useState<any>(null);
+  const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.0);
   const [pdfLoading, setPdfLoading] = useState(false);
+  const [overlayCanvasSize, setOverlayCanvasSize] = useState({ width: 0, height: 0 });
+  const hasInitializedPdf = useRef(false);
 
   // Ferramentas de anotação
   const [annotationTool, setAnnotationTool] = useState<'none' | 'highlight' | 'note' | 'drawing' | 'textbox'>('none');
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
-  const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
 
   const [textInputModal, setTextInputModal] = useState<{
     isOpen: boolean;
@@ -80,10 +79,17 @@ export default function PdfViewer({
   // Load PDF document
   useEffect(() => {
     if (!activeFileId) {
-      setPdfDoc(null);
-      setPageNum(1);
+      setTimeout(() => {
+        setPdfDoc(null);
+        setPageNum(1);
+      }, 0);
+      hasInitializedPdf.current = false;
       return;
     }
+
+    // Avoid re-loading if already loaded for this file
+    if (hasInitializedPdf.current) return;
+    hasInitializedPdf.current = true;
 
     const loadPdf = async () => {
       setPdfLoading(true);
@@ -97,9 +103,11 @@ export default function PdfViewer({
         });
 
         const pdf = await loadingTask.promise;
-        setPdfDoc(pdf);
-        setNumPages(pdf.numPages);
-        setPageNum(1);
+        setTimeout(() => {
+          setPdfDoc(pdf);
+          setNumPages(pdf.numPages);
+          setPageNum(1);
+        }, 0);
       } catch (err) {
         console.error('Erro ao renderizar o PDF:', err);
         alert('Não foi possível ler o PDF do servidor.');
@@ -110,40 +118,6 @@ export default function PdfViewer({
 
     loadPdf();
   }, [activeFileId]);
-
-  // Render PDF page
-  const renderPage = async () => {
-    if (!pdfDoc || !canvasRef.current) return;
-
-    try {
-      const page = await pdfDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale });
-      const canvas = canvasRef.current;
-      const context = canvas.getContext('2d');
-
-      if (!context) return;
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
-
-      if (overlayCanvasRef.current) {
-        overlayCanvasRef.current.height = viewport.height;
-        overlayCanvasRef.current.width = viewport.width;
-      }
-
-      await page.render({
-        canvasContext: context,
-        viewport: viewport
-      }).promise;
-
-      drawStoredHighlights();
-    } catch (err) {
-      console.error('Erro ao renderizar a página do PDF:', err);
-    }
-  };
-
-  useEffect(() => {
-    renderPage();
-  }, [pdfDoc, pageNum, scale]);
 
   // Draw highlights and drawings
   const drawStoredHighlights = () => {
@@ -160,8 +134,8 @@ export default function PdfViewer({
           const coords = JSON.parse(ann.content);
           ctx.fillStyle = coords.color || 'rgba(250, 204, 21, 0.4)';
           ctx.fillRect(coords.x, coords.y, coords.w, coords.h);
-        } catch (e) {
-          console.error(e);
+        } catch (_e) {
+          console.error(_e);
         }
       } else if (ann.type === 'drawing') {
         try {
@@ -179,15 +153,61 @@ export default function PdfViewer({
             }
             ctx.stroke();
           }
-        } catch (e) {
-          console.error(e);
+        } catch (_e) {
+          console.error(_e);
         }
       }
     });
   };
 
+  // Render PDF page
+  const renderPage = useCallback(async () => {
+    if (!pdfDoc || !canvasRef.current) return;
+
+    try {
+      const page = await pdfDoc.getPage(pageNum);
+      const viewport = page.getViewport({ scale });
+      const canvas = canvasRef.current;
+      const context = canvas.getContext('2d');
+
+      if (!context) return;
+      canvas.height = viewport.height;
+      canvas.width = viewport.width;
+
+      if (overlayCanvasRef.current) {
+        overlayCanvasRef.current.height = viewport.height;
+        overlayCanvasRef.current.width = viewport.width;
+        setOverlayCanvasSize({ width: viewport.width, height: viewport.height });
+      }
+
+      await page.render({
+        canvasContext: context,
+        viewport: viewport
+      }).promise;
+
+      drawStoredHighlights();
+    } catch (err) {
+      console.error('Erro ao renderizar a página do PDF:', err);
+    }
+  }, [pdfDoc, pageNum, scale, drawStoredHighlights]);
+
+  // Keep refs in sync with latest functions
+  const renderPageRef = useRef(renderPage);
   useEffect(() => {
-    drawStoredHighlights();
+    renderPageRef.current = renderPage;
+  }, [renderPage]);
+
+  const drawStoredHighlightsRef = useRef(drawStoredHighlights);
+  useEffect(() => {
+    drawStoredHighlightsRef.current = drawStoredHighlights;
+  }, [drawStoredHighlights]);
+
+  useEffect(() => {
+    renderPageRef.current();
+  }, [pdfDoc, pageNum, scale]);
+
+  useEffect(() => {
+    drawStoredHighlightsRef.current();
   }, [dbAnnotations]);
 
   // Mouse coords
@@ -462,8 +482,8 @@ export default function PdfViewer({
                     key={ann.id}
                     style={{ 
                       position: 'absolute', 
-                      left: `${(note.x / (overlayCanvasRef.current?.width || 1)) * 100}%`,
-                      top: `${(note.y / (overlayCanvasRef.current?.height || 1)) * 100}%`,
+                      left: `${(note.x / (overlayCanvasSize.width || 1)) * 100}%`,
+                      top: `${(note.y / (overlayCanvasSize.height || 1)) * 100}%`,
                       zIndex: 10,
                       transform: 'translate(-50%, -50%)'
                     }}
@@ -480,7 +500,7 @@ export default function PdfViewer({
                     </div>
                   </div>
                 );
-              } catch (e) {
+              } catch {
                 return null;
               }
             }
@@ -493,8 +513,8 @@ export default function PdfViewer({
                     key={ann.id}
                     style={{
                       position: 'absolute',
-                      left: `${(box.x / (overlayCanvasRef.current?.width || 1)) * 100}%`,
-                      top: `${(box.y / (overlayCanvasRef.current?.height || 1)) * 100}%`,
+                      left: `${(box.x / (overlayCanvasSize.width || 1)) * 100}%`,
+                      top: `${(box.y / (overlayCanvasSize.height || 1)) * 100}%`,
                       zIndex: 10,
                       color: 'var(--text-primary)',
                       backgroundColor: 'var(--bg-secondary)',
@@ -519,7 +539,7 @@ export default function PdfViewer({
                     </button>
                   </div>
                 );
-              } catch (e) {
+              } catch {
                 return null;
               }
             }
@@ -533,8 +553,8 @@ export default function PdfViewer({
                     key={ann.id}
                     style={{ 
                       position: 'absolute', 
-                      left: `${(firstPoint.x / (overlayCanvasRef.current?.width || 1)) * 100}%`,
-                      top: `${(firstPoint.y / (overlayCanvasRef.current?.height || 1)) * 100}%`,
+                      left: `${(firstPoint.x / (overlayCanvasSize.width || 1)) * 100}%`,
+                      top: `${(firstPoint.y / (overlayCanvasSize.height || 1)) * 100}%`,
                       zIndex: 10,
                       transform: 'translate(-50%, -50%)'
                     }}
@@ -551,7 +571,7 @@ export default function PdfViewer({
                     </div>
                   </div>
                 );
-              } catch (e) {
+              } catch {
                 return null;
               }
             }
@@ -563,8 +583,8 @@ export default function PdfViewer({
             <div
               style={{
                 position: 'absolute',
-                left: `${(textInputModal.x / (overlayCanvasRef.current?.width || 1)) * 100}%`,
-                top: `${(textInputModal.y / (overlayCanvasRef.current?.height || 1)) * 100}%`,
+                left: `${(textInputModal.x / (overlayCanvasSize.width || 1)) * 100}%`,
+                top: `${(textInputModal.y / (overlayCanvasSize.height || 1)) * 100}%`,
                 transform: 'translate(-50%, -100%) translateY(-10px)',
                 zIndex: 1000,
                 backgroundColor: 'var(--bg-secondary)',

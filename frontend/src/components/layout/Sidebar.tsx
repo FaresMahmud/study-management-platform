@@ -21,15 +21,15 @@ const menuItems = [
 
 export function Sidebar({ activeTab, setActiveTab, isMobileOpen, onMobileClose }: SidebarProps) {
   const { currentTrackUrl, currentTrackTitle, isPlaying, currentTime, duration, pauseTrack, resumeTrack, stopTrack } = usePodcastStore();
-  const [collapsed, setCollapsed] = useState(false);
+  const [collapsed, setCollapsed] = useState(() => {
+    const saved = localStorage.getItem('sidebar-collapsed');
+    return saved !== null ? saved === 'true' : false;
+  });
 
   // Persistir estado no localStorage
   useEffect(() => {
-    const saved = localStorage.getItem('sidebar-collapsed');
-    if (saved !== null) {
-      setCollapsed(saved === 'true');
-    }
-  }, []);
+    localStorage.setItem('sidebar-collapsed', String(collapsed));
+  }, [collapsed]);
 
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', String(collapsed));

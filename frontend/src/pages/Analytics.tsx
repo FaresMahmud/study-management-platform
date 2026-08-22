@@ -50,18 +50,19 @@ interface TooltipHeatmap {
   mouseY: number;
 }
 
-type EntradaGrafico = {
+interface EntradaGrafico {
   name: string;
   color: string;
   totalHours: number;
   sessionDates: string[];
   sessionDurations: number[];
-} & Record<string, unknown>;
+  [key: string]: unknown;
+}
 
 // Tooltip customizado do gráfico empilhado
 interface PropsTooltipGrafico {
   active?: boolean;
-  payload?: {
+  payload?: Array<{
     name: string;
     value: number;
     color: string;
@@ -70,7 +71,22 @@ interface PropsTooltipGrafico {
       sessionDates: string[];
       sessionDurations: number[];
     };
-  }[];
+  }>;
+  label?: string;
+}
+
+interface TooltipProps {
+  active?: boolean;
+  payload?: Array<{
+    name: string;
+    value: number;
+    color: string;
+    payload: {
+      color: string;
+      sessionDates: string[];
+      sessionDurations: number[];
+    };
+  }>;
   label?: string;
 }
 
@@ -122,8 +138,10 @@ export default function Analytics() {
   const [useMock, setUseMock] = useState(false);
 
   const [celulaHover, setCelulaHover] = useState<{ barIdx: number; subjIdx: number } | null>(null);
-  const celulaHoverRef = useRef(celulaHover);
-  celulaHoverRef.current = celulaHover;
+  const celulaHoverRef = useRef<{ barIdx: number; subjIdx: number } | null>(celulaHover);
+  useEffect(() => {
+    celulaHoverRef.current = celulaHover;
+  }, [celulaHover]);
 
   const [heatmapTooltip, setHeatmapTooltip] = useState<TooltipHeatmap | null>(null);
 
@@ -148,7 +166,7 @@ export default function Analytics() {
     queryKey: ['flashcards-all'],
     queryFn: async () => {
       try {
-        const response = await apiClient.get<any>('/api/v1/flashcards?size=1000');
+        const response = await apiClient.get<{ content: Flashcard[] }>('/api/v1/flashcards?size=1000');
         return response.data.content || [];
       } catch (err) {
         console.error('Erro ao buscar flashcards:', err);
@@ -166,7 +184,7 @@ export default function Analytics() {
   // Se carregar e não tiver dados, inicia mostrando o mock para não ficar em branco
   useEffect(() => {
     if (!isLoading && !temDadosReais) {
-      setUseMock(true);
+      setTimeout(() => setUseMock(true), 0);
     }
   }, [isLoading, temDadosReais]);
 
@@ -600,7 +618,7 @@ export default function Analytics() {
                           content={(props) => (
                             <TooltipGrafico
                               active={props.active}
-                              payload={props.payload as any}
+                              payload={props.payload as TooltipProps['payload']}
                               label={props.label as string}
                             />
                           )}
@@ -618,8 +636,7 @@ export default function Analytics() {
                             onMouseLeave={() => setCelulaHover(null)}
                           >
                             {dadosGrafico.map((entrada, subjIdx) => {
-                              const hover = celulaHoverRef.current;
-                              const estaHover = hover !== null && hover.barIdx === barIdx && hover.subjIdx === subjIdx;
+                              const estaHover = celulaHover !== null && celulaHover.barIdx === barIdx && celulaHover.subjIdx === subjIdx;
                               return (
                                 <Cell
                                   key={`cell-${subjIdx}-${barIdx}`}

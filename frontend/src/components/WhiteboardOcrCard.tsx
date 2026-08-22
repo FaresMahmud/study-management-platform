@@ -19,7 +19,6 @@ interface AnalysisResponse {
 export default function WhiteboardOcrCard({ subjects }: WhiteboardOcrCardProps) {
   const queryClient = useQueryClient();
 
-  const [selectedFile, setSelectedFile] = useState<File | null>(null);
   const [previewUrl, setPreviewUrl] = useState<string | null>(null);
   const [analysisResult, setAnalysisResult] = useState<AnalysisResponse | null>(null);
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>('');
@@ -46,7 +45,7 @@ export default function WhiteboardOcrCard({ subjects }: WhiteboardOcrCardProps) 
       setSummaryTitle(`Resumo do Quadro - ${new Date().toLocaleDateString('pt-BR')}`);
       setModalAberto(true);
     },
-    onError: (err: any) => {
+    onError: (err: { response?: { data?: { message?: string } } }) => {
       const msg = err.response?.data?.message || 'Falha ao analisar a foto com Inteligência Artificial.';
       setErro(msg);
     },
@@ -69,7 +68,7 @@ export default function WhiteboardOcrCard({ subjects }: WhiteboardOcrCardProps) 
       alert('Resumo importado com sucesso!');
       fecharEResetar();
     },
-    onError: (err: any) => {
+    onError: (err: { response?: { data?: { message?: string } } }) => {
       const msg = err.response?.data?.message || 'Erro ao salvar o resumo.';
       setErro(msg);
     },

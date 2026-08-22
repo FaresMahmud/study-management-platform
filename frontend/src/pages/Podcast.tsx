@@ -2,7 +2,7 @@ import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { ExamPrep } from '../types';
-import { Play, Pause, Volume2, VolumeX, Download, Sparkles, Clock, Radio, ArrowLeft, Headphones, Check } from 'lucide-react';
+import { Play, Pause, Volume2, VolumeX, Download, Sparkles, Radio, ArrowLeft, Headphones } from 'lucide-react';
 import { Link } from 'react-router-dom';
 import { triggerConfetti } from '../utils/confetti';
 import { usePodcastStore, globalAudio } from '../store/podcastStore';
@@ -14,7 +14,6 @@ export default function Podcast() {
   // Get global store state
   const {
     currentTrackUrl,
-    currentTrackTitle,
     isPlaying,
     currentTime,
     duration,
@@ -33,9 +32,9 @@ export default function Podcast() {
     queryKey: ['examPreps'],
     queryFn: async () => {
       try {
-        const response = await apiClient.get<any>('/api/v1/exam-preps');
+        const response = await apiClient.get<{ content?: ExamPrep[] }>('/api/v1/exam-preps');
         return Array.isArray(response.data) ? response.data : (response.data.content || []);
-      } catch (err) {
+      } catch {
         return [];
       }
     },
@@ -45,14 +44,20 @@ export default function Podcast() {
 
   useEffect(() => {
     if (activeExam && selectedExamPrepId === '') {
-      setSelectedExamPrepId(activeExam.id);
+      setTimeout(() => setSelectedExamPrepId(activeExam.id), 0);
     }
-  }, [activeExam, selectedExamPrepId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeExam]);
+
+  interface PodcastResponse {
+  playUrl: string;
+  scriptText: string;
+}
 
   // Mutation de Geração de Podcast
   const generatePodcastMutation = useMutation({
     mutationFn: async (params: { examPrepId: number; difficultyLevel: string }) => {
-      return (await apiClient.post<any>('/api/v1/ai/podcast/generate', params)).data;
+      return (await apiClient.post<PodcastResponse>('/api/v1/ai/podcast/generate', params)).data;
     },
     onSuccess: (data) => {
       triggerConfetti();
@@ -63,11 +68,11 @@ export default function Podcast() {
   });
 
   // Query para buscar podcast existente
-  const { data: currentPodcast, isLoading: isPodcastLoading } = useQuery<any>({
+  const { data: currentPodcast, isLoading: isPodcastLoading } = useQuery<PodcastResponse | null>({
     queryKey: ['podcast', selectedExamPrepId, difficultyLevel],
     queryFn: async () => {
       if (!selectedExamPrepId) return null;
-      const res = await apiClient.post<any>('/api/v1/ai/podcast/generate', {
+      const res = await apiClient.post<PodcastResponse>('/api/v1/ai/podcast/generate', {
         examPrepId: selectedExamPrepId,
         difficultyLevel
       });
@@ -281,23 +286,30 @@ export default function Podcast() {
                 
                 {/* Visualizador de Onda Estático/Dinâmico */}
                 <div style={{ display: 'flex', gap: '3px', alignItems: 'center', height: '24px', justifyContent: 'center' }}>
-                  {Array.from({ length: 28 }).map((_, i) => {
-                    const active = isPlaying;
-                    const h = 5 + Math.sin(i * 0.5) * 15 + (active ? Math.random() * 8 : 0);
-                    return (
-                      <div 
-                        key={i} 
-                        style={{ 
-                          width: '3px', 
-                          height: `${Math.max(4, h)}px`, 
-                          backgroundColor: isPlaying ? 'var(--primary)' : 'var(--text-muted)', 
-                          borderRadius: '1px',
-                          opacity: isPlaying ? 0.9 : 0.4,
-                          transition: 'height 0.15s ease'
-                        }} 
-                      />
-                    );
-                  })}
+                  {(() => {
+                    // Use a stable seed for pseudo-randomness during render
+                    // Compute once per render cycle via IIFE but without Date.now()
+                    const seed = 12345; // Fixed seed for deterministic animation
+                    return Array.from({ length: 28 }).map((_, i) => {
+                      const active = isPlaying;
+                      // Use a deterministic pseudo-random based on index
+                      const pseudoRandom = Math.sin(i * 12.345 + seed * 0.001) * 0.5 + 0.5;
+                      const h = 5 + Math.sin(i * 0.5) * 15 + (active ? pseudoRandom * 8 : 0);
+                      return (
+                        <div
+                          key={i}
+                          style={{
+                            width: '3px',
+                            height: `${Math.max(4, h)}px`,
+                            backgroundColor: isPlaying ? 'var(--primary)' : 'var(--text-muted)',
+                            borderRadius: '1px',
+                            opacity: isPlaying ? 0.9 : 0.4,
+                            transition: 'height 0.15s ease'
+                          }}
+                        />
+                      );
+                    });
+                  })()}
                 </div>
 
                 {/* Slider de Progresso */}

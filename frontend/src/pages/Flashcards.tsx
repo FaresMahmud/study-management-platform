@@ -27,6 +27,15 @@ export default function Flashcards() {
   const [iaText, setIaText] = useState('');
   const [iaLoading, setIaLoading] = useState(false);
 
+  // Use state for current time to avoid impure Date.now() during render and ref access issues
+  const [now, setNow] = useState(() => Date.now());
+  useEffect(() => {
+    const interval = setInterval(() => {
+      setNow(() => Date.now());
+    }, 1000);
+    return () => clearInterval(interval);
+  }, []);
+
   const handleGenerateIa = async (e: React.FormEvent) => {
     e.preventDefault();
     if (!iaSubjectId) return;
@@ -41,7 +50,7 @@ export default function Flashcards() {
       setIaModalOpen(false);
       setIaText('');
       alert('Flashcards gerados com sucesso!');
-    } catch (err) {
+    } catch {
       alert('Erro ao gerar flashcards com IA.');
     } finally {
       setIaLoading(false);
@@ -115,6 +124,12 @@ export default function Flashcards() {
     },
   });
 
+  const handleReview = (quality: 'easy' | 'good' | 'hard') => {
+    if (currentIndex >= dueCards.length) return;
+    const card = dueCards[currentIndex];
+    reviewMutation.mutate({ id: card.id, quality });
+  };
+
   const reviewMutation = useMutation({
     mutationFn: async (payload: { id: number; quality: 'easy' | 'good' | 'hard' }) => {
       return (await apiClient.post<Flashcard>(`/api/flashcards/${payload.id}/review?quality=${payload.quality}`)).data;
@@ -150,7 +165,7 @@ export default function Flashcards() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, dueCards, currentIndex, showAnswer]);
+  }, [activeTab, dueCards, currentIndex, showAnswer, handleReview]);
 
   const abrirCriar = () => {
     setEditingCard(null);
@@ -196,12 +211,6 @@ export default function Flashcards() {
     } else {
       createMutation.mutate(payload);
     }
-  };
-
-  const handleReview = (quality: 'easy' | 'good' | 'hard') => {
-    if (currentIndex >= dueCards.length) return;
-    const card = dueCards[currentIndex];
-    reviewMutation.mutate({ id: card.id, quality });
   };
 
   const reiniciarRevisoes = () => {
@@ -496,9 +505,9 @@ export default function Flashcards() {
                 </thead>
                 <tbody>
                   {allCards.map(card => {
-                    const nextDate = new Date(card.nextReviewDate);
-                    const isDue = nextDate.getTime() <= Date.now();
-                    return (
+                      const nextDate = new Date(card.nextReviewDate);
+                      const isDue = nextDate.getTime() <= now;
+                      return (
                       <tr key={card.id}>
                         <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }}>{card.front}</td>
                         <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }}>{card.back}</td>

@@ -31,8 +31,10 @@ export default function Navbar() {
 
   // Fecha o menu mobile quando a rota muda
   useEffect(() => {
-    setIsMenuOpen(false);
-  }, [location.pathname]);
+    if (isMenuOpen) {
+      setTimeout(() => setIsMenuOpen(false), 0);
+    }
+  }, [location.pathname, isMenuOpen]);
 
   // Busca as sessões de estudo para calcular o Streak diário
   const { data: sessions = [] } = useQuery<StudySession[]>({

@@ -2,7 +2,7 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { ArrowRight, Award, Brain, HelpCircle, Sparkles } from 'lucide-react';
 import { useState } from 'react';
 import { apiClient } from '../api/client';
-import type { Flashcard, Subject } from '../types';
+import type { Subject } from '../types';
 import { triggerConfetti } from '../utils/confetti';
 
 interface ExamPrep {
@@ -103,18 +103,10 @@ export default function Quiz() {
     },
   });
 
-  const { data: flashcards = [] } = useQuery<Flashcard[]>({
-    queryKey: ['flashcards-all'],
-    queryFn: async () => {
-      const res = await apiClient.get<any>('/api/v1/flashcards?size=1000');
-      return normalizeListResponse<Flashcard>(res.data);
-    }
-  });
-
   const { data: examPreps = [] } = useQuery<ExamPrep[]>({
     queryKey: ['exam-preps'],
     queryFn: async () => {
-      const res = await apiClient.get<any>('/api/v1/exam-preps');
+      const res = await apiClient.get<{ content?: ExamPrep[] }>('/api/v1/exam-preps');
       return normalizeListResponse<ExamPrep>(res.data);
     }
   });

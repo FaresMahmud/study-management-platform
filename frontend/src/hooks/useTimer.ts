@@ -2,7 +2,7 @@ import { useState, useRef } from 'react';
 
 export function useTimer() {
   const [seconds, setSeconds] = useState(0);
-  const intervalRef = useRef<any>(null);
+  const intervalRef = useRef<ReturnType<typeof setInterval> | null>(null);
 
   const start = () => {
     if (intervalRef.current) return;

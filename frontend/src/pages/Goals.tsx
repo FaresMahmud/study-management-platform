@@ -195,7 +195,7 @@ export default function Goals() {
         }
         closeModal();
       }
-    } catch (err) {
+    } catch {
       // O erro é tratado no callback onError da mutation
     }
   };

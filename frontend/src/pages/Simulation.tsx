@@ -54,12 +54,17 @@ export default function Simulation() {
   // Results
   const [simulationCompleted, setSimulationCompleted] = useState(false);
   const [resultScore, setResultScore] = useState<number | null>(null);
-  const [resultStatus, setResultStatus] = useState<string>('');
+
+  const handleAutoSubmit = () => {
+    if (simulationId) {
+      finishSimulationMutation.mutate({ id: simulationId, answers });
+    }
+  };
 
   const { data: examPreps = [] } = useQuery<ExamPrep[]>({
     queryKey: ['exam-preps'],
     queryFn: async () => {
-      const res = await apiClient.get<any>('/api/v1/exam-preps');
+      const res = await apiClient.get<{ content?: ExamPrep[] }>('/api/v1/exam-preps');
       return normalizeListResponse<ExamPrep>(res.data);
     }
   });
@@ -83,7 +88,7 @@ export default function Simulation() {
           }
         }));
         setQuestions(formatted);
-      } catch (err) {
+      } catch {
         setQuestions([
           {
             question: "Questão 1: Qual é a principal vantagem da repetição espaçada?",
@@ -124,7 +129,6 @@ export default function Simulation() {
     },
     onSuccess: (data) => {
       setResultScore(data.score ?? 0);
-      setResultStatus(data.status);
       setSimulationCompleted(true);
       setSimulationStarted(false);
       queryClient.invalidateQueries({ queryKey: ['goals'] });
@@ -155,7 +159,7 @@ export default function Simulation() {
     return () => {
       if (timerIntervalRef.current) clearInterval(timerIntervalRef.current);
     };
-  }, [simulationStarted, simulationCompleted]);
+  }, [simulationStarted, simulationCompleted, handleAutoSubmit]);
 
   useEffect(() => {
     const handleFullscreen = () => {
@@ -171,12 +175,6 @@ export default function Simulation() {
 
   const handleMarkQuestion = () => {
     setMarkedQuestions(prev => ({ ...prev, [currentIdx]: !prev[currentIdx] }));
-  };
-
-  const handleAutoSubmit = () => {
-    if (simulationId) {
-      finishSimulationMutation.mutate({ id: simulationId, answers });
-    }
   };
 
   const handleSubmitSimulation = () => {

@@ -68,9 +68,12 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
       }
       
       onFinished();
-    } catch (err: any) {
+    } catch (err: unknown) {
       console.error('Erro no onboarding:', err);
-      setErrorMsg(err.response?.data?.message || 'Erro ao criar plano de estudos. Verifique se os dados estão corretos.');
+      const message = err instanceof Error ? err.message : 'Erro ao criar plano de estudos. Verifique se os dados estão corretos.';
+      // Also check for axios-like error response
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      setErrorMsg(axiosErr.response?.data?.message || message);
     } finally {
       setLoading(false);
     }

@@ -12,15 +12,18 @@ export function useApi<T>(url: string) {
     try {
       const response = await apiClient.get<T>(url);
       setData(response.data);
-    } catch (err: any) {
-      setError(err.message || 'Erro ao buscar dados');
+    } catch (err: unknown) {
+      const message = err instanceof Error ? err.message : 'Erro ao buscar dados';
+      setError(message);
     } finally {
       setLoading(false);
     }
   }, [url]);
 
   useEffect(() => {
-    fetchData();
+    setTimeout(() => {
+      fetchData();
+    }, 0);
   }, [fetchData]);
 
   return { data, loading, error, refetch: fetchData };
