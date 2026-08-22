@@ -25,7 +25,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -51,7 +51,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -82,7 +82,7 @@ jobs:
       - name: Setup Node.js
         uses: actions/setup-node@v4
         with:
-          node-version: '20'
+          node-version: '22'
           cache: 'npm'
           cache-dependency-path: frontend/package-lock.json
 
@@ -138,9 +138,11 @@ jobs:
           CHROMA_SERVER_HOST: 0.0.0.0
           CHROMA_SERVER_HTTP_PORT: 8000
           IS_PERSISTENT: "TRUE"
-          PERSIST_DIRECTORY: /chroma/data
+          PERSIST_DIRECTORY: /data
+          ALLOW_RESET: "TRUE"
+          ANONYMIZED_TELEMETRY: "FALSE"
         options: >-
-          --health-cmd="curl -f http://localhost:8000/api/v2/heartbeat"
+          --health-cmd="sh -c 'nc -z localhost 8000 || exit 1'"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=10
