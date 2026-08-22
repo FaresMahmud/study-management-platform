@@ -138,7 +138,7 @@ export default function StudyWorkspace() {
           <BookOpen size={20} className="text-primary" />
           <select
             className="form-input"
-            style={{ width: '220px', margin: 0 }}
+            style={{ width: '100%', maxWidth: '280px', margin: 0 }}
             value={selectedSubjectId}
             onChange={(e) => {
               setSelectedSubjectId(e.target.value ? Number(e.target.value) : '');
@@ -158,7 +158,7 @@ export default function StudyWorkspace() {
             {/* Seletor do PDF */}
             <select
               className="form-input dropdown-label"
-              style={{ width: '200px', margin: 0 }}
+              style={{ width: '100%', maxWidth: '240px', margin: 0 }}
               value={activeFileId || ''}
               onChange={(e) => setActiveFileId(e.target.value ? Number(e.target.value) : null)}
               title={activeFileId ? String(pdfFiles.find(f => f.id === activeFileId)?.fileName) : "Nenhum PDF selecionado"}
@@ -172,7 +172,7 @@ export default function StudyWorkspace() {
             {/* Seletor do Resumo */}
             <select
               className="form-input dropdown-label"
-              style={{ width: '200px', margin: 0 }}
+              style={{ width: '100%', maxWidth: '240px', margin: 0 }}
               value={activeSummaryId || ''}
               onChange={(e) => setActiveSummaryId(e.target.value ? Number(e.target.value) : null)}
               title={activeSummaryId ? summaries.find(s => s.id === activeSummaryId)?.title : "Nenhum resumo selecionado"}

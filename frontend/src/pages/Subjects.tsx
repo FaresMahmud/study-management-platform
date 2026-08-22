@@ -227,7 +227,7 @@ export default function Subjects() {
         </div>
       ) : (
         /* Grid de Matérias (2 Colunas conforme o audit) */
-        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(400px, 1fr))', gap: '20px' }}>
+        <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
 
           {subjects.map((subj) => {
             const hasSummaries = summaries.some(s => s.subject.id === subj.id);

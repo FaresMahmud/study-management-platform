@@ -1,8 +1,12 @@
 import axios, { AxiosError } from 'axios';
 import { useAuthStore } from '../store/authStore';
 
-// URL base apontando para o servidor Spring Boot
-const API_BASE_URL = import.meta.env.VITE_API_URL || 'http://localhost:8080';
+// URL base apontando para o servidor Spring Boot (deve ser configurada via VITE_API_URL)
+const API_BASE_URL = import.meta.env.VITE_API_URL;
+
+if (!API_BASE_URL) {
+  throw new Error('VITE_API_URL não está configurado. Defina a variável de ambiente VITE_API_URL no .env ou no build.');
+}
 
 export const apiClient = axios.create({
   baseURL: API_BASE_URL,

@@ -6,6 +6,13 @@ import { Calendar, Target, Clock, Sparkles, BookOpen, AlertCircle, ArrowRight } 
 import type { ExamPrep } from '../types';
 import { pluralize } from '../utils/format';
 
+// URL base para chamadas públicas (sem auth) - deve ser configurada via VITE_API_URL
+const PUBLIC_API_URL = import.meta.env.VITE_API_URL;
+
+if (!PUBLIC_API_URL) {
+  throw new Error('VITE_API_URL não está configurado. Defina a variável de ambiente VITE_API_URL no .env ou no build.');
+}
+
 export default function PublicShareView() {
   const { token } = useParams<{ token: string }>();
 
@@ -13,7 +20,7 @@ export default function PublicShareView() {
   const { data: examPrep, isLoading, isError } = useQuery<ExamPrep>({
     queryKey: ['public-share', token],
     queryFn: async () => {
-      const response = await axios.get<ExamPrep>(`http://localhost:8080/api/v1/exam-preps/public/share/${token}`);
+      const response = await axios.get<ExamPrep>(`${PUBLIC_API_URL}/api/v1/exam-preps/public/share/${token}`);
       return response.data;
     },
     enabled: !!token,
