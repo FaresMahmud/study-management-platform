@@ -11,8 +11,10 @@ export function useTimer() {
   };
 
   const stop = () => {
-    clearInterval(intervalRef.current);
-    intervalRef.current = null;
+    if (intervalRef.current) {
+      clearInterval(intervalRef.current);
+      intervalRef.current = null;
+    }
   };
 
   const formatted = `${Math.floor(seconds / 60)}m ${seconds % 60}s`;

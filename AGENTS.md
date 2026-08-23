@@ -59,6 +59,8 @@ A seguir, tabela de referência rápida para os 5 documentos de arquitetura e pa
 
 O frontend está localizado em `frontend/`.
 
+- Documentação detalhada: [`frontend/README.md`](frontend/README.md)
+
 ### Stack principal
 
 - React 18+
@@ -120,6 +122,8 @@ Utilizado para:
 # 3. Backend
 
 O backend está localizado em `backend/`.
+
+- Documentação detalhada: [`backend/README.md`](backend/README.md)
 
 ### Stack principal
 

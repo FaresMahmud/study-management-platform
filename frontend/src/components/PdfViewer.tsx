@@ -181,6 +181,7 @@ export default function PdfViewer({
       }
 
       await page.render({
+        canvas: canvas,
         canvasContext: context,
         viewport: viewport
       }).promise;

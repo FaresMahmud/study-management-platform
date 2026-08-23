@@ -6,6 +6,10 @@ on:
   pull_request:
     branches: [main, developer]
 
+permissions:
+  contents: read
+  packages: write
+
 env:
   REGISTRY: ghcr.io
   IMAGE_NAME: ${{ github.repository }}
@@ -59,7 +63,7 @@ jobs:
         run: npm ci
 
       - name: Run tests
-        run: npm run test -- --run
+        run: npm run test
 
       - name: Upload coverage
         uses: codecov/codecov-action@v4
@@ -142,7 +146,7 @@ jobs:
           ALLOW_RESET: "TRUE"
           ANONYMIZED_TELEMETRY: "FALSE"
         options: >-
-          --health-cmd="python3 -c \"import urllib.request; urllib.request.urlopen('http://localhost:8000/api/v1/heartbeat')\" || exit 1"
+          --health-cmd="python3 -c 'import urllib.request; urllib.request.urlopen(\"http://localhost:8000/api/v1/heartbeat\")' || exit 1"
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
@@ -171,9 +175,6 @@ jobs:
         run: mvn test -B
         env:
           SPRING_PROFILES_ACTIVE: test
-          SPRING_DATASOURCE_URL: jdbc:mysql://localhost:3306/study_platform?useSSL=false&serverTimezone=UTC
-          SPRING_DATASOURCE_USERNAME: study_user
-          SPRING_DATASOURCE_PASSWORD: study_pass
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
           CHROMADB_HOST: localhost
