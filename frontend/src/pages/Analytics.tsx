@@ -618,7 +618,7 @@ export default function Analytics() {
                           content={(props) => (
                             <TooltipGrafico
                               active={props.active}
-                              payload={props.payload as TooltipProps['payload']}
+                              payload={props.payload as unknown as TooltipProps['payload']}
                               label={props.label as string}
                             />
                           )}

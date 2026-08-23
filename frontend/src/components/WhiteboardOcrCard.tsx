@@ -25,6 +25,7 @@ export default function WhiteboardOcrCard({ subjects }: WhiteboardOcrCardProps) 
   const [summaryTitle, setSummaryTitle] = useState('');
   const [modalAberto, setModalAberto] = useState(false);
   const [erro, setErro] = useState('');
+  const [, setSelectedFile] = useState<File | null>(null);
 
   // Mutation para enviar a foto e analisar por IA
   const analyzePhotoMutation = useMutation({
