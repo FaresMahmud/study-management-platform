@@ -201,7 +201,7 @@ export default function Subjects() {
 
       <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '28px', fontWeight: 800 }}>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontSize: '28px', fontWeight: 800 }}>
             <BookOpen size={28} style={{ color: 'var(--primary)' }} />
             Matérias & PDFs
           </h1>
@@ -246,7 +246,7 @@ export default function Subjects() {
                 <div>
                   <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     <span style={{ fontSize: '18px', fontWeight: 800, color: 'var(--text-primary)' }}>{subj.subjectName}</span>
-                    <div style={{ display: 'flex', gap: '8px' }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
                       <button onClick={() => openEditModal(subj)} style={{ padding: '4px', color: 'var(--text-secondary)' }} title="Editar">
                         <Edit2 size={15} />
                       </button>
@@ -256,7 +256,7 @@ export default function Subjects() {
                     </div>
                   </div>
 
-                  <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: '8px', lineHeight: 1.5 }}>
+                  <p style={{ color: 'var(--text-secondary)', fontSize: '13px', marginTop: 'var(--space-xs)', lineHeight: 1.5 }}>
                     {subj.subjectDescription || 'Nenhuma descrição informada.'}
                   </p>
 
@@ -265,7 +265,7 @@ export default function Subjects() {
                     const subjGoal = goals.find(g => g.subject?.id === subj.id);
                     const mastery = subjGoal ? Math.round(subjGoal.currentMastery) : 0;
                     return (
-                      <div style={{ marginTop: '16px' }}>
+                      <div style={{ marginTop: 'var(--space-md)' }}>
                         <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '11px', color: 'var(--text-muted)', marginBottom: '4px' }}>
                           <span>Proficiência acumulada</span>
                           <strong style={{ color: subj.color || 'var(--primary)' }}>{mastery}%</strong>
@@ -278,13 +278,13 @@ export default function Subjects() {
                   })()}
                 </div>
 
-                <div style={{ marginTop: '21px', borderTop: '1px solid var(--border-color)', paddingTop: '16px' }}>
+                <div style={{ marginTop: '21px', borderTop: '1px solid var(--border-color)', paddingTop: 'var(--space-md)' }}>
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     {(() => {
                       const cardsCount = flashcards.filter(f => f.subject?.id === subj.id).length;
                       const pdfsCount = summaries.filter(s => s.subject?.id === subj.id).length;
                       return (
-                        <div style={{ display: 'flex', gap: '16px', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <div style={{ display: 'flex', gap: 'var(--space-md)', fontSize: '11px', color: 'var(--text-muted)' }}>
                           <span><strong>{cardsCount}</strong> Flashcards</span>
                           <span><strong>{pdfsCount}</strong> PDFs / Resumos</span>
                         </div>
@@ -303,7 +303,7 @@ export default function Subjects() {
 
                   {expandedSubjectId === subj.id && (
                     <div style={{ marginTop: '13px', paddingTop: '13px', borderTop: '1px dashed var(--border-color)' }}>
-                      <span style={{ fontSize: '12px', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: '8px' }}>
+                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 'var(--space-xs)' }}>
                         <FileText size={13} style={{ color: subj.color || 'var(--primary)' }} />
                         PDFs Extraídos
                       </span>
@@ -321,7 +321,7 @@ export default function Subjects() {
                                 to="/summaries"
                                 state={{ activeSummaryId: sum.id }}
                                 className="sessao-recente-item"
-                                style={{ padding: '8px 12px', fontSize: '12px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                style={{ padding: '8px 12px', fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
                               >
                                 <span>{sum.title}</span>
                                 <ArrowRight size={12} />
@@ -354,7 +354,7 @@ export default function Subjects() {
               backgroundColor: 'transparent'
             }}
           >
-            <Plus size={36} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+            <Plus size={36} style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-xs)' }} />
             <span style={{ fontSize: '14px', fontWeight: 700, color: 'var(--text-secondary)' }}>Adicionar Nova Matéria</span>
           </div>
 
@@ -363,7 +363,7 @@ export default function Subjects() {
 
       {/* Seção Atividade Recente no rodapé */}
       <div className="card" style={{ marginTop: '20px', padding: '21px' }}>
-        <h3 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
+        <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: '13px', display: 'flex', alignItems: 'center', gap: '6px' }}>
           <Activity size={18} style={{ color: 'var(--primary)' }} />
           Atividade Recente
         </h3>
@@ -375,7 +375,7 @@ export default function Subjects() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: '10px' }}>
             {sessions.slice(0, 2).map(session => (
               <div key={session.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontSize: '13px' }}>
                   <Clock size={14} style={{ color: 'var(--primary)' }} />
                   <span>Você estudou a matéria "{session.subject?.subjectName}" por {session.duration} minutos.</span>
                 </div>
@@ -384,7 +384,7 @@ export default function Subjects() {
             ))}
             {summaries.slice(0, 2).map(sum => (
               <div key={sum.id} style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '13px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontSize: '13px' }}>
                   <FileText size={14} style={{ color: 'var(--success)' }} />
                   <span>Upload do material "{sum.title}" concluído com sucesso.</span>
                 </div>
@@ -403,7 +403,7 @@ export default function Subjects() {
             <h2 className="modal-title">{editingSubject ? 'Editar Matéria' : 'Nova Matéria'}</h2>
 
             {formError && (
-              <div style={{ padding: '10px', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '16px', fontSize: '13px' }}>
+              <div style={{ padding: '10px', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: 'var(--space-md)', fontSize: '13px' }}>
                 {formError}
               </div>
             )}
@@ -437,15 +437,15 @@ export default function Subjects() {
 
               <div className="form-group">
                 <label className="form-label">Cor Visual</label>
-                <div style={{ display: 'flex', gap: '8px', flexWrap: 'wrap', marginTop: '8px' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-xs)', flexWrap: 'wrap', marginTop: 'var(--space-xs)' }}>
                   {PREDEFINED_COLORS.map((c) => (
                     <button
                       key={c}
                       type="button"
                       onClick={() => setSelectedColor(c)}
                       style={{
-                        width: '32px',
-                        height: '32px',
+                        width: 'var(--space-lg)',
+                        height: 'var(--space-lg)',
                         borderRadius: '50%',
                         backgroundColor: c,
                         border: selectedColor === c ? '3px solid white' : '1px solid rgba(0,0,0,0.2)',

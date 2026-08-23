@@ -134,7 +134,7 @@ export default function StudyWorkspace() {
 
       {/* BARRA DE SELEÇÃO INICIAL */}
       <div className="flex-between" style={{ padding: '12px var(--space-md)', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
           <BookOpen size={20} className="text-primary" />
           <select
             className="form-input"
@@ -154,7 +154,7 @@ export default function StudyWorkspace() {
         </div>
 
         {selectedSubjectId && (
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
             {/* Seletor do PDF */}
             <select
               className="form-input dropdown-label"
@@ -197,7 +197,7 @@ export default function StudyWorkspace() {
             </button>
 
             {/* Split layout toggle buttons */}
-            <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '12px', marginLeft: '12px' }}>
+            <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: 'var(--space-sm)', marginLeft: 'var(--space-sm)' }}>
               <button
                 className={`btn btn-sm ${splitRatio === 100 ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ padding: '6px', minWidth: '40px' }}
@@ -232,7 +232,7 @@ export default function StudyWorkspace() {
         <div className="flex-center" style={{ flex: 1, flexDirection: 'column', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Sparkles size={56} style={{ color: 'var(--primary)', marginBottom: '1.25rem' }} />
           <h2>Abra sua Área de Estudos</h2>
-          <p style={{ maxWidth: '400px', textAlign: 'center', marginTop: '8px', fontSize: '0.9rem' }}>
+          <p style={{ maxWidth: '400px', textAlign: 'center', marginTop: 'var(--space-xs)', fontSize: '0.9rem' }}>
             Selecione uma matéria acima para carregar seus arquivos PDF da aula e escrever seus resumos integrados lado a lado.
           </p>
         </div>

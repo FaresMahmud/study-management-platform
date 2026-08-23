@@ -247,7 +247,7 @@ export default function Quiz() {
 
       <div className="title-section">
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: 'var(--space-lg)' }}>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontSize: '1.25rem' }}>
             <Brain size={28} style={{ color: 'var(--success)' }} />
             Quiz Adaptativo
           </h1>
@@ -257,8 +257,8 @@ export default function Quiz() {
 
       {!quizStarted ? (
         <div style={{ maxWidth: '600px', margin: '40px auto' }} className="card">
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <HelpCircle size={48} style={{ color: 'var(--success)', marginBottom: '12px' }} />
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+            <HelpCircle size={48} style={{ color: 'var(--success)', marginBottom: 'var(--space-sm)' }} />
             <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Iniciar Quiz Personalizado</h2>
           </div>
 
@@ -274,9 +274,9 @@ export default function Quiz() {
         </div>
       ) : quizCompleted ? (
         <div style={{ maxWidth: '600px', margin: '40px auto' }} className="card">
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
             <Award size={48} style={{ color: 'var(--success)' }} />
-            <h2 style={{ fontSize: '21px', fontWeight: 800, marginTop: '8px' }}>Desempenho no Quiz</h2>
+            <h2 style={{ fontSize: '21px', fontWeight: 800, marginTop: 'var(--space-xs)' }}>Desempenho no Quiz</h2>
             <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Você acertou {correctAnswersCount} de {questions.length} questões.</p>
           </div>
 
@@ -288,19 +288,19 @@ export default function Quiz() {
             </select>
           </div>
 
-          <button className="btn btn-primary" style={{ width: '100%', marginBottom: '8px' }} onClick={handleSaveResult} disabled={!selectedExamPrepId}>Salvar e Atualizar Maestria</button>
+          <button className="btn btn-primary" style={{ width: '100%', marginBottom: 'var(--space-xs)' }} onClick={handleSaveResult} disabled={!selectedExamPrepId}>Salvar e Atualizar Maestria</button>
           <button className="btn btn-secondary" style={{ width: '100%' }} onClick={() => setQuizStarted(false)}>Voltar</button>
         </div>
       ) : (
         <div style={{ maxWidth: '800px', margin: '20px auto' }}>
           {questions.length === 0 ? (
-            <div className="card" style={{ padding: '24px', textAlign: 'center' }}>
-              <HelpCircle size={48} style={{ color: 'var(--success)', marginBottom: '12px' }} />
+            <div className="card" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>
+              <HelpCircle size={48} style={{ color: 'var(--success)', marginBottom: 'var(--space-sm)' }} />
               <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Nenhuma questão disponível</h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 'var(--space-xs)' }}>
                 Tente iniciar o quiz novamente para gerar as perguntas.
               </p>
-              <button className="btn btn-primary" style={{ marginTop: '16px' }} onClick={() => setQuizStarted(false)}>
+              <button className="btn btn-primary" style={{ marginTop: 'var(--space-md)' }} onClick={() => setQuizStarted(false)}>
                 Voltar
               </button>
             </div>
@@ -308,7 +308,7 @@ export default function Quiz() {
             <>
 
               {/* Header e Progresso */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px', fontSize: '13px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xs)', fontSize: '13px' }}>
                 <span>Questão {currentIdx + 1} de {questions.length}</span>
                 <span style={{ color: 'var(--success)', fontWeight: 600 }}>Acertos: {correctAnswersCount}/{questions.length}</span>
               </div>
@@ -317,8 +317,8 @@ export default function Quiz() {
                 <div className="progress-bar-fill" style={{ width: `${((currentIdx + 1) / questions.length) * 100}%`, backgroundColor: 'var(--success)' }} />
               </div>
 
-              <div className="card" style={{ padding: '24px' }}>
-                <div style={{ display: 'flex', gap: '8px', marginBottom: '13px' }}>
+              <div className="card" style={{ padding: 'var(--space-lg)' }}>
+                <div style={{ display: 'flex', gap: 'var(--space-xs)', marginBottom: '13px' }}>
                   <span className="badge badge-primary">Nível Médio</span>
                   <span className="badge badge-success">Material do PDF</span>
                 </div>
@@ -351,14 +351,14 @@ export default function Quiz() {
 
                 {/* Painel de Explicação detalhada */}
                 {answered && (
-                  <div style={{ marginTop: '21px', padding: '16px', background: 'var(--bg-tertiary)', borderLeft: '4px solid var(--success)', borderRadius: 'var(--radius-md)' }}>
-                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--success)', fontWeight: 700, marginBottom: '8px' }}>
+                  <div style={{ marginTop: '21px', padding: 'var(--space-md)', background: 'var(--bg-tertiary)', borderLeft: '4px solid var(--success)', borderRadius: 'var(--radius-md)' }}>
+                    <h4 style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px', color: 'var(--success)', fontWeight: 700, marginBottom: 'var(--space-xs)' }}>
                       <Sparkles size={16} />
                       Explicação Detalhada
                     </h4>
                     <p style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: 1.8 }}>{questions[currentIdx].explanation}</p>
 
-                    <div style={{ display: 'flex', gap: '8px', marginTop: '13px' }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-xs)', marginTop: '13px' }}>
                       <button className="btn btn-secondary btn-sm" onClick={convertToFlashcard}>Converter em Flashcard SRS</button>
                     </div>
                   </div>

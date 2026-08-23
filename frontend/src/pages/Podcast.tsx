@@ -143,15 +143,15 @@ export default function Podcast() {
   };
 
   return (
-    <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px' }}>
+    <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)', padding: 'var(--space-lg)' }}>
       
       {/* Header com Navegação */}
-      <div style={{ display: 'flex', alignItems: 'center', gap: '16px' }}>
-        <Link to="/" className="btn btn-secondary btn-sm" style={{ padding: '8px' }}>
+      <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)' }}>
+        <Link to="/" className="btn btn-secondary btn-sm" style={{ padding: 'var(--space-xs)' }}>
           <ArrowLeft size={16} />
         </Link>
         <div>
-          <h1 style={{ fontSize: '24px', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 900, color: 'var(--text-primary)', letterSpacing: '-0.02em', margin: 0 }}>
             🎧 Podcast de Estudo Inteligente
           </h1>
           <p style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>
@@ -160,18 +160,18 @@ export default function Podcast() {
         </div>
       </div>
 
-      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '24px' }}>
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: 'var(--space-lg)' }}>
         
         {/* COLUNA ESQUERDA: CONTROLES DE ESCOLHA E CONFIGURAÇÃO */}
-        <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '21px', border: '1px solid var(--border-color)', height: 'fit-content' }}>
+        <div className="card" style={{ padding: 'var(--space-lg)', display: 'flex', flexDirection: 'column', gap: '21px', border: '1px solid var(--border-color)', height: 'fit-content' }}>
           <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
             <Radio size={20} className="text-primary" />
-            <h3 style={{ fontSize: '16px', fontWeight: 800, margin: 0 }}>Configurar Podcast</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, margin: 0 }}>Configurar Podcast</h3>
           </div>
 
           {/* Selecionar Preparação de Exame */}
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+            <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
               Objetivo de Estudo
             </label>
             <select 
@@ -189,10 +189,10 @@ export default function Podcast() {
 
           {/* Selecionar Nível de Dificuldade */}
           <div>
-            <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+            <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
               Nível do Roteiro
             </label>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px' }}>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-xs)' }}>
               {(['BASIC', 'MEDIUM', 'ADVANCED'] as const).map((level) => (
                 <button
                   key={level}
@@ -201,7 +201,7 @@ export default function Podcast() {
                   className={`btn ${difficultyLevel === level ? 'btn-primary' : 'btn-secondary'}`}
                   style={{
                     padding: '8px 4px',
-                    fontSize: '12px',
+                    fontSize: '0.75rem',
                     fontWeight: 700,
                     textTransform: 'capitalize'
                   }}
@@ -218,12 +218,12 @@ export default function Podcast() {
             disabled={!selectedExamPrepId || generatePodcastMutation.isPending || isPodcastLoading} 
             onClick={handleGenerateClick}
             style={{ 
-              marginTop: '12px', 
+              marginTop: 'var(--space-sm)', 
               display: 'flex', 
               alignItems: 'center', 
               justifyContent: 'center', 
-              gap: '8px',
-              padding: '12px'
+              gap: 'var(--space-xs)',
+              padding: 'var(--space-sm)'
             }}
           >
             <Sparkles size={16} />
@@ -234,11 +234,11 @@ export default function Podcast() {
         </div>
 
         {/* COLUNA DIREITA: PLAYER E ROTEIRO */}
-        <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', gap: '21px', border: '1px solid var(--border-color)', minHeight: '380px', position: 'relative' }}>
+        <div className="card" style={{ padding: 'var(--space-lg)', display: 'flex', flexDirection: 'column', gap: '21px', border: '1px solid var(--border-color)', minHeight: '380px', position: 'relative' }}>
           
 
           {isPodcastLoading || generatePodcastMutation.isPending ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '16px' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 'var(--space-md)' }}>
               <div className="wave-pulse" style={{ display: 'flex', gap: '6px', alignItems: 'center', height: '40px' }}>
                 {[1, 2, 3, 4, 5, 6, 7].map((bar) => (
                   <div 
@@ -259,19 +259,19 @@ export default function Podcast() {
               </p>
             </div>
           ) : !currentPodcast?.scriptText ? (
-            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: '16px', textAlign: 'center' }}>
-              <div style={{ padding: '16px', borderRadius: '50%', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
+            <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', flex: 1, gap: 'var(--space-md)', textAlign: 'center' }}>
+              <div style={{ padding: 'var(--space-md)', borderRadius: '50%', backgroundColor: 'var(--bg-tertiary)', color: 'var(--text-muted)' }}>
                 <Headphones size={36} />
               </div>
               <div>
-                <h4 style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '16px' }}>Nenhum Podcast Criado</h4>
+                <h4 style={{ fontWeight: 800, color: 'var(--text-primary)', fontSize: '1rem' }}>Nenhum Podcast Criado</h4>
                 <p style={{ fontSize: '13px', color: 'var(--text-secondary)', maxWidth: '320px', marginTop: '4px' }}>
                   Clique no botão para gerar o roteiro e sintetizar o podcast para este objetivo!
                 </p>
               </div>
             </div>
           ) : (
-            <div style={{ display: 'flex', flexDirection: 'column', gap: '24px', flex: 1 }}>
+            <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)', flex: 1 }}>
               
               {/* Box do Custom Audio Player */}
               <div style={{ 
@@ -281,11 +281,11 @@ export default function Podcast() {
                 padding: '20px',
                 display: 'flex',
                 flexDirection: 'column',
-                gap: '16px'
+                gap: 'var(--space-md)'
               }}>
                 
                 {/* Visualizador de Onda Estático/Dinâmico */}
-                <div style={{ display: 'flex', gap: '3px', alignItems: 'center', height: '24px', justifyContent: 'center' }}>
+                <div style={{ display: 'flex', gap: '3px', alignItems: 'center', height: 'var(--space-lg)', justifyContent: 'center' }}>
                   {(() => {
                     // Use a stable seed for pseudo-randomness during render
                     // Compute once per render cycle via IIFE but without Date.now()
@@ -375,7 +375,7 @@ export default function Podcast() {
                       href={podcastAudioUrl} 
                       download={`podcast_${selectedExamPrepId}_${difficultyLevel}.mp3`}
                       className="btn btn-secondary btn-sm"
-                      style={{ padding: '8px' }}
+                      style={{ padding: 'var(--space-xs)' }}
                     >
                       <Download size={14} />
                     </a>
@@ -383,7 +383,7 @@ export default function Podcast() {
                 </div>
 
                 {/* Volume Controller */}
-                <div style={{ display: 'flex', alignItems: 'center', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', borderTop: '1px solid var(--border-color)', paddingTop: 'var(--space-sm)' }}>
                   <button onClick={toggleMute} style={{ background: 'transparent', border: 'none', cursor: 'pointer', color: 'var(--text-secondary)' }}>
                     {isMuted ? <VolumeX size={16} /> : <Volume2 size={16} />}
                   </button>
@@ -401,7 +401,7 @@ export default function Podcast() {
               </div>
 
               {/* Roteiro para leitura visual */}
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '8px', flex: 1 }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', flex: 1 }}>
                 <h4 style={{ fontSize: '13px', fontWeight: 800, color: 'var(--text-secondary)' }}>
                   📄 Acompanhar Leitura (Script)
                 </h4>
@@ -409,7 +409,7 @@ export default function Podcast() {
                   background: 'var(--bg-secondary)', 
                   border: '1px solid var(--border-color)', 
                   borderRadius: 'var(--radius-sm)', 
-                  padding: '16px',
+                  padding: 'var(--space-md)',
                   maxHeight: '180px',
                   overflowY: 'auto',
                   fontSize: '13px',

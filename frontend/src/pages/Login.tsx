@@ -47,10 +47,10 @@ export default function Login() {
   };
 
   return (
-    <div className="auth-wrapper">
+    <div className="auth-wrapper" style={{ padding: 'var(--space-xl)' }}>
       <div className="auth-card">
         <div className="auth-header">
-          <div style={{ display: 'inline-flex', padding: '0.75rem', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', marginBottom: '1rem' }}>
+          <div style={{ display: 'inline-flex', padding: 'var(--space-xs)', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', marginBottom: 'var(--space-lg)' }}>
             <BookOpen size={32} />
           </div>
           <h1>Bem-vindo ao StudyFlow</h1>
@@ -58,7 +58,7 @@ export default function Login() {
         </div>
 
         {error && (
-          <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1.5rem', fontSize: '0.875rem', fontWeight: 500 }}>
+          <div style={{ padding: 'var(--space-xs) var(--space-sm)', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: 'var(--space-lg)', fontSize: 'var(--text-sm)', fontWeight: 500 }}>
             {error}
           </div>
         )}
@@ -77,7 +77,7 @@ export default function Login() {
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: '2rem' }}>
+          <div className="form-group" style={{ marginBottom: 'var(--space-lg)' }}>
             <label className="form-label" htmlFor="password">Senha</label>
             <input
               id="password"

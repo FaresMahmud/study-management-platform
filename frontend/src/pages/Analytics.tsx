@@ -536,7 +536,7 @@ export default function Analytics() {
         </div>
 
         {activeTab === 'learning_zone' && (
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
             {exibirMock && (
               <span className="demo-badge">
                 <Info size={14} />
@@ -659,7 +659,7 @@ export default function Analytics() {
             {/* Coluna Direita: Calendário Heatmap */}
             <div className="dashboard-coluna-direita">
               <div className="card heatmap-card">
-                <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', marginBottom: '1.25rem' }}>
+                <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', marginBottom: '1.25rem' }}>
                   <Calendar size={18} className="text-primary" />
                   <h2 className="card-title" style={{ margin: 0 }}>
                     Evolução Diária ({MESES_PT[mesAtual]} {anoAtual})
@@ -670,7 +670,7 @@ export default function Analytics() {
                 <div className="heatmap-scroll-container">
                   <div style={{ minWidth: '320px' }}>
                     {/* Dias da semana */}
-                    <div className="heatmap-grid" style={{ marginBottom: '8px' }}>
+                    <div className="heatmap-grid" style={{ marginBottom: 'var(--space-xs)' }}>
                       {DIAS_SEMANA_ABREV.map(d => (
                         <div key={d} className="heatmap-dia-semana">{d}</div>
                       ))}
@@ -842,7 +842,7 @@ export default function Analytics() {
 
           {/* Recomendações de Estudo */}
           <div className="recomendacoes-card">
-            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '16px' }}>
+            <h2 className="card-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', marginBottom: 'var(--space-md)' }}>
               <Activity size={18} className="text-primary" />
               Diretrizes de Estudo Personalizadas (IA)
             </h2>
@@ -898,7 +898,7 @@ export default function Analytics() {
                 Total: <strong style={{ color: 'var(--text-primary)' }}>{formatarDuracao(heatmapTooltip.dados.totalMins)}</strong>
               </div>
               {heatmapTooltip.dados.materias.map(m => (
-                <div key={m.nome} style={{ display: 'flex', justifyContent: 'space-between', gap: '8px', fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
+                <div key={m.nome} style={{ display: 'flex', justifyContent: 'space-between', gap: 'var(--space-xs)', fontSize: '0.72rem', color: 'var(--text-secondary)', marginTop: '2px' }}>
                   <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
                     <span style={{ width: '7px', height: '7px', borderRadius: '50%', backgroundColor: m.cor, flexShrink: 0 }} />
                     {m.nome}

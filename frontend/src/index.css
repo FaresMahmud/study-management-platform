@@ -1730,10 +1730,36 @@ body.zen-mode-active .main-content {
   margin-left: 72px;
 }
 
+/* Mobile hamburger menu button */
+.mobile-menu-toggle {
+  display: none;
+  position: fixed;
+  top: var(--space-md);
+  left: var(--space-md);
+  z-index: 95;
+  background: var(--bg-secondary);
+  border: 1px solid var(--border-color);
+  border-radius: var(--radius-sm);
+  color: var(--text-primary);
+  cursor: pointer;
+  padding: var(--space-sm);
+  min-width: 44px;
+  min-height: 44px;
+  align-items: center;
+  justify-content: center;
+  backdrop-filter: blur(10px);
+  box-shadow: 0 2px 8px rgba(0, 0, 0, 0.2);
+}
+
 /* Mobile Sidebar Drawer (≤1024px) */
 @media (max-width: 1024px) {
+  .mobile-menu-toggle {
+    display: flex;
+  }
+
   .dashboard-main {
     margin-left: 0;
+    padding-top: 60px;
   }
 
   .sidebar {
