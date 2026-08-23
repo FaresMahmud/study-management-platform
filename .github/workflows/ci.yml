@@ -131,7 +131,7 @@ jobs:
         options: --health-cmd="redis-cli ping" --health-interval=10s --health-timeout=5s --health-retries=5
 
       chroma:
-        image: chromadb/chroma:1.0.15
+        image: chromadb/chroma:0.4.24
         ports:
           - 8000:8000
         env:
@@ -146,6 +146,7 @@ jobs:
           --health-interval=10s
           --health-timeout=5s
           --health-retries=5
+          --health-start-period=30s
 
     steps:
       - name: Checkout code
