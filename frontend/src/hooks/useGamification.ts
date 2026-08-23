@@ -1,5 +1,18 @@
 import { useMemo } from 'react';
 
+interface Session {
+  sessionDate: string;
+  duration?: number;
+}
+
+interface Goal {
+  subject?: {
+    id?: number;
+    subjectName?: string;
+  };
+  currentMastery?: number;
+}
+
 export interface Gamification {
   streakDays: number;
   totalStudyTime: number;
@@ -7,15 +20,19 @@ export interface Gamification {
   zone: 'aprendizado' | 'maestria' | 'revisao';
 }
 
-export function useGamification(sessions: any[] = [], goals: any[] = []): Gamification {
+// Pass current date as parameter to avoid impure function calls during render
+export function useGamification(sessions: Session[] = [], goals: Goal[] = [], todayStr?: string): Gamification {
   return useMemo(() => {
+    // Compute dates inside useMemo using the passed todayStr to avoid impure function calls during render
+    const now = todayStr ? new Date(todayStr) : new Date();
+    const todayStrComputed = todayStr ?? now.toISOString().split('T')[0];
+    const yesterdayStr = new Date(now.getTime() - 86400000).toISOString().split('T')[0];
+
     // 1. Streak Days
     const dates = Array.from(new Set(sessions.map(s => s.sessionDate))).sort().reverse();
     let streak = 0;
-    const todayStr = new Date().toISOString().split('T')[0];
-    const yesterdayStr = new Date(Date.now() - 86400000).toISOString().split('T')[0];
-    
-    if (dates.includes(todayStr) || dates.includes(yesterdayStr)) {
+
+    if (dates.includes(todayStrComputed) || dates.includes(yesterdayStr)) {
       let current = new Date(dates[0]);
       streak = 1;
       for (let i = 1; i < dates.length; i++) {
@@ -34,7 +51,7 @@ export function useGamification(sessions: any[] = [], goals: any[] = []): Gamifi
     goals.forEach(g => {
       const sub = g.subject || {};
       if (sub.id) {
-        const curr = masteryMap.get(sub.id) || { name: sub.subjectName, sum: 0, count: 0 };
+        const curr = masteryMap.get(sub.id) || { name: sub.subjectName || 'Sem Nome', sum: 0, count: 0 };
         masteryMap.set(sub.id, { name: curr.name, sum: curr.sum + (g.currentMastery || 0), count: curr.count + 1 });
       }
     });

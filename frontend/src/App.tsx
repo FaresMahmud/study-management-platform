@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
@@ -41,10 +41,16 @@ function ProtectedLayout() {
   const navigate = useNavigate();
   const location = useLocation();
 
+  const hasCheckedOnboarding = useRef(false);
+
   useEffect(() => {
+    if (hasCheckedOnboarding.current) return;
+    hasCheckedOnboarding.current = true;
+
     const onboarded = localStorage.getItem('study_onboarded');
     if (isAuthenticated && onboarded !== 'true') {
-      setOnboardingOpen(true);
+      // Defer setState to avoid synchronous setState in effect
+      setTimeout(() => setOnboardingOpen(true), 0);
     }
   }, [isAuthenticated]);
 

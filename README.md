@@ -67,13 +67,20 @@ study-management-platform/
 ├── docker-compose.yml      # Stack de desenvolvimento
 └── docker-compose.prod.yml # Stack de produção
 ```
-
 ---
 
 ## Documentação
 
 ### Para Agentes de IA
 - **[`AGENTS.md`](AGENTS.md)** — Ponto de entrada obrigatório. Contexto arquitetural, funcional e técnico mínimo.
+
+### Documentação de Módulos
+
+### Backend
+- Documentação detalhada: [`backend/README.md`](backend/README.md)
+
+### Frontend
+- Documentação detalhada: [`frontend/README.md`](frontend/README.md)
 
 ### Documentação Técnica [`docs/`](docs/)
 | Arquivo | Descrição |
@@ -168,18 +175,6 @@ cd frontend && npm run test
 - `VITE_API_URL` **obrigatório** no build de produção (sem fallback localhost)
 
 **Detalhes:** [`docs/production-readiness.md#segurança`](docs/production-readiness.md#autenticação--segurança)
-
----
-
-## Responsividade & Mobile Ready
-
-- Sidebar colapsível (72px/260px) + mobile drawer com overlay
-- Grid fluido `minmax(320px, 1fr)`, formulários `width: 100%` + `max-width` responsivo
-- Charts Recharts com `height: 100%` em containers flexíveis
-- Touch targets ≥ 44px, hover apenas em `(hover: hover) and (pointer: fine)`
-- Design tokens Fibonacci, preparados para Capacitor/React Native
-
-**Detalhes:** [`docs/responsiveness.md`](docs/responsiveness.md)
 
 ---
 

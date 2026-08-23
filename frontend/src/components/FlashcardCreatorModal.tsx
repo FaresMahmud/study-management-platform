@@ -1,4 +1,4 @@
-import React, { useState, useEffect } from 'react';
+import React, { useState, useEffect, useRef } from 'react';
 import { useMutation } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { apiClient } from '../api/client';
@@ -24,11 +24,16 @@ export default function FlashcardCreatorModal({
   const [error, setError] = useState('');
 
   // Sincroniza a seleção inicial
+  const hasInitialized = useRef(false);
+
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasInitialized.current) {
+      hasInitialized.current = true;
       setFront(initialFront);
       setBack('');
       setError('');
+    } else if (!isOpen) {
+      hasInitialized.current = false;
     }
   }, [isOpen, initialFront]);
 

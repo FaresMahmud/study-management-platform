@@ -1,9 +1,9 @@
-import React, { useState, useEffect, useRef } from 'react';
+import React, { useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { ExamPrep, Subject, Flashcard, Summary } from '../types';
-import { Play, Pause, X, Sparkles, Check, AlertTriangle, MessageSquare, BookOpen, Brain, RefreshCw, Headphones } from 'lucide-react';
-import { Link, useNavigate } from 'react-router-dom';
+import { Play, Pause, X, Sparkles, AlertTriangle, MessageSquare, BookOpen, Brain, RefreshCw, Headphones } from 'lucide-react';
+import { useNavigate } from 'react-router-dom';
 import { triggerConfetti } from '../utils/confetti';
 import './FocusMode.css';
 
@@ -43,9 +43,9 @@ export default function FocusMode() {
     queryKey: ['examPreps'],
     queryFn: async () => {
       try {
-        const response = await apiClient.get<any>('/api/v1/exam-preps');
+        const response = await apiClient.get<{ content?: ExamPrep[] }>('/api/v1/exam-preps');
         return Array.isArray(response.data) ? response.data : (response.data.content || []);
-      } catch (err) {
+      } catch {
         return [];
       }
     },
@@ -55,9 +55,10 @@ export default function FocusMode() {
 
   useEffect(() => {
     if (activeExam && selectedExamPrepId === '') {
-      setSelectedExamPrepId(activeExam.id);
+      setTimeout(() => setSelectedExamPrepId(activeExam.id), 0);
     }
-  }, [activeExam, selectedExamPrepId]);
+    // eslint-disable-next-line react-hooks/exhaustive-deps
+  }, [activeExam]);
 
   // Busca de flashcards vinculados ao Exame
   const { data: flashcards = [] } = useQuery<Flashcard[]>({
@@ -88,10 +89,49 @@ export default function FocusMode() {
     enabled: isSessionActive && !!selectedExamPrepId && studyTab === 'summaries',
   });
 
+  // ─── Handlers do Fluxo ────────────────────────────────────────────────
+  // Sintetizador de Som Chime Dinâmico em Web Audio API
+  const playChime = (success: boolean) => {
+    try {
+      const AudioCtx = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
+      if (!AudioCtx) return;
+      const ctx = new AudioCtx();
+
+      if (success) {
+        // Melodia de Sucesso (Arpejo)
+        const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
+        notes.forEach((freq, index) => {
+          const osc = ctx.createOscillator();
+          const gain = ctx.createGain();
+          osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.15);
+          gain.gain.setValueAtTime(0.15, ctx.currentTime + index * 0.15);
+          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.15 + 0.4);
+          osc.connect(gain);
+          gain.connect(ctx.destination);
+          osc.start(ctx.currentTime + index * 0.15);
+          osc.stop(ctx.currentTime + index * 0.15 + 0.4);
+        });
+      } else {
+        // Alerta de perda de foco (Frequência baixa dissonante)
+        const osc = ctx.createOscillator();
+        const gain = ctx.createGain();
+        osc.frequency.setValueAtTime(120, ctx.currentTime);
+        gain.gain.setValueAtTime(0.2, ctx.currentTime);
+        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
+        osc.connect(gain);
+        gain.connect(ctx.destination);
+        osc.start(ctx.currentTime);
+        osc.stop(ctx.currentTime + 0.3);
+      }
+    } catch {
+      // Silently fail if audio context not available
+    }
+  };
+
   // ─── Mutations backend ────────────────────────────────────────────────
   const startSessionMutation = useMutation({
     mutationFn: async (params: { examPrepId: number; duration: number }) => {
-      return (await apiClient.post<any>('/api/v1/pomodoro/start', null, {
+      return (await apiClient.post<{ id: number }>('/api/v1/pomodoro/start', null, {
         params: { examPrepId: params.examPrepId, duration: params.duration }
       })).data;
     },
@@ -105,7 +145,7 @@ export default function FocusMode() {
 
   const completeSessionMutation = useMutation({
     mutationFn: async (params: { sessionId: number; contentConsumed: string }) => {
-      return (await apiClient.post<any>(`/api/v1/pomodoro/complete/${params.sessionId}`, {
+      return (await apiClient.post<{ success: boolean }>(`/api/v1/pomodoro/complete/${params.sessionId}`, {
         contentConsumed: params.contentConsumed
       })).data;
     },
@@ -116,19 +156,33 @@ export default function FocusMode() {
     }
   });
 
+  const handleSessionFinish = () => {
+    setIsRunning(false);
+    if (currentSessionId) {
+      completeSessionMutation.mutate({
+        sessionId: currentSessionId,
+        contentConsumed: JSON.stringify({
+          durationMinutes: sessionDuration,
+          warningsCount: focusWarnings,
+          completedAt: new Date().toISOString()
+        })
+      });
+    }
+  };
+
   useEffect(() => {
-    let interval: any = null;
+    let interval: ReturnType<typeof setInterval> | null = null;
     if (isSessionActive && isRunning && timeLeft > 0) {
       interval = setInterval(() => {
         setTimeLeft(prev => prev - 1);
       }, 1000);
     } else if (timeLeft === 0 && isSessionActive) {
-      handleSessionFinish();
+      setTimeout(() => handleSessionFinish(), 0);
     }
     return () => {
       if (interval) clearInterval(interval);
     };
-  }, [isSessionActive, isRunning, timeLeft]);
+  }, [isSessionActive, isRunning, timeLeft, handleSessionFinish]);
 
   // ─── Monitor de Foco (Blur e Atalhos) ──────────────────────────────────
   useEffect(() => {
@@ -170,7 +224,6 @@ export default function FocusMode() {
     };
   }, [isSessionActive]);
 
-  // ─── Handlers do Fluxo ────────────────────────────────────────────────
   const handleStart = () => {
     if (!selectedExamPrepId) return;
     const seconds = sessionDuration * 60;
@@ -182,66 +235,14 @@ export default function FocusMode() {
     });
   };
 
-  const handleSessionFinish = () => {
-    setIsRunning(false);
-    if (currentSessionId) {
-      completeSessionMutation.mutate({
-        sessionId: currentSessionId,
-        contentConsumed: JSON.stringify({
-          durationMinutes: sessionDuration,
-          warningsCount: focusWarnings,
-          completedAt: new Date().toISOString()
-        })
-      });
-    }
-  };
-
   const handleGiveUp = () => {
-    if (window.confirm('Tem certeza que deseja desistir e encerrar a sessão de foco atual? O progresso não será salvo.')) {
-      setIsSessionActive(false);
-      setIsRunning(false);
-      setCurrentSessionId(null);
-      setFocusWarnings(0);
-      navigate('/');
-    }
-  };
-
-  // Sintetizador de Som Chime Dinâmico em Web Audio API
-  const playChime = (success: boolean) => {
-    try {
-      const AudioCtx = window.AudioContext || (window as any).webkitAudioContext;
-      if (!AudioCtx) return;
-      const ctx = new AudioCtx();
-      
-      if (success) {
-        // Melodia de Sucesso (Arpejo)
-        const notes = [261.63, 329.63, 392.00, 523.25]; // C4, E4, G4, C5
-        notes.forEach((freq, index) => {
-          const osc = ctx.createOscillator();
-          const gain = ctx.createGain();
-          osc.frequency.setValueAtTime(freq, ctx.currentTime + index * 0.15);
-          gain.gain.setValueAtTime(0.15, ctx.currentTime + index * 0.15);
-          gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + index * 0.15 + 0.4);
-          osc.connect(gain);
-          gain.connect(ctx.destination);
-          osc.start(ctx.currentTime + index * 0.15);
-          osc.stop(ctx.currentTime + index * 0.15 + 0.4);
-        });
-      } else {
-        // Alerta de perda de foco (Frequência baixa dissonante)
-        const osc = ctx.createOscillator();
-        const gain = ctx.createGain();
-        osc.frequency.setValueAtTime(120, ctx.currentTime);
-        gain.gain.setValueAtTime(0.2, ctx.currentTime);
-        gain.gain.exponentialRampToValueAtTime(0.01, ctx.currentTime + 0.3);
-        osc.connect(gain);
-        gain.connect(ctx.destination);
-        osc.start(ctx.currentTime);
-        osc.stop(ctx.currentTime + 0.3);
-      }
-    } catch (e) {
-      console.log('Chime error:', e);
-    }
+    setIsSessionActive(false);
+    setIsRunning(false);
+    setTimeLeft(sessionDuration * 60);
+    setTotalDuration(sessionDuration * 60);
+    setCurrentSessionId(null);
+    setFocusWarnings(0);
+    setIsTabBlurred(false);
   };
 
   // RAG Chat Handler no Foco
@@ -260,7 +261,7 @@ export default function FocusMode() {
         question: userMsg
       });
       setChatMessages(prev => [...prev, { sender: 'tutor', text: res.data.answer }]);
-    } catch (err) {
+    } catch {
       setChatMessages(prev => [...prev, { sender: 'tutor', text: 'Desculpe, tive um problema ao buscar no seu material de estudos.' }]);
     } finally {
       setChatLoading(false);

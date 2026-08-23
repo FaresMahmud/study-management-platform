@@ -46,7 +46,7 @@ export default function Summaries() {
   // Sync activeSummaryId when route state changes (e.g. user clicks another summary from subjects page)
   useEffect(() => {
     if (routeState?.activeSummaryId) {
-      setActiveSummaryId(routeState.activeSummaryId);
+      setTimeout(() => setActiveSummaryId(routeState.activeSummaryId ?? null), 0);
     }
   }, [routeState]);
 
@@ -83,7 +83,7 @@ export default function Summaries() {
 
   const createFlashcardMutation = useMutation({
     mutationFn: async (newCard: { front: string; back: string; subjectId: number; summaryId?: number }) => {
-      return (await apiClient.post<any>('/api/flashcards', newCard)).data;
+      return (await apiClient.post<{ id: number }>('/api/flashcards', newCard)).data;
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['flashcards'] });
@@ -170,7 +170,9 @@ export default function Summaries() {
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
         new Notification(titulo, { body: corpo });
-      } catch (e) { }
+      } catch {
+        // Ignore notification errors
+      }
     }
   };
 
@@ -200,7 +202,7 @@ export default function Summaries() {
 
   const playBeepNotification = () => {
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const ctx = new AudioContextClass();
       const osc = ctx.createOscillator();
       const gain = ctx.createGain();
@@ -212,14 +214,16 @@ export default function Summaries() {
       gain.gain.exponentialRampToValueAtTime(0.001, ctx.currentTime + 0.8);
       osc.start();
       osc.stop(ctx.currentTime + 0.8);
-    } catch (e) { }
+    } catch {
+      // Ignore audio errors
+    }
   };
 
   // Synthesize rain/white noise using Web Audio API (highly lightweight & offline friendly)
   const startAmbientSound = (type: 'rain' | 'white') => {
     stopAmbientSound();
     try {
-      const AudioContextClass = window.AudioContext || (window as any).webkitAudioContext;
+      const AudioContextClass = window.AudioContext || (window as unknown as { webkitAudioContext: typeof AudioContext }).webkitAudioContext;
       const audioCtx = new AudioContextClass();
       audioCtxRef.current = audioCtx;
 
@@ -227,10 +231,13 @@ export default function Summaries() {
       const noiseBuffer = audioCtx.createBuffer(1, bufferSize, audioCtx.sampleRate);
       const output = noiseBuffer.getChannelData(0);
 
-      // Generate pinkish-white noise
+      // Generate pinkish-white noise using deterministic pseudo-random
       let lastOut = 0.0;
+      let seed = 123456; // Fixed seed for deterministic generation
       for (let i = 0; i < bufferSize; i++) {
-        const white = Math.random() * 2 - 1;
+        // Simple linear congruential generator for deterministic pseudo-random
+        seed = (seed * 1664525 + 1013904223) % 4294967296;
+        const white = (seed / 4294967296) * 2 - 1;
         // Simple filter to make white noise sound more like pink/brown noise (deeper)
         output[i] = (lastOut * 0.9 + white * 0.1);
         lastOut = output[i];
@@ -269,13 +276,17 @@ export default function Summaries() {
     if (audioSourceRef.current) {
       try {
         audioSourceRef.current.stop();
-      } catch (e) { }
+      } catch {
+        // Ignore audio errors
+      }
       audioSourceRef.current = null;
     }
     if (audioCtxRef.current) {
       try {
         audioCtxRef.current.close();
-      } catch (e) { }
+      } catch {
+        // Ignore audio errors
+      }
       audioCtxRef.current = null;
     }
   };
@@ -303,7 +314,7 @@ export default function Summaries() {
   };
 
   // Queries
-  const { data: subjects = [], isLoading: isLoadingSubjects } = useQuery<Subject[]>({
+  const { data: subjects = [] } = useQuery<Subject[]>({
     queryKey: ['subjects'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<Subject>>('/api/subjects?size=1000');
@@ -311,7 +322,7 @@ export default function Summaries() {
     },
   });
 
-  const { data: summaries = [], isLoading: isLoadingSummaries } = useQuery<Summary[]>({
+  const { data: summaries = [] } = useQuery<Summary[]>({
     queryKey: ['summaries'],
     queryFn: async () => {
       const res = await apiClient.get<SpringPage<Summary>>('/api/summaries?size=1000');
@@ -332,11 +343,13 @@ export default function Summaries() {
       }
       setUltimoSalvo(new Date(activeSummary.lastModifiedDate || activeSummary.creationDate).toLocaleTimeString());
     } else if (!activeSummaryId) {
-      setEditorTitle('');
-      setEditorSubjectId('');
-      if (editorRef.current) {
-        editorRef.current.innerHTML = '';
-      }
+      setTimeout(() => {
+        setEditorTitle('');
+        setEditorSubjectId('');
+        if (editorRef.current) {
+          editorRef.current.innerHTML = '';
+        }
+      }, 0);
     }
   }, [activeSummaryId, activeSummary]);
 
@@ -355,7 +368,7 @@ export default function Summaries() {
     mutationFn: async (updated: { id: number; title: string; content: string; subjectId: number }) => {
       return (await apiClient.put<Summary>(`/api/summaries/${updated.id}`, updated)).data;
     },
-    onSuccess: (data) => {
+    onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['summaries'] });
       setUltimoSalvo(new Date().toLocaleTimeString());
       setSalvando(false);
@@ -460,8 +473,6 @@ export default function Summaries() {
     const text = tempDiv.textContent || tempDiv.innerText || '';
     return text.substring(0, 75) + (text.length > 75 ? '...' : '');
   };
-
-  const isLoading = isLoadingSubjects || isLoadingSummaries;
 
   return (
     <div className={`summaries-container ${isZenMode ? 'zen-active' : ''}`}>

@@ -1,11 +1,10 @@
-import React, { useState, useEffect } from 'react';
-import { 
-  X, 
-  Sparkles, 
-  BookOpen, 
-  Brain, 
-  Flame, 
-  ChevronRight, 
+import React, { useState, useEffect, useRef } from 'react';
+import {
+  X,
+  Sparkles,
+  BookOpen,
+  Brain,
+  ChevronRight,
   ChevronLeft,
   Check
 } from 'lucide-react';
@@ -18,10 +17,14 @@ interface OnboardingModalProps {
 
 export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProps) {
   const [step, setStep] = useState(0);
+  const hasInitialized = useRef(false);
 
   useEffect(() => {
-    if (isOpen) {
+    if (isOpen && !hasInitialized.current) {
+      hasInitialized.current = true;
       setStep(0);
+    } else if (!isOpen) {
+      hasInitialized.current = false;
     }
   }, [isOpen]);
 

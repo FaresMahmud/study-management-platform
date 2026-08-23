@@ -18,6 +18,7 @@ import ExamWizard from '../components/wizard/ExamWizard';
 import { pluralize } from '../utils/format';
 import { DailyGoal } from '../components/dashboard/DailyGoal';
 import { FadeIn } from '../components/ui/FadeIn';
+import type { Subject, StudySession, Goal, ExamPrep } from '../types';
 import './Dashboard.css';
 
 export default function Dashboard() {
@@ -52,10 +53,10 @@ export default function Dashboard() {
     }
   };
 
-  const { data: subjects, loading: loadSub, error: errSub, refetch: refSub } = useApi<any[]>('/api/subjects');
-  const { data: sessions, loading: loadSes, error: errSes, refetch: refSes } = useApi<any[]>('/api/study-sessions');
-  const { data: goals, loading: loadGoals, error: errGoals, refetch: refGoals } = useApi<any[]>('/api/goals');
-  const { data: prepsData, loading: loadPreps, error: errPreps, refetch: refPreps } = useApi<any>('/api/v1/exam-preps');
+  const { data: subjects, loading: loadSub, error: errSub, refetch: refSub } = useApi<Subject[]>('/api/subjects');
+  const { data: sessions, loading: loadSes, error: errSes, refetch: refSes } = useApi<StudySession[]>('/api/study-sessions');
+  const { data: goals, loading: loadGoals, error: errGoals, refetch: refGoals } = useApi<Goal[]>('/api/goals');
+  const { data: prepsData, loading: loadPreps, error: errPreps, refetch: refPreps } = useApi<{ content: ExamPrep[] }>('/api/v1/exam-preps');
 
   const gamification = useGamification(sessions || [], goals || []);
 
@@ -95,7 +96,7 @@ export default function Dashboard() {
         imageBase64: selectedImageBase64
       });
       setChatMessages(prev => [...prev, { sender: 'tutor', text: response.data.answer, sources: response.data.sources }]);
-    } catch (err) {
+    } catch {
       setChatMessages(prev => [...prev, { sender: 'tutor', text: 'Desculpe, ocorreu um erro ao obter resposta do tutor de estudos.' }]);
     } finally {
       setChatLoading(false);
@@ -123,6 +124,10 @@ export default function Dashboard() {
     daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
     isSoon = daysRemaining >= 0 && daysRemaining < 7;
   }
+
+  const subjectName = latestGoal?.subject?.subjectName || 'MATÉRIA GERAL';
+  const goalTitle = latestGoal?.title || '';
+  const targetMastery = latestGoal?.targetMastery || 80;
 
   const activities = [
     { ...mockActivities[0], title: 'Área de Estudos', description: 'Leitura e resumos de PDFs', onClick: () => navigate('/workspace') },
@@ -159,11 +164,11 @@ export default function Dashboard() {
           <section className="dashboard-section">
             <FadeIn>
               <HeroSession
-                subject={latestGoal.subject?.subjectName || 'MATÉRIA GERAL'}
-                topic={isSoon ? `Sua prova de ${latestGoal.subject?.subjectName || 'Matéria'} é em ${pluralize(daysRemaining, 'dia')}! 🚨` : latestGoal.title}
+                subject={subjectName}
+                topic={isSoon ? `Sua prova de ${subjectName} é em ${pluralize(daysRemaining, 'dia')}! 🚨` : goalTitle}
                 timeRemaining="30m"
                 quizzesPending={1}
-                targetScore={latestGoal.targetMastery || 80}
+                targetScore={targetMastery}
                 onContinue={() => navigate(isSoon ? '/simulation' : '/workspace')}
               />
             </FadeIn>

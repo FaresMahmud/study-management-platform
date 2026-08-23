@@ -4,7 +4,7 @@ import { Activity, ArrowRight, BookOpen, ChevronDown, ChevronUp, Clock, Edit2, F
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient, normalizeListResponse } from '../api/client';
-import type { SpringPage, Subject, Summary } from '../types';
+import type { SpringPage, Subject, Summary, Goal, Flashcard, StudySession } from '../types';
 
 const PREDEFINED_COLORS = [
   '#6366f1', // Indigo
@@ -49,29 +49,29 @@ export default function Subjects() {
   });
 
   // Fetch goals
-  const { data: goals = [] } = useQuery<any[]>({
+  const { data: goals = [] } = useQuery<Goal[]>({
     queryKey: ['goals'],
     queryFn: async () => {
-      const response = await apiClient.get<any>('/api/v1/goals?size=1000');
-      return response.data.content || response.data || [];
+      const response = await apiClient.get<{ content?: Goal[] }>('/api/v1/goals?size=1000');
+      return normalizeListResponse<Goal>(response.data);
     },
   });
 
   // Fetch flashcards
-  const { data: flashcards = [] } = useQuery<any[]>({
+  const { data: flashcards = [] } = useQuery<Flashcard[]>({
     queryKey: ['flashcards'],
     queryFn: async () => {
-      const response = await apiClient.get<any>('/api/flashcards?size=1000');
-      return response.data.content || response.data || [];
+      const response = await apiClient.get<{ content?: Flashcard[] }>('/api/flashcards?size=1000');
+      return normalizeListResponse<Flashcard>(response.data);
     },
   });
 
   // Fetch sessions
-  const { data: sessions = [] } = useQuery<any[]>({
+  const { data: sessions = [] } = useQuery<StudySession[]>({
     queryKey: ['sessions'],
     queryFn: async () => {
-      const response = await apiClient.get<any>('/api/study-sessions?size=1000');
-      return response.data.content || response.data || [];
+      const response = await apiClient.get<{ content?: StudySession[] }>('/api/study-sessions?size=1000');
+      return normalizeListResponse<StudySession>(response.data);
     },
   });
 
@@ -230,7 +230,6 @@ export default function Subjects() {
         <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(320px, 1fr))', gap: '20px' }}>
 
           {subjects.map((subj) => {
-            const hasSummaries = summaries.some(s => s.subject.id === subj.id);
             return (
               <div
                 key={subj.id}
