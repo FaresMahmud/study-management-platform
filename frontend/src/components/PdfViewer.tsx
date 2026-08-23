@@ -14,6 +14,7 @@ interface PdfViewerProps {
   activeSummaryId: number | null;
   pdfFiles: PDFFile[];
   onCite: (text: string, fileName: string, pageNum: number) => void;
+  selectedSubjectId?: number;
 }
 
 export default function PdfViewer({
@@ -34,6 +35,7 @@ export default function PdfViewer({
   const [annotationTool, setAnnotationTool] = useState<'none' | 'highlight' | 'note' | 'drawing' | 'textbox'>('none');
   const [isDrawing, setIsDrawing] = useState(false);
   const [startPos, setStartPos] = useState({ x: 0, y: 0 });
+  const [currentPos, setCurrentPos] = useState({ x: 0, y: 0 });
 
   const [textInputModal, setTextInputModal] = useState<{
     isOpen: boolean;
