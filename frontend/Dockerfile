@@ -2,9 +2,9 @@
 FROM node:20-alpine AS build
 WORKDIR /app
 COPY package*.json ./
-COPY scripts/ ./scripts/
-RUN npm install
+RUN npm install --ignore-scripts
 COPY . .
+RUN node scripts/copy-pdf-worker.js
 ARG VITE_API_URL
 ENV VITE_API_URL=$VITE_API_URL
 RUN npm run build
