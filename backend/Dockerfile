@@ -14,4 +14,4 @@ WORKDIR /home/spring
 COPY --from=build --chown=spring:spring /app/target/study-management-platform-*.jar app.jar
 RUN ls -la /home/spring/
 EXPOSE 8080
-ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
+CMD ["sh", "-c", "java -XX:+UseContainerSupport -XX:MaxRAMPercentage=75.0 -jar app.jar 2>&1 || echo 'APP_EXIT_CODE='$?"]
