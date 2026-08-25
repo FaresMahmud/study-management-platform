@@ -177,8 +177,7 @@ jobs:
           SPRING_PROFILES_ACTIVE: test
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
-          CHROMADB_HOST: localhost
-          CHROMADB_PORT: 8000
+          CHROMA_URL: http://localhost:8000
           JWT_SECRET: test-secret-key-for-ci-only-min-256-bits-length
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 

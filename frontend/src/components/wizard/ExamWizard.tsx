@@ -70,10 +70,24 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
       onFinished();
     } catch (err: unknown) {
       console.error('Erro no onboarding:', err);
-      const message = err instanceof Error ? err.message : 'Erro ao criar plano de estudos. Verifique se os dados estão corretos.';
-      // Also check for axios-like error response
+      let message = 'Erro ao criar plano de estudos. Verifique se os dados estão corretos.';
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      setErrorMsg(axiosErr.response?.data?.message || message);
+      if (axiosErr.response?.data?.message) {
+        message = axiosErr.response.data.message;
+      } else if (err instanceof Error) {
+        message = err.message;
+      }
+      // Msg mais específica para erro de upload de PDF
+      if (matType === 'pdf' && file) {
+        if (message.includes('50 MB') || message.includes('limit')) {
+          message = `O arquivo "${file.name}" excede o limite de 50 MB. Tamanho atual: ${(file.size / (1024 * 1024)).toFixed(1)} MB.`;
+        } else if (message.includes('400') || message.includes('Bad Request')) {
+          message = `O arquivo "${file.name}" não é um PDF válido. Selecione um arquivo com extensão .pdf.`;
+        } else {
+          message = `Erro ao enviar o PDF "${file.name}": ${message}`;
+        }
+      }
+      setErrorMsg(message);
     } finally {
       setLoading(false);
     }

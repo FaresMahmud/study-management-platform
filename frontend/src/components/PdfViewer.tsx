@@ -1,13 +1,23 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
 import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X } from 'lucide-react';
+import axios from 'axios';
 import { apiClient } from '../api/client';
+import { useAuthStore } from '../store/authStore';
 import * as pdfjsLib from 'pdfjs-dist';
 import type { FileAnnotation, PDFFile } from '../types';
 import './PdfViewer.css';
 
 // Configura o worker do PDF.js para ser servido localmente
 pdfjsLib.GlobalWorkerOptions.workerSrc = '/pdf.worker.min.mjs';
+
+// Instância axios separada (sem interceptors) para requisições binárias de PDF.
+// O apiClient intercepts-response modifica response.data para respostas paginadas,
+// o que corrompe ArrayBuffers quando responseType: 'arraybuffer'.
+const pdfAxios = axios.create({
+  baseURL: import.meta.env.VITE_API_URL,
+  responseType: 'arraybuffer',
+});
 
 interface PdfViewerProps {
   activeFileId: number | null;
@@ -96,12 +106,53 @@ export default function PdfViewer({
     const loadPdf = async () => {
       setPdfLoading(true);
       try {
-        const response = await apiClient.get(`/api/v1/files/${activeFileId}/view`, {
-          responseType: 'arraybuffer',
+        // Usa instância axios sem interceptors para obter o ArrayBuffer puro
+        const token = useAuthStore.getState().token;
+        const response = await pdfAxios.get(`/api/v1/files/${activeFileId}/view`, {
+          headers: token ? { Authorization: `Bearer ${token}` } : {},
         });
 
+        // Diagnóstico: verifica o que o servidor retornou
+        console.log('[PdfViewer] Content-Type:', response.headers?.['content-type']);
+        console.log('[PdfViewer] Status:', response.status);
+        console.log('[PdfViewer] Data type:', typeof response.data, response.data?.constructor?.name);
+
+        // Garante que recebemos um ArrayBuffer válido
+        let rawData: ArrayBuffer;
+        if (response.data instanceof ArrayBuffer) {
+          rawData = response.data;
+        } else if (ArrayBuffer.isView(response.data)) {
+          rawData = response.data.buffer as ArrayBuffer;
+        } else {
+          rawData = new Uint8Array(response.data).buffer as ArrayBuffer;
+        }
+
+        console.log('[PdfViewer] ArrayBuffer size:', rawData.byteLength, 'bytes');
+
+        // Diagnóstico: verifica os primeiros bytes (PDF começa com %PDF)
+        if (rawData.byteLength > 0) {
+          const header = new Uint8Array(rawData.slice(0, 10));
+          const headerStr = String.fromCharCode(...header);
+          console.log('[PdfViewer] File header:', headerStr.replace(/[^\x20-\x7E]/g, '.'));
+          const isPDF = headerStr.startsWith('%PDF');
+          console.log('[PdfViewer] Starts with %PDF:', isPDF);
+
+          if (!isPDF) {
+            // Provavelmente é uma resposta de erro HTML/JSON em vez de PDF
+            const textPreview = new TextDecoder('utf-8', { fatal: false }).decode(rawData.slice(0, 500));
+            console.log('[PdfViewer] Response is NOT a PDF. Content preview:', textPreview);
+            alert('O servidor não retornou um PDF válido. Verifique se o arquivo existe e é um PDF legível.');
+            return;
+          }
+        }
+
+        if (!rawData || rawData.byteLength === 0) {
+          alert('O servidor retornou um arquivo PDF vazio.');
+          return;
+        }
+
         const loadingTask = pdfjsLib.getDocument({
-          data: new Uint8Array(response.data),
+          data: new Uint8Array(rawData),
         });
 
         const pdf = await loadingTask.promise;
@@ -112,7 +163,20 @@ export default function PdfViewer({
         }, 0);
       } catch (err) {
         console.error('Erro ao renderizar o PDF:', err);
-        alert('Não foi possível ler o PDF do servidor.');
+        let msg = 'Não foi possível ler o PDF do servidor.';
+        if (err && typeof err === 'object' && 'response' in err) {
+          const axiosErr = err as { response?: { status?: number } };
+          if (axiosErr.response?.status === 404) {
+            msg = 'Arquivo PDF não encontrado no servidor. Ele pode ter sido removido.';
+          } else if (axiosErr.response?.status === 403) {
+            msg = 'Você não tem permissão para acessar este arquivo.';
+          } else if (axiosErr.response?.status === 401) {
+            msg = 'Sessão expirada. Faça login novamente.';
+          }
+        } else if (err instanceof Error && err.message?.includes('Password')) {
+          msg = 'Este PDF está protegido por senha e não pode ser aberto.';
+        }
+        alert(msg);
       } finally {
         setPdfLoading(false);
       }
