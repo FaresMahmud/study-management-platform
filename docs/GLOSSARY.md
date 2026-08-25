@@ -20,7 +20,8 @@
 | `PdfChunk` | Fragmento de texto extraído de um PDF, indexado vetorialmente. Campos: `chunkText`, `chunkIndex`, `embedding`, `uploadedFile`, `subject`, `examPrep`. Arquivo: `backend/.../file/PdfChunk.java`. |
 | `AiGeneratedContent` | Conteúdo gerado por IA (resumo, quiz, etc.) persistido. Campos: `contentType`, `prompt`, `response`, `user`, `examPrep`/`subject`. Arquivo: `backend/.../ai/AiGeneratedContent.java`. |
 | `QuizAttempt` | Registro de uma tentativa de quiz. Campos: `correctAnswers`, `totalQuestions`, `score` (0–100), `contentJson`, `attemptTime`, `examPrep`, `user`. Arquivo: `backend/.../examprep/QuizAttempt.java`. |
-| `ExamSimulation` | Simulado cronometrado de prova. Campos: `startTime`, `endTime`, `score`, `questionsTotal`, `questionsCorrect`, `examPrep`, `user`. Arquivo: `backend/.../examprep/ExamSimulation.java`. |
+| `ExamSimulation` | Simulado cronometrado de prova. Campos: `startTime`, `endTime`, `score`, `status` (SimulationStatus), `contentJson` (TEXT — questões geradas por IA), `examPrep`. Arquivo: `backend/.../examprep/ExamSimulation.java`. |
+| `ExamSimulationResponseDTO` | DTO de resposta para simulados (evita serialização de proxies Hibernate). Campos: `id`, `examPrepId`, `examPrepTitle`, `startTime`, `endTime`, `score`, `status`, `contentJson`. Arquivo: `backend/.../examprep/dto/ExamSimulationResponseDTO.java`. |
 
 ## Value Objects / Embedded Types
 
@@ -31,7 +32,7 @@
 | `DifficultyLevel` | Enum usado na geração de conteúdo de IA/podcasts: `EASY`, `MEDIUM`, `HARD`. Arquivo: `backend/.../ai/DifficultyLevel.java`. |
 | `ContentType` | Enum usado em `AiGeneratedContent`: tipos como `SUMMARY`, `QUIZ`, `FLASHCARD`, `SCRIPT`, `EXPLANATION`. Arquivo: `backend/.../ai/ContentType.java`. |
 | `ExamPrepStatus` | Enum do ciclo de vida da preparação: `ACTIVE`, `COMPLETED`, `CANCELLED`. Arquivo: `backend/.../examprep/ExamPrepStatus.java`. |
-| `SimulationStatus` | Enum do ciclo do simulado: `IN_PROGRESS`, `FINISHED`, `ABANDONED`. Arquivo: `backend/.../examprep/SimulationStatus.java`. |
+| `SimulationStatus` | Enum do ciclo do simulado: `STARTED`, `COMPLETED`, `TIMED_OUT`, `CANCELLED`. Arquivo: `backend/.../examprep/SimulationStatus.java`. |
 
 ## Conceitos de domínio
 
@@ -67,7 +68,7 @@
 | **Modo Socrático** | Flag `socratic: true` na requisição ao tutor. Altera o prompt para conduzir em vez de entregar a resposta. |
 | **Modo Multimodal** | Envio de `imageMimeType` + `imageBase64` para análise visual via `GeminiService.generateMultimodalContent`. |
 | **"Sem contexto"** | Quando a busca no ChromaDB retorna vazia. O sistema responde com mensagem fixa, **não** cai em chat livre. |
-| **Mock Fallback** | Quando `GEMINI_API_KEY` está vazia. O `RAGChatService` retorna resposta simulada para fins de demo. |
+| **Mock Fallback** | Quando `GEMINI_API_KEY` está vazia. O `RAGChatService` retorna resposta simulada para fins de demo. Simulados (`ExamSimulationService`) não possuem mock — exigem Gemini configurado. |
 | **Podcast / TTS** | Geração de áudio a partir de roteiro via Google Translate TTS. Arquivo: `backend/.../ai/TtsService.java`. |
 | **QuestionGenerator** | Interface implementada por `GeminiService` para geração de questões. |
 | **EmbeddingGenerator** | Interface implementada por `GeminiService` para geração de embeddings. |
@@ -166,6 +167,8 @@
 | `POST /api/v1/pomodoro/complete/{id}` | Concluir Pomodoro |
 | `GET /api/v1/pomodoro/list` | Listar sessões de um exame |
 | `POST /api/v1/quiz/attempt` | Registrar tentativa |
+| `POST /api/v1/simulation/start?examPrepId=` | Iniciar simulado cronometrado |
+| `POST /api/v1/simulation/finish/{id}` | Finalizar simulado |
 | `GET /api/v1/analytics/learning-zone?examPrepId=` | Métricas de zona |
 | `POST /api/v1/chat/ask` | Pergunta ao tutor RAG |
 | `POST /api/v1/ai/podcast/stream` | Gerar podcast |

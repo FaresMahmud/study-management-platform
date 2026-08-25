@@ -253,9 +253,9 @@ Erros não mapeados caem em `handleGenericException` → HTTP 500 com mensagem g
 
 ## Testes — estado atual
 
-- **Framework**: JUnit 5 + Mockito + Spring Boot Test + Testcontainers (MySQL).
+- **Framework**: JUnit 5 + Mockito + Spring Boot Test.
 - **Localização**: `backend/src/test/java/com/studyplatform/...`.
-- **Perfil `test`**: `backend/src/test/resources/application-test.properties` (H2 não — `pom.xml` declara `mysql` testcontainers).
+- **Perfil `test`**: `backend/src/test/resources/application-test.properties` (H2 in-memory, `spring.jpa.hibernate.ddl-auto=create-drop`, Flyway desabilitado).
 - **Cobertura observada**:
   - `AuthServiceTest`, `AuthControllerTest`
   - `JwtServiceTest`

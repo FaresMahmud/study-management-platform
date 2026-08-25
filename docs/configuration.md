@@ -216,7 +216,7 @@ Roda em `http://localhost:5173`. Apontando para `http://localhost:8080/api` por 
 - **Endpoint base**: `https://generativelanguage.googleapis.com/v1beta/models/...`.
 - **Autenticação**: query param `?key=<GEMINI_API_KEY>`.
 - **Config**: `gemini.api.key=${GEMINI_API_KEY:}` em `application.properties`.
-- **Fallback**: se a chave estiver vazia ou for `SUA_CHAVE_GEMINI_AQUI`, o sistema exibe mock fallback (não falha).
+- **Fallback**: se a chave estiver vazia ou for `SUA_CHAVE_GEMINI_AQUI`, o `RAGChatService` exibe mock fallback (não falha). Simulados (`ExamSimulationService`) não possuem mock — exigem Gemini configurado.
 - **Onde aparece**:
   - `GeminiService.generateContent` (texto)
   - `GeminiService.generateMultimodalContent` (texto + imagem)

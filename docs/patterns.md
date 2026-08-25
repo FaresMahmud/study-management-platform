@@ -56,7 +56,9 @@ record AuthResponseDTO(String token, String name, String email, boolean premium)
 
 **O que é:** Conversão Entity ↔ DTO isolada em classe `@Component`. Não acessa banco, não tem `@Transactional`.
 
-**Onde aparece:** `SubjectMapper`, `GoalMapper`, `FlashcardMapper`, `ExamPrepMapper`, `SummaryMapper`, `QuizAttemptMapper`, `SimulationMapper`, `FileAnnotationMapper`, `AiGeneratedContentMapper`.
+**Onde aparece:** `SubjectMapper`, `GoalMapper`, `FlashcardMapper`, `ExamPrepMapper`, `SummaryMapper`, `QuizAttemptMapper`, `FileAnnotationMapper`, `AiGeneratedContentMapper`.
+
+> **Exceção**: `ExamSimulationService` usa um método estático `toResponseDTO()` em vez de um `Mapper` separado, porque o DTO (`ExamSimulationResponseDTO`) existe para evitar serialização de proxies Hibernate — a conversão é simples e não justifica um componente `@Component` adicional.
 
 **Como seguir:**
 ```java

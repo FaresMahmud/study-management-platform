@@ -27,7 +27,8 @@ interface Question {
 
 interface ExamSimulation {
   id: number;
-  examPrep: ExamPrep;
+  examPrepId: number;
+  examPrepTitle: string;
   startTime: string;
   endTime?: string;
   score?: number;
@@ -77,26 +78,15 @@ export default function Simulation() {
     },
     onSuccess: (data) => {
       setSimulationId(data.id);
-      try {
-        const parsed: Question[] = JSON.parse(data.contentJson);
-        // Garante que cada questão tenha a opção E mapeada
-        const formatted = parsed.map(q => ({
-          ...q,
-          options: {
-            ...q.options,
-            E: q.options.E || 'Nenhuma das alternativas anteriores.'
-          }
-        }));
-        setQuestions(formatted);
-      } catch {
-        setQuestions([
-          {
-            question: "Questão 1: Qual é a principal vantagem da repetição espaçada?",
-            options: { A: "Decorar", B: "Consolidar a memória", C: "Nenhuma", D: "Esquecer", E: "Melhorar caligrafia" },
-            correctAnswer: "B"
-          }
-        ]);
-      }
+      const parsed: Question[] = JSON.parse(data.contentJson);
+      const formatted = parsed.map(q => ({
+        ...q,
+        options: {
+          ...q.options,
+          E: q.options.E || 'Nenhuma das alternativas anteriores.'
+        }
+      }));
+      setQuestions(formatted);
 
       setAnswers({});
       setMarkedQuestions({});
@@ -110,6 +100,10 @@ export default function Simulation() {
       if (container?.requestFullscreen) {
         container.requestFullscreen().then(() => setInFullscreen(true)).catch(e => console.error(e));
       }
+    },
+    onError: (error: { response?: { data?: { message?: string } } }) => {
+      const msg = error?.response?.data?.message || 'Erro ao iniciar simulado. Verifique se há material de estudo disponível.';
+      alert(msg);
     }
   });
 

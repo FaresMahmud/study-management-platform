@@ -1,5 +1,6 @@
 package com.studyplatform.examprep;
 
+import com.studyplatform.examprep.dto.ExamSimulationResponseDTO;
 import io.swagger.v3.oas.annotations.Operation;
 import io.swagger.v3.oas.annotations.tags.Tag;
 import lombok.RequiredArgsConstructor;
@@ -21,17 +22,17 @@ public class SimulationController {
 
     @Operation(summary = "Iniciar simulado cronometrado", description = "Gera 3 questões inéditas via IA sem respostas imediatas e inicia o cronômetro de 15 minutos")
     @PostMapping("/start")
-    public ResponseEntity<ExamSimulation> start(@RequestParam Long examPrepId) {
-        ExamSimulation simulation = examSimulationService.startSimulation(examPrepId);
+    public ResponseEntity<ExamSimulationResponseDTO> start(@RequestParam Long examPrepId) {
+        ExamSimulationResponseDTO simulation = examSimulationService.startSimulation(examPrepId);
         return ResponseEntity.ok(simulation);
     }
 
     @Operation(summary = "Finalizar simulado cronometrado", description = "Corrige as respostas submetidas pelo aluno, calcula a pontuação final e atualiza a maestria")
     @PostMapping("/finish/{id}")
-    public ResponseEntity<ExamSimulation> finish(
+    public ResponseEntity<ExamSimulationResponseDTO> finish(
             @PathVariable Long id,
             @RequestBody Map<Integer, String> answers) {
-        ExamSimulation simulation = examSimulationService.finishSimulation(id, answers);
+        ExamSimulationResponseDTO simulation = examSimulationService.finishSimulation(id, answers);
         return ResponseEntity.ok(simulation);
     }
 }
