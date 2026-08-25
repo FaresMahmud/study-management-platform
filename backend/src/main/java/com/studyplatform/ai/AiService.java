@@ -54,10 +54,6 @@ public class AiService {
         Subject subject = subjectRepository.findByIdAndUserId(subjectId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Matéria não encontrada"));
 
-        if (!Boolean.TRUE.equals(user.getPremium())) {
-            throw new BusinessException("upgrade_required");
-        }
-
         String sourceText = text;
         if (sourceText == null || sourceText.trim().isEmpty()) {
             List<com.studyplatform.file.UploadedFile> files = uploadedFileRepository.findByUserIdAndSubjectId(user.getId(), subjectId);
