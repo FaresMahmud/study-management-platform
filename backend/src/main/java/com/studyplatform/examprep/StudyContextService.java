@@ -6,4 +6,5 @@ package com.studyplatform.examprep;
  */
 public interface StudyContextService {
     String getContextTextForExamPrep(Long examPrepId);
+    boolean hasContextForExamPrep(Long examPrepId);
 }

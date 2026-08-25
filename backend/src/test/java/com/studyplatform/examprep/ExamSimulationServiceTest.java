@@ -2,11 +2,9 @@ package com.studyplatform.examprep;
 
 import com.fasterxml.jackson.databind.ObjectMapper;
 
-import com.studyplatform.examprep.QuestionGenerator;
-import com.studyplatform.examprep.StudyContextService;
+import com.studyplatform.examprep.dto.ExamSimulationResponseDTO;
 import com.studyplatform.shared.exception.BusinessException;
 import com.studyplatform.user.User;
-import com.studyplatform.user.UserRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.Test;
 import org.junit.jupiter.api.extension.ExtendWith;
@@ -14,12 +12,10 @@ import org.mockito.InjectMocks;
 import org.mockito.Mock;
 import org.mockito.Spy;
 import org.mockito.junit.jupiter.MockitoExtension;
-import org.springframework.security.core.Authentication;
 import org.springframework.security.core.context.SecurityContext;
 import org.springframework.security.core.context.SecurityContextHolder;
 
 import java.time.LocalDateTime;
-import java.util.Collections;
 import java.util.Map;
 import java.util.Optional;
 
@@ -40,12 +36,7 @@ public class ExamSimulationServiceTest {
     private StudyContextService studyContextService;
 
     @Mock
-    private UserRepository userRepository;
-
-    @Mock
     private QuestionGenerator questionGenerator;
-
-
 
     @Mock
     private QuizAttemptService quizAttemptService;
@@ -57,13 +48,13 @@ public class ExamSimulationServiceTest {
     private SecurityContext securityContext;
 
     @Mock
-    private Authentication authentication;
-
-    @Mock
     private org.springframework.context.ApplicationEventPublisher eventPublisher;
 
     @Mock
     private com.studyplatform.shared.security.SecurityService securityService;
+
+    @Mock
+    private org.springframework.cache.CacheManager cacheManager;
 
     @InjectMocks
     private ExamSimulationService examSimulationService;
@@ -74,26 +65,97 @@ public class ExamSimulationServiceTest {
     @BeforeEach
     void setUp() {
         user = User.builder().id(1L).email("student@studyflow.com").build();
-        examPrep = ExamPrep.builder().id(1L).user(user).build();
+        examPrep = ExamPrep.builder().id(1L).user(user).title("Test Exam").build();
 
         SecurityContextHolder.setContext(securityContext);
     }
 
+    // ==================== START SIMULATION TESTS ====================
+
     @Test
-    void testStartSimulationOfflineFallback() {
+    void testStartSimulationNoMaterial() {
         when(securityService.getAuthenticatedUser()).thenReturn(user);
         when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
         when(studyContextService.getContextTextForExamPrep(eq(1L))).thenReturn("");
 
-        when(examSimulationRepository.save(any(ExamSimulation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> examSimulationService.startSimulation(1L));
 
-        ExamSimulation result = examSimulationService.startSimulation(1L);
-
-        assertNotNull(result);
-        assertEquals(SimulationStatus.STARTED, result.getStatus());
-        assertTrue(result.getContentJson().contains("Qual das seguintes opções descreve corretamente o RAG"));
-        verify(examSimulationRepository, times(1)).save(any(ExamSimulation.class));
+        assertTrue(ex.getMessage().contains("material de estudo"));
+        verify(examSimulationRepository, never()).save(any());
     }
+
+    @Test
+    void testStartSimulationNullContext() {
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
+        when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
+        when(studyContextService.getContextTextForExamPrep(eq(1L))).thenReturn(null);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> examSimulationService.startSimulation(1L));
+
+        assertTrue(ex.getMessage().contains("material de estudo"));
+    }
+
+    @Test
+    void testStartSimulationGeminiNotConfigured() {
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
+        when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
+        when(studyContextService.getContextTextForExamPrep(eq(1L))).thenReturn("Conteúdo de estudo");
+        when(questionGenerator.isConfigured()).thenReturn(false);
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> examSimulationService.startSimulation(1L));
+
+        assertTrue(ex.getMessage().contains("não está configurado"));
+        verify(examSimulationRepository, never()).save(any());
+    }
+
+    @Test
+    void testStartSimulationGeminiFailure() throws Exception {
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
+        when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
+        when(studyContextService.getContextTextForExamPrep(eq(1L))).thenReturn("Conteúdo de estudo");
+        when(questionGenerator.isConfigured()).thenReturn(true);
+        when(questionGenerator.generateContent(anyString())).thenThrow(new RuntimeException("API error"));
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> examSimulationService.startSimulation(1L));
+
+        assertTrue(ex.getMessage().contains("Falha ao gerar questões"));
+        verify(examSimulationRepository, never()).save(any());
+    }
+
+    @Test
+    void testStartSimulationInvalidJson() throws Exception {
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
+        when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
+        when(studyContextService.getContextTextForExamPrep(eq(1L))).thenReturn("Conteúdo de estudo");
+        when(questionGenerator.isConfigured()).thenReturn(true);
+        when(questionGenerator.generateContent(anyString())).thenReturn("not valid json {{{");
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> examSimulationService.startSimulation(1L));
+
+        assertTrue(ex.getMessage().contains("formato inválido"));
+        verify(examSimulationRepository, never()).save(any());
+    }
+
+    @Test
+    void testStartSimulationEmptyArray() throws Exception {
+        when(securityService.getAuthenticatedUser()).thenReturn(user);
+        when(examPrepRepository.findByIdAndUserId(eq(1L), eq(1L))).thenReturn(Optional.of(examPrep));
+        when(studyContextService.getContextTextForExamPrep(eq(1L))).thenReturn("Conteúdo de estudo");
+        when(questionGenerator.isConfigured()).thenReturn(true);
+        when(questionGenerator.generateContent(anyString())).thenReturn("[]");
+
+        BusinessException ex = assertThrows(BusinessException.class,
+                () -> examSimulationService.startSimulation(1L));
+
+        assertTrue(ex.getMessage().contains("não retornou questões válidas"));
+    }
+
+    // ==================== FINISH SIMULATION TESTS ====================
 
     @Test
     void testFinishSimulationSuccess() {
@@ -127,6 +189,7 @@ public class ExamSimulationServiceTest {
 
         when(examSimulationRepository.findByIdAndExamPrepUserId(eq(10L), eq(1L))).thenReturn(Optional.of(simulation));
         when(examSimulationRepository.save(any(ExamSimulation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(examSimulationRepository.findByIdWithExamPrep(eq(10L))).thenReturn(Optional.of(simulation));
 
         Map<Integer, String> studentAnswers = Map.of(
                 0, "A", // Correct
@@ -134,7 +197,7 @@ public class ExamSimulationServiceTest {
                 2, "A"  // Incorrect
         );
 
-        ExamSimulation result = examSimulationService.finishSimulation(10L, studentAnswers);
+        ExamSimulationResponseDTO result = examSimulationService.finishSimulation(10L, studentAnswers);
 
         assertNotNull(result);
         assertEquals(SimulationStatus.COMPLETED, result.getStatus());
@@ -146,21 +209,19 @@ public class ExamSimulationServiceTest {
     void testFinishSimulationTimeout() {
         when(securityService.getAuthenticatedUser()).thenReturn(user);
 
-        String contentJson = "[]";
-
-        // Início há 16 minutos (estourou o tempo de 15 minutos)
         ExamSimulation simulation = ExamSimulation.builder()
                 .id(10L)
                 .examPrep(examPrep)
                 .startTime(LocalDateTime.now().minusMinutes(16))
                 .status(SimulationStatus.STARTED)
-                .contentJson(contentJson)
+                .contentJson("[]")
                 .build();
 
         when(examSimulationRepository.findByIdAndExamPrepUserId(eq(10L), eq(1L))).thenReturn(Optional.of(simulation));
         when(examSimulationRepository.save(any(ExamSimulation.class))).thenAnswer(invocation -> invocation.getArgument(0));
+        when(examSimulationRepository.findByIdWithExamPrep(eq(10L))).thenReturn(Optional.of(simulation));
 
-        ExamSimulation result = examSimulationService.finishSimulation(10L, Map.of());
+        ExamSimulationResponseDTO result = examSimulationService.finishSimulation(10L, Map.of());
 
         assertNotNull(result);
         assertEquals(SimulationStatus.TIMED_OUT, result.getStatus());

@@ -24,4 +24,10 @@ public class StudyContextServiceImpl implements StudyContextService {
                 .map(PdfChunk::getChunkText)
                 .collect(Collectors.joining("\n\n"));
     }
+
+    @Override
+    public boolean hasContextForExamPrep(Long examPrepId) {
+        List<PdfChunk> chunks = pdfChunkRepository.findByExamPrepId(examPrepId);
+        return chunks != null && !chunks.isEmpty();
+    }
 }

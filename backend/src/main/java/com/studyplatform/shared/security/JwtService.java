@@ -18,10 +18,10 @@ import org.springframework.stereotype.Service;
 @Service
 public class JwtService {
 
-    @Value("${JWT_SECRET}")
+    @Value("${jwt.secret:dev-secret-change-in-production-min-256-bits}")
     private String secretKey;
 
-    @Value("${JWT_EXPIRATION}")
+    @Value("${jwt.expiration:86400000}")
     private long jwtExpiration;
 
     // Gera um token JWT para o usuário. Chamado após login ou registro.

@@ -63,9 +63,9 @@ O frontend está localizado em `frontend/`.
 
 ### Stack principal
 
-- React 18+
-- Vite
-- TypeScript
+- React 19
+- Vite 8
+- TypeScript 6
 - Zustand (estado global — autenticação, preferências)
 - TanStack React Query (requisições API, cache, sincronização, invalidação)
 - CSS personalizado com modules + variáveis CSS
@@ -127,14 +127,14 @@ O backend está localizado em `backend/`.
 
 ### Stack principal
 
-- Java 17+
-- Spring Boot 3.x
-- PostgreSQL (desenvolvimento) / H2 (tests)
+- Java 21
+- Spring Boot 3.2.4
+- MySQL (desenvolvimento) / H2 (tests)
 - Flyway (versionamento de schema)
 - ChromaDB (banco vetorial para RAG)
 - Google Gemini (modelos: gemini-2.5-flash para texto, text-embedding-004 para embeddings)
 - Google Translate TTS (serviço de áudio)
-- JJWT 0.12.x (gerenciamento de tokens)
+- JJWT 0.12.5 (gerenciamento de tokens)
 
 O backend concentra:
 
@@ -161,8 +161,9 @@ O backend concentra:
 
 O sistema utiliza banco relacional, com suporte a:
 
-- PostgreSQL (produção/desenvolvimento);
-- H2 (tests - perfil configured no application.properties);
+- MySQL (desenvolvimento);
+- PostgreSQL (produção);
+- H2 (tests - perfil `application-test.properties`);
 
 O esquema é versionado com **Flyway** — migrations versionadas seguem convenção `V<NN>__<description>.sql` e ficam em:
 
@@ -170,7 +171,7 @@ O esquema é versionado com **Flyway** — migrations versionadas seguem conven�
 backend/src/main/resources/db/migration/
 ```
 
-Existem migrations já aplicadas (V1 through V9 no código atual). **Regra crítica**: Nunca alterar uma migration já aplicada como forma de corrigir o banco em produção/desenvolvimento compartilhado. Para alterações estruturais, criar uma nova migration seguinte a convenção já existente no projeto.
+Existem migrations já aplicadas (V1 through V12 no código atual). **Regra crítica**: Nunca alterar uma migration já aplicada como forma de corrigir o banco em produção/desenvolvimento compartilhado. Para alterações estruturais, criar uma nova migration seguinte a convenção já existente no projeto.
 
 Antes de criar uma migration:
 
@@ -193,26 +194,6 @@ chroma.url=http://localhost:8000
 O ambiente local normalmente utiliza a porta 8000.
 
 O ChromaDB é utilizado principalmente no pipeline de RAG (Retrieval-Augmented Generation), integrado ao serviço `ai.RAGChatService` e `ai.GeminiService` (embeddings via `text-embedding-004`).
-
----
-
-## 4.2 Banco vetorial
-
-O sistema utiliza **ChromaDB** para armazenamento e recuperação semântica.
-
-Configuração esperada:
-
-```text
-chroma.url
-```
-
-O ambiente local normalmente utiliza a porta:
-
-```text
-8000
-```
-
-O ChromaDB é utilizado principalmente no pipeline de RAG.
 
 ---
 
@@ -571,9 +552,9 @@ Permite criar uma preparação específica para uma prova real.
 
 - **Criar preparação**: `POST /api/v1/exam-preps` — define título, data da prova, nota alvo;
 - **Associar matérias**: matérias são adicionadas e vinculadas via `Subject.examPrepId`;
-- **Gerar quizzes/simulados**: IA pode gerar quizzes dinamicamente baseados no material estudado;
+- **Gerar quizzes/simulados**: Simulados são gerados via Gemini (`QuestionGenerator`) baseados exclusivamente no material de estudo do usuário (PDF chunks via `StudyContextService`);
 - **Registrar tentativas**: `POST /api/v1/quiz/attempt` — registra acertos/errados, atualiza `currentMastery` das metas vinculadas;
-- **Simulações**: `ExamSimulation` registra uma tentativa completa de simulação com score;
+- **Simulações**: `ExamSimulation` registra uma tentativa completa de simulação cronometrada (15 min, 3 questões) com score. Respostas do via `ExamSimulationResponseDTO` (evita serialização de proxies Hibernate);
 - **Compartilhamento público**: `POST /api/v1/exam-preps/{id}/share` — gera `shareToken`; `GET /api/v1/exam-preps/public/share/{shareToken}` — consulta sem auth;
 - **Revogar compartilhamento**: `DELETE /api/v1/exam-preps/{id}/share` — torna privado novamente.
 
@@ -599,6 +580,8 @@ Permite criar uma preparação específica para uma prova real.
 - `DELETE /api/v1/exam-preps/{id}/share` — revogar link público;
 - `GET /api/v1/exam-preps/public/share/{shareToken}` — consultar pública (sem auth);
 - `POST /api/v1/quiz/attempt` — registrar tentativa de quiz;
+- `POST /api/v1/simulation/start?examPrepId=` — iniciar simulado cronometrado (gera questões via Gemini);
+- `POST /api/v1/simulation/finish/{id}` — finalizar simulado (corrige e calcula score);
 
 ---
 
