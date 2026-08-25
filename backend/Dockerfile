@@ -13,4 +13,4 @@ USER spring:spring
 WORKDIR /home/spring
 COPY --from=build --chown=spring:spring /app/target/study-management-platform-*.jar app.jar
 EXPOSE 8080
-ENTRYPOINT ["java", "-jar", "app.jar"]
+ENTRYPOINT ["java", "-XX:+UseContainerSupport", "-XX:MaxRAMPercentage=75.0", "-jar", "app.jar"]
