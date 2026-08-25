@@ -222,9 +222,9 @@ export default function Dashboard() {
                   <span>Suporte 24/7 de Estudos</span>
                 </div>
               </div>
-              <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
                 <label style={{ display: 'flex', alignItems: 'center', gap: '4px', fontSize: '11px', cursor: 'pointer', color: socraticMode ? 'var(--accent-light)' : 'var(--text-muted)' }}>
-                  <input type="checkbox" checked={socraticMode} onChange={e => setSocraticMode(e.target.checked)} style={{ width: '12px', height: '12px' }} />
+                  <input type="checkbox" checked={socraticMode} onChange={e => setSocraticMode(e.target.checked)} style={{ width: 'var(--space-sm)', height: 'var(--space-sm)' }} />
                   <span>Socrático</span>
                 </label>
                 <button onClick={() => setChatOpen(false)} className="chat-close-btn"><X size={16} /></button>
@@ -251,7 +251,7 @@ export default function Dashboard() {
             </div>
 
             <form onSubmit={handleSendChatMessage} className="chat-input-form" style={{ position: 'relative' }}>
-              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: selectedImage ? 'var(--success)' : 'var(--text-muted)', fontSize: '16px', padding: '0 4px' }} title="Anexar Imagem para Resolução">
+              <label style={{ display: 'flex', alignItems: 'center', justifyContent: 'center', cursor: 'pointer', color: selectedImage ? 'var(--success)' : 'var(--text-muted)', fontSize: '1rem', padding: '0 4px' }} title="Anexar Imagem para Resolução">
                 <input type="file" accept="image/*" onChange={handleImageChange} style={{ display: 'none' }} disabled={chatLoading} />
                 <span>📷</span>
               </label>

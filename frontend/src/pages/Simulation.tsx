@@ -199,7 +199,7 @@ export default function Simulation() {
       flexDirection: 'column',
       height: inFullscreen ? '100vh' : 'auto',
       backgroundColor: inFullscreen ? 'var(--bg-primary)' : 'transparent',
-      padding: inFullscreen ? '24px' : '0'
+      padding: inFullscreen ? 'var(--space-lg)' : '0'
     }}>
 
       <style>{`
@@ -251,7 +251,7 @@ export default function Simulation() {
       {/* Header */}
       <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '21px' }}>
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '21px' }}>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontSize: '21px' }}>
             <Compass size={24} style={{ color: 'var(--warning)' }} />
             Simulado Cronometrado
           </h1>
@@ -261,10 +261,10 @@ export default function Simulation() {
 
       {!simulationStarted && !simulationCompleted ? (
         <div style={{ maxWidth: '600px', margin: '40px auto' }} className="card">
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
-            <Clock size={48} style={{ color: 'var(--warning)', marginBottom: '12px' }} />
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
+            <Clock size={48} style={{ color: 'var(--warning)', marginBottom: 'var(--space-sm)' }} />
             <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Iniciar Simulado sem Distração</h2>
-            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: '8px' }}>
+            <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginTop: 'var(--space-xs)' }}>
               Avaliação de 15 minutos em tela cheia com 3 questões de vestibular.
             </p>
           </div>
@@ -283,19 +283,19 @@ export default function Simulation() {
         </div>
       ) : simulationCompleted ? (
         <div style={{ maxWidth: '720px', margin: '40px auto' }} className="card">
-          <div style={{ textAlign: 'center', marginBottom: '24px' }}>
+          <div style={{ textAlign: 'center', marginBottom: 'var(--space-lg)' }}>
             <Award size={48} style={{ color: 'var(--warning)' }} />
-            <h2 style={{ fontSize: '21px', fontWeight: 800, marginTop: '8px' }}>Desempenho no Simulado</h2>
+            <h2 style={{ fontSize: '21px', fontWeight: 800, marginTop: 'var(--space-xs)' }}>Desempenho no Simulado</h2>
           </div>
 
-          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '16px', backgroundColor: 'var(--bg-secondary)', padding: '16px', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', marginBottom: '21px' }}>
+          <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-md)', backgroundColor: 'var(--bg-secondary)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', marginBottom: '21px' }}>
             <div>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Média de Acertos</span>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Média de Acertos</span>
               <p style={{ fontSize: '28px', fontWeight: 900, color: 'var(--warning)' }}>{resultScore}%</p>
             </div>
             <div style={{ textAlign: 'right' }}>
-              <span style={{ fontSize: '12px', color: 'var(--text-muted)' }}>Status da Prova</span>
-              <p style={{ fontSize: '16px', fontWeight: 700, color: 'var(--success)', marginTop: '8px' }}>Concluída</p>
+              <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>Status da Prova</span>
+              <p style={{ fontSize: '1rem', fontWeight: 700, color: 'var(--success)', marginTop: 'var(--space-xs)' }}>Concluída</p>
             </div>
           </div>
 
@@ -305,7 +305,7 @@ export default function Simulation() {
         <div className="simulation-grid">
 
           {/* Coluna Esquerda: Questão Ativa */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '400px' }}>
+          <div className="card" style={{ padding: 'var(--space-lg)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '400px' }}>
             <div>
               <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '21px' }}>
                 <span className="badge badge-primary">Questão {currentIdx + 1} de {questions.length}</span>
@@ -323,7 +323,7 @@ export default function Simulation() {
                 {questions[currentIdx]?.question}
               </h3>
 
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)' }}>
                 {(['A', 'B', 'C', 'D', 'E'] as const).map((key) => {
                   const isSelected = answers[currentIdx] === key;
                   return (
@@ -346,7 +346,7 @@ export default function Simulation() {
           </div>
 
           {/* Coluna Direita: Navegador + Resumo */}
-          <div className="card" style={{ padding: '16px', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
+          <div className="card" style={{ padding: 'var(--space-md)', display: 'flex', flexDirection: 'column', justifyContent: 'space-between' }}>
             <div>
               <div style={{ textAlign: 'center', marginBottom: '21px' }}>
                 <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Tempo Restante</span>
@@ -356,8 +356,8 @@ export default function Simulation() {
               </div>
 
               {/* Grid Compacto do Navegador */}
-              <h4 style={{ fontSize: '12px', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '13px', fontWeight: 700 }}>Navegador de Questões</h4>
-              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: '8px', marginBottom: '21px' }}>
+              <h4 style={{ fontSize: '0.75rem', textTransform: 'uppercase', color: 'var(--text-muted)', marginBottom: '13px', fontWeight: 700 }}>Navegador de Questões</h4>
+              <div style={{ display: 'grid', gridTemplateColumns: 'repeat(3, 1fr)', gap: 'var(--space-xs)', marginBottom: '21px' }}>
                 {questions.map((_, idx) => {
                   const isCurrent = idx === currentIdx;
                   const isAnswered = answers[idx] !== undefined;
@@ -377,9 +377,9 @@ export default function Simulation() {
               </div>
 
               <div style={{ fontSize: '11px', color: 'var(--text-muted)', display: 'flex', flexDirection: 'column', gap: '4px' }}>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--success)' }} /> Respondida</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--warning)' }} /> Marcada</span>
-                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--bg-tertiary)' }} /> Pendente</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 'var(--space-xs)', height: 'var(--space-xs)', borderRadius: '50%', backgroundColor: 'var(--success)' }} /> Respondida</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 'var(--space-xs)', height: 'var(--space-xs)', borderRadius: '50%', backgroundColor: 'var(--warning)' }} /> Marcada</span>
+                <span style={{ display: 'flex', alignItems: 'center', gap: '4px' }}><span style={{ width: 'var(--space-xs)', height: 'var(--space-xs)', borderRadius: '50%', backgroundColor: 'var(--bg-tertiary)' }} /> Pendente</span>
               </div>
             </div>
 

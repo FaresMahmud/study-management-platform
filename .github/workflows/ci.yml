@@ -34,7 +34,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run ESLint
         run: npm run lint
@@ -60,7 +60,7 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
 
       - name: Run tests
         run: npm run test
@@ -91,7 +91,10 @@ jobs:
           cache-dependency-path: frontend/package-lock.json
 
       - name: Install dependencies
-        run: npm ci
+        run: npm ci --ignore-scripts
+
+      - name: Copy PDF worker
+        run: node scripts/copy-pdf-worker.js
 
       - name: Build frontend
         run: npm run build
@@ -177,8 +180,7 @@ jobs:
           SPRING_PROFILES_ACTIVE: test
           SPRING_DATA_REDIS_HOST: localhost
           SPRING_DATA_REDIS_PORT: 6379
-          CHROMADB_HOST: localhost
-          CHROMADB_PORT: 8000
+          CHROMA_URL: http://localhost:8000
           JWT_SECRET: test-secret-key-for-ci-only-min-256-bits-length
           GEMINI_API_KEY: ${{ secrets.GEMINI_API_KEY }}
 

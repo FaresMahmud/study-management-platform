@@ -58,6 +58,8 @@ export default function StudyWorkspace() {
   const activeSummary = summaries.find(s => s.id === activeSummaryId);
 
   // ─── Mutations de Arquivos e Resumos ──────────────────────────────────
+  const [uploadError, setUploadError] = useState<string | null>(null);
+
   const uploadMutation = useMutation({
     mutationFn: async (formData: FormData) => {
       return (await apiClient.post<PDFFile>('/api/files/upload', formData, {
@@ -65,9 +67,14 @@ export default function StudyWorkspace() {
       })).data;
     },
     onSuccess: (data) => {
+      setUploadError(null);
       queryClient.invalidateQueries({ queryKey: ['pdf-files', selectedSubjectId] });
       setActiveFileId(data.id); // Abre o arquivo recém-enviado
       triggerConfetti();
+    },
+    onError: (error: Error & { response?: { data?: { message?: string } } }) => {
+      const msg = error.response?.data?.message || error.message || 'Erro ao enviar o arquivo.';
+      setUploadError(msg);
     }
   });
 
@@ -86,10 +93,13 @@ export default function StudyWorkspace() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !selectedSubjectId) return;
     const file = e.target.files[0];
+    setUploadError(null);
     const formData = new FormData();
     formData.append('file', file);
     formData.append('subjectId', String(selectedSubjectId));
     uploadMutation.mutate(formData);
+    // Limpa o input para permitir re-upload do mesmo arquivo
+    e.target.value = '';
   };
 
   const handleCreateSummary = () => {
@@ -134,7 +144,7 @@ export default function StudyWorkspace() {
 
       {/* BARRA DE SELEÇÃO INICIAL */}
       <div className="flex-between" style={{ padding: '12px var(--space-md)', borderBottom: '1px solid var(--border-color)', backgroundColor: 'var(--bg-secondary)', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', gap: '16px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-md)', alignItems: 'center' }}>
           <BookOpen size={20} className="text-primary" />
           <select
             className="form-input"
@@ -154,7 +164,7 @@ export default function StudyWorkspace() {
         </div>
 
         {selectedSubjectId && (
-          <div style={{ display: 'flex', gap: '12px', alignItems: 'center' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)', alignItems: 'center' }}>
             {/* Seletor do PDF */}
             <select
               className="form-input dropdown-label"
@@ -184,10 +194,10 @@ export default function StudyWorkspace() {
             </select>
 
             {/* Upload PDF */}
-            <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', margin: 0, display: 'flex', alignItems: 'center', gap: '4px' }}>
+            <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', margin: 0, display: 'flex', alignItems: 'center', gap: '4px', opacity: uploadMutation.isPending ? 0.6 : 1 }}>
               <Upload size={14} />
-              PDF
-              <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handleFileUpload} />
+              {uploadMutation.isPending ? 'Enviando...' : 'PDF'}
+              <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploadMutation.isPending} />
             </label>
 
             {/* Criar Resumo */}
@@ -197,7 +207,7 @@ export default function StudyWorkspace() {
             </button>
 
             {/* Split layout toggle buttons */}
-            <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: '12px', marginLeft: '12px' }}>
+            <div style={{ display: 'flex', gap: '4px', borderLeft: '1px solid var(--border-color)', paddingLeft: 'var(--space-sm)', marginLeft: 'var(--space-sm)' }}>
               <button
                 className={`btn btn-sm ${splitRatio === 100 ? 'btn-primary' : 'btn-secondary'}`}
                 style={{ padding: '6px', minWidth: '40px' }}
@@ -227,12 +237,20 @@ export default function StudyWorkspace() {
         )}
       </div>
 
+      {/* Mensagem de erro do upload */}
+      {uploadError && (
+        <div style={{ padding: '10px 16px', backgroundColor: 'var(--danger-glow, rgba(239,68,68,0.1))', borderBottom: '1px solid var(--danger)', color: 'var(--danger)', fontSize: '13px', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+          <span>Erro no upload: {uploadError}</span>
+          <button onClick={() => setUploadError(null)} style={{ background: 'transparent', border: 'none', color: 'var(--danger)', cursor: 'pointer', fontWeight: 700 }}>✕</button>
+        </div>
+      )}
+
       {/* WORKSPACE DIVIDIDO */}
       {!selectedSubjectId ? (
         <div className="flex-center" style={{ flex: 1, flexDirection: 'column', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
           <Sparkles size={56} style={{ color: 'var(--primary)', marginBottom: '1.25rem' }} />
           <h2>Abra sua Área de Estudos</h2>
-          <p style={{ maxWidth: '400px', textAlign: 'center', marginTop: '8px', fontSize: '0.9rem' }}>
+          <p style={{ maxWidth: '400px', textAlign: 'center', marginTop: 'var(--space-xs)', fontSize: '0.9rem' }}>
             Selecione uma matéria acima para carregar seus arquivos PDF da aula e escrever seus resumos integrados lado a lado.
           </p>
         </div>

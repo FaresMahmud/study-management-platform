@@ -301,14 +301,14 @@ export default function Flashcards() {
 
       <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
         <div>
-          <h1 style={{ display: 'flex', alignItems: 'center', gap: '8px', fontSize: '28px', fontWeight: 800 }}>
+          <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontSize: '28px', fontWeight: 800 }}>
             <Brain size={28} style={{ color: 'var(--primary)' }} />
             Flashcards
           </h1>
           <p className="subtitle" style={{ fontSize: '13px' }}>Memorização ativa e repetição espaçada usando FSRS</p>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+        <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
           <button 
             className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'} btn-sm`} 
             onClick={() => setActiveTab('review')}
@@ -321,7 +321,7 @@ export default function Flashcards() {
             Gerenciar Todos ({allCards.length})
           </button>
           
-          <div style={{ width: '1px', height: '24px', backgroundColor: 'var(--border-color)', margin: '0 8px' }} />
+          <div style={{ width: '1px', height: 'var(--space-lg)', backgroundColor: 'var(--border-color)', margin: '0 8px' }} />
           
           <button className="btn btn-secondary btn-sm" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ background: 'linear-gradient(to right, var(--primary), var(--secondary))', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Sparkles size={14} />
@@ -365,7 +365,7 @@ export default function Flashcards() {
               <Check size={48} style={{ color: 'var(--success)', marginBottom: '13px' }} />
               <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Nada para revisar hoje! 🎉</h2>
               <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '21px' }}>Suas revisões estão em dia. Que tal carregar novos arquivos e PDFs?</p>
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
                 <button className="btn btn-primary" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ background: 'linear-gradient(to right, var(--primary), var(--secondary))', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Sparkles size={16} />
                   Gerar Flashcards com IA
@@ -383,7 +383,7 @@ export default function Flashcards() {
           ) : (
             <div>
               {/* Área de Estudo Ativo */}
-              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '12px', color: 'var(--text-muted)', marginBottom: '8px' }}>
+              <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 'var(--space-xs)' }}>
                 <span>Revisando {currentIndex + 1} de {dueCards.length}</span>
                 <span>Matéria: <strong>{dueCards[currentIndex].subject?.subjectName ?? 'Sem matéria'}</strong></span>
               </div>
@@ -392,14 +392,14 @@ export default function Flashcards() {
                 <div className={`flashcard-inner ${showAnswer ? 'flipped' : ''}`}>
                   {/* FRENTE */}
                   <div className="flashcard-face front">
-                    <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: '16px' }}>Frente</span>
-                    <h3 style={{ fontSize: '24px', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.4 }}>{dueCards[currentIndex].front}</h3>
-                    <span style={{ fontSize: '12px', color: 'var(--text-muted)', position: 'absolute', bottom: '16px' }}>Clique ou Pressione Space para revelar</span>
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 'var(--space-md)' }}>Frente</span>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.4 }}>{dueCards[currentIndex].front}</h3>
+                    <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', position: 'absolute', bottom: 'var(--space-md)' }}>Clique ou Pressione Space para revelar</span>
                   </div>
 
                   {/* VERSO */}
                   <div className="flashcard-face back">
-                    <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--primary)', letterSpacing: '0.05em', marginBottom: '16px' }}>Verso</span>
+                    <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--primary)', letterSpacing: '0.05em', marginBottom: 'var(--space-md)' }}>Verso</span>
                     <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.5 }}>{dueCards[currentIndex].back}</h3>
 
                     {dueCards[currentIndex].summaryTitle && (
@@ -412,7 +412,7 @@ export default function Flashcards() {
               </div>
 
               {/* Botões FSRS de Rating com Atalhos */}
-              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center' }}>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
                 {!showAnswer ? (
                   <button className="btn btn-primary" style={{ width: '100%', maxWidth: '280px' }} onClick={() => setShowAnswer(true)}>Mostrar Resposta</button>
                 ) : (
@@ -441,19 +441,19 @@ export default function Flashcards() {
 
           {/* Grid de Decks (Seção 5.3) */}
           <div style={{ marginTop: '34px' }}>
-            <h3 style={{ fontSize: '16px', fontWeight: 800, marginBottom: '16px' }}>Seus Decks por Matéria</h3>
-            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: '16px' }}>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, marginBottom: 'var(--space-md)' }}>Seus Decks por Matéria</h3>
+            <div style={{ display: 'grid', gridTemplateColumns: 'repeat(auto-fit, minmax(240px, 1fr))', gap: 'var(--space-md)' }}>
               {subjects.map(subj => {
                 const count = allCards.filter(c => c.subject?.id === subj.id).length;
                 return (
-                  <div key={subj.id} className="card" style={{ padding: '16px', borderLeft: `4px solid ${subj.color}` }}>
+                  <div key={subj.id} className="card" style={{ padding: 'var(--space-md)', borderLeft: `4px solid ${subj.color}` }}>
                     <h4 style={{ fontSize: '14px', fontWeight: 700 }}>{subj.subjectName}</h4>
-                    <p style={{ fontSize: '12px', color: 'var(--text-secondary)', marginTop: '4px' }}>{pluralize(count, 'cartão', 'cartões')} carregados</p>
+                    <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{pluralize(count, 'cartão', 'cartões')} carregados</p>
 
                     <button
                       onClick={() => { setActiveTab('review'); reiniciarRevisoes(); }}
                       className="btn btn-secondary btn-sm"
-                      style={{ width: '100%', marginTop: '13px', fontSize: '12px' }}
+                      style={{ width: '100%', marginTop: '13px', fontSize: '0.75rem' }}
                       disabled={count === 0}
                     >
                       Estudar Deck
@@ -469,8 +469,8 @@ export default function Flashcards() {
         /* ================= TELA DE GERENCIAMENTO ================= */
         <div style={{ display: 'flex', flexDirection: 'column', gap: '13px' }}>
           <div className="flex-between">
-            <h2 style={{ fontSize: '16px', fontWeight: 600 }}>Banco de Flashcards</h2>
-            <div style={{ display: 'flex', gap: '8px' }}>
+            <h2 style={{ fontSize: '1rem', fontWeight: 600 }}>Banco de Flashcards</h2>
+            <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
               <button className="btn btn-secondary btn-sm" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ borderColor: 'var(--accent)', color: 'var(--accent)' }}>
                 <Sparkles size={14} style={{ marginRight: '4px' }} />
                 Gerar com IA
@@ -589,7 +589,7 @@ export default function Flashcards() {
         <div className="modal-overlay">
           <div className="modal-content">
             <button className="modal-close" onClick={() => setIaModalOpen(false)}><X size={20} /></button>
-            <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+            <h2 className="modal-title" style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
               <Sparkles size={20} style={{ color: 'var(--accent)' }} />
               Gerar Flashcards com IA
             </h2>

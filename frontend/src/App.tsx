@@ -1,5 +1,6 @@
 import React, { useState, useEffect, useRef } from 'react';
 import { BrowserRouter, Routes, Route, Navigate, Outlet, useNavigate, useLocation } from 'react-router-dom';
+import { Menu } from 'lucide-react';
 import { QueryClient, QueryClientProvider } from '@tanstack/react-query';
 import { useAuthStore } from './store/authStore';
 import { Sidebar } from './components/layout/Sidebar';
@@ -87,6 +88,14 @@ function ProtectedLayout() {
         onClick={() => setSidebarMobileOpen(false)}
         aria-hidden="true"
       />
+      {/* Mobile hamburger button */}
+      <button
+        className="mobile-menu-toggle"
+        onClick={() => setSidebarMobileOpen(true)}
+        aria-label="Abrir menu"
+      >
+        <Menu size={24} />
+      </button>
       <Sidebar
         activeTab={getActiveTab()}
         setActiveTab={handleTabChange}

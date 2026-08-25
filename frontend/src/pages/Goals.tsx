@@ -231,7 +231,7 @@ export default function Goals() {
     <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
       <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 0 }}>
         <div>
-          <h1 style={{ fontSize: 'var(--space-lg)', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Metas de Maestria</h1>
+          <h1 style={{ fontSize: '1.25rem', fontWeight: 700, letterSpacing: '-0.02em', color: 'var(--text-primary)' }}>Metas de Maestria</h1>
           <p className="subtitle" style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Defina e monitore objetivos de proficiência por disciplina de estudo</p>
         </div>
         <button className="btn btn-primary" onClick={openCreateModal}>
@@ -244,7 +244,7 @@ export default function Goals() {
         <div className="flex-center" style={{ minHeight: '200px', color: 'var(--text-secondary)' }}>Carregando metas...</div>
       ) : goals.length === 0 ? (
         <div className="card empty-state" style={{ padding: 'var(--space-lg)', textAlign: 'center' }}>
-          <Target size={48} style={{ color: 'var(--text-muted)', marginBottom: '8px' }} />
+          <Target size={48} style={{ color: 'var(--text-muted)', marginBottom: 'var(--space-xs)' }} />
           <h2 style={{ fontSize: '21px', fontWeight: 700 }}>Nenhuma meta cadastrada</h2>
           <p style={{ marginBottom: '13px', fontSize: '13px', color: 'var(--text-secondary)' }}>Defina sua primeira meta de maestria para acompanhar sua evolução no painel.</p>
           <button className="btn btn-primary" onClick={openCreateModal}>
@@ -261,8 +261,8 @@ export default function Goals() {
             return (
               <div key={goal.id} className="card" style={{ display: 'flex', flexDirection: 'column', justifyContent: 'space-between', minHeight: '200px', padding: 'var(--space-sm)' }}>
                 <div>
-                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-                    <span style={{ fontWeight: 700, fontSize: '16px' }}>{goal.title}</span>
+                  <div className="card-title" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xs)' }}>
+                    <span style={{ fontWeight: 700, fontSize: '1rem' }}>{goal.title}</span>
                     <div style={{ display: 'flex', gap: '4px' }}>
                       <button
                         onClick={() => openEditModal(goal)}
@@ -365,7 +365,7 @@ export default function Goals() {
               <div className="form-group" style={{ marginBottom: '13px' }}>
                 <label className="form-label" style={{ fontSize: '13px', marginBottom: '5px' }}>Matérias Relacionadas (Selecione uma ou mais)</label>
                 <div style={{ display: 'flex', flexDirection: 'column', gap: '6px', maxHeight: '160px', overflowY: 'auto', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)' }}>
-                  <label style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                  <label style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', cursor: 'pointer', fontSize: '13px' }}>
                     <input
                       type="checkbox"
                       checked={selectedSubjectIds.length === 0}
@@ -374,7 +374,7 @@ export default function Goals() {
                     <span style={{ fontWeight: 600, color: 'var(--text-secondary)' }}>Nenhuma (Meta Geral)</span>
                   </label>
                   {subjects.map((sub) => (
-                    <label key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: '8px', cursor: 'pointer', fontSize: '13px' }}>
+                    <label key={sub.id} style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', cursor: 'pointer', fontSize: '13px' }}>
                       <input
                         type="checkbox"
                         checked={selectedSubjectIds.includes(sub.id)}

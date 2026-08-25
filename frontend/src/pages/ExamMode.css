@@ -4,7 +4,7 @@
   min-height: 100vh;
   background: var(--bg-primary);
   padding: 60px 40px;
-  gap: 32px;
+  gap: var(--space-lg);
   align-items: center;
   width: 100%;
 }
@@ -23,7 +23,7 @@
 .exam-card {
   width: 100%;
   max-width: 550px;
-  padding: 32px !important;
+  padding: var(--space-lg) !important;
 }
 
 .exam-footer {
@@ -31,7 +31,7 @@
   justify-content: space-between;
   width: 100%;
   max-width: 550px;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .exam-footer .btn {
@@ -40,6 +40,6 @@
 
 @media (max-width: 480px) {
   .exam-mode-page {
-    padding: 40px 16px;
+    padding: var(--space-lg) 16px;
   }
 }

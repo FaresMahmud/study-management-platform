@@ -282,21 +282,21 @@ export default function FocusMode() {
   // ─── TELA INICIAL: ESCOLHA DE OBJETIVOS E INICIALIZAÇÃO ──────────────────
   if (!isSessionActive) {
     return (
-      <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)' }}>
+      <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)', padding: 'var(--space-lg)', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)' }}>
         <div className="card" style={{ maxWidth: '500px', width: '100%', padding: '34px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', padding: '16px', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', marginBottom: '16px' }}>
+          <div style={{ display: 'inline-flex', padding: 'var(--space-md)', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>
             <Headphones size={36} className="animate-pulse" />
           </div>
           
           <h2 style={{ fontSize: '21px', fontWeight: 900, marginBottom: '6px' }}>Modo Foco Pomodoro</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
             Bloqueie distrações, concentre-se nas suas matérias e registre suas sessões produtivas na base de dados.
           </p>
 
-          <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', textAlign: 'left' }}>
+          <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', textAlign: 'left' }}>
             {/* Escolha do Objetivo */}
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+              <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
                 Objetivo Vinculado
               </label>
               <select 
@@ -314,10 +314,10 @@ export default function FocusMode() {
 
             {/* Duração da Sessão */}
             <div>
-              <label style={{ display: 'block', marginBottom: '8px', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+              <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
                 Tempo de Foco
               </label>
-              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '12px' }}>
+              <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: 'var(--space-sm)' }}>
                 {[
                   { label: '25 min (Foco) + 5 min', value: 25 },
                   { label: '50 min (Foco) + 10 min', value: 50 },
@@ -339,7 +339,7 @@ export default function FocusMode() {
               className="btn btn-primary"
               disabled={!selectedExamPrepId || startSessionMutation.isPending}
               onClick={handleStart}
-              style={{ padding: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: '8px', marginTop: '12px' }}
+              style={{ padding: '13px', display: 'flex', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-xs)', marginTop: 'var(--space-sm)' }}
             >
               <Play size={16} fill="currentColor" />
               <span>{startSessionMutation.isPending ? 'Iniciando...' : 'Iniciar Modo Foco'}</span>
@@ -353,19 +353,19 @@ export default function FocusMode() {
   // ─── TELA SECUNDÁRIA: RESULTADO COM CONFETES ─────────────────────────────
   if (completeSessionMutation.isSuccess) {
     return (
-      <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: '24px', padding: '24px', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)' }}>
+      <div className="dashboard-root" style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-lg)', padding: 'var(--space-lg)', alignItems: 'center', justifyContent: 'center', minHeight: 'calc(100vh - 120px)' }}>
         <div className="card" style={{ maxWidth: '480px', width: '100%', padding: '34px', border: '1px solid var(--border-color)', textAlign: 'center' }}>
-          <div style={{ display: 'inline-flex', padding: '16px', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)', marginBottom: '16px' }}>
+          <div style={{ display: 'inline-flex', padding: 'var(--space-md)', borderRadius: '50%', backgroundColor: 'rgba(16, 185, 129, 0.15)', color: 'var(--success)', marginBottom: 'var(--space-md)' }}>
             <Sparkles size={36} />
           </div>
           
-          <h2 style={{ fontSize: '24px', fontWeight: 900, marginBottom: '6px' }}>Sessão Concluída! 🎉</h2>
-          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, marginBottom: '6px' }}>Sessão Concluída! 🎉</h2>
+          <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
             Parabéns! Você completou os {sessionDuration} minutos de foco ininterrupto com sucesso.
           </p>
 
-          <div style={{ background: 'var(--bg-tertiary)', padding: '16px', borderRadius: 'var(--radius-md)', textAlign: 'left', marginBottom: '24px', fontSize: '13px', border: '1px solid var(--border-color)' }}>
-            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: '8px' }}>
+          <div style={{ background: 'var(--bg-tertiary)', padding: 'var(--space-md)', borderRadius: 'var(--radius-md)', textAlign: 'left', marginBottom: 'var(--space-lg)', fontSize: '13px', border: '1px solid var(--border-color)' }}>
+            <div style={{ display: 'flex', justifyContent: 'space-between', marginBottom: 'var(--space-xs)' }}>
               <span>Duração Total:</span>
               <strong style={{ color: 'var(--text-primary)' }}>{sessionDuration} minutos</strong>
             </div>
@@ -377,7 +377,7 @@ export default function FocusMode() {
             </div>
           </div>
 
-          <button className="btn btn-primary" style={{ width: '100%', padding: '12px' }} onClick={() => navigate('/')}>
+          <button className="btn btn-primary" style={{ width: '100%', padding: 'var(--space-sm)' }} onClick={() => navigate('/')}>
             Voltar ao Dashboard
           </button>
         </div>
@@ -396,7 +396,7 @@ export default function FocusMode() {
       flexDirection: 'column', 
       fontFamily: 'Inter, sans-serif',
       color: 'var(--text-primary)',
-      padding: '24px'
+      padding: 'var(--space-lg)'
     }}>
       
       {/* Overlay de desfocagem/saída de tela */}
@@ -411,12 +411,12 @@ export default function FocusMode() {
           flexDirection: 'column',
           alignItems: 'center',
           justifyContent: 'center',
-          gap: '16px',
+          gap: 'var(--space-md)',
           textAlign: 'center',
-          padding: '24px'
+          padding: 'var(--space-lg)'
         }}>
           <AlertTriangle size={48} className="text-warning animate-bounce" />
-          <h2 style={{ fontSize: '24px', fontWeight: 900, color: '#fff' }}>Atenção: Mantenha o Foco!</h2>
+          <h2 style={{ fontSize: '1.25rem', fontWeight: 900, color: '#fff' }}>Atenção: Mantenha o Foco!</h2>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '380px' }}>
             Você saiu da aba de estudos. O timer continua correndo! Volte imediatamente para manter seu ritmo de alto rendimento.
           </p>
@@ -424,10 +424,10 @@ export default function FocusMode() {
       )}
 
       {/* Barra de Status Topo */}
-      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: '16px', borderBottom: '1px solid var(--border-color)', marginBottom: '24px' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
-          <div style={{ width: '8px', height: '8px', borderRadius: '50%', backgroundColor: 'var(--primary)', boxShadow: '0 0 6px var(--primary)' }} />
-          <span style={{ fontSize: '12px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
+      <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', paddingBottom: 'var(--space-md)', borderBottom: '1px solid var(--border-color)', marginBottom: 'var(--space-lg)' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
+          <div style={{ width: 'var(--space-xs)', height: 'var(--space-xs)', borderRadius: '50%', backgroundColor: 'var(--primary)', boxShadow: '0 0 6px var(--primary)' }} />
+          <span style={{ fontSize: '0.75rem', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--text-secondary)' }}>
             Modo Foco Ativo • {activeExam?.title}
           </span>
         </div>
@@ -445,7 +445,7 @@ export default function FocusMode() {
       <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 800 ? '340px 1fr' : '1fr', gap: '34px', flex: 1, overflow: 'hidden' }}>
         
         {/* LADO ESQUERDO: CONTROLE E CRONÔMETRO */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: '24px', borderRight: window.innerWidth > 800 ? '1px solid var(--border-color)' : 'none', paddingRight: window.innerWidth > 800 ? '34px' : 0 }}>
+        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-lg)', borderRight: window.innerWidth > 800 ? '1px solid var(--border-color)' : 'none', paddingRight: window.innerWidth > 800 ? '34px' : 0 }}>
           
           {/* Cronômetro Circular SVG */}
           <div style={{ position: 'relative', width: '220px', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -475,11 +475,11 @@ export default function FocusMode() {
           </div>
 
           {/* Ações do Timer */}
-          <div style={{ display: 'flex', gap: '12px' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-sm)' }}>
             <button 
               className={`btn ${isRunning ? 'btn-secondary' : 'btn-primary'}`} 
               onClick={() => setIsRunning(!isRunning)}
-              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 24px', fontWeight: 700 }}
+              style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', padding: '10px 24px', fontWeight: 700 }}
             >
               {isRunning ? <Pause size={14} /> : <Play size={14} fill="currentColor" />}
               <span>{isRunning ? 'Pausar' : 'Retomar'}</span>
@@ -488,7 +488,7 @@ export default function FocusMode() {
 
           {/* Indicadores de perda de foco */}
           {focusWarnings > 0 && (
-            <div style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '8px 16px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--error)', fontSize: '12px' }}>
+            <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', padding: '8px 16px', borderRadius: 'var(--radius-sm)', backgroundColor: 'rgba(239, 68, 68, 0.1)', border: '1px solid rgba(239, 68, 68, 0.2)', color: 'var(--error)', fontSize: '0.75rem' }}>
               <AlertTriangle size={14} />
               <span>{focusWarnings} {focusWarnings === 1 ? 'desvio' : 'desvios'} de atenção detectados!</span>
             </div>
@@ -496,10 +496,10 @@ export default function FocusMode() {
         </div>
 
         {/* LADO DIREITO: HUB DE ESTUDO ATIVO (FLASHCARDS, RESUMOS E TUTOR) */}
-        <div style={{ display: 'flex', flexDirection: 'column', gap: '16px', overflow: 'hidden' }}>
+        <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', overflow: 'hidden' }}>
           
           {/* Navegação entre Ferramentas de Estudo */}
-          <div style={{ display: 'flex', gap: '8px', borderBottom: '1px solid var(--border-color)', paddingBottom: '12px' }}>
+          <div style={{ display: 'flex', gap: 'var(--space-xs)', borderBottom: '1px solid var(--border-color)', paddingBottom: 'var(--space-sm)' }}>
             <button 
               onClick={() => setStudyTab('flashcards')} 
               className={`btn btn-sm ${studyTab === 'flashcards' ? 'btn-primary' : 'btn-secondary'}`}
@@ -535,7 +535,7 @@ export default function FocusMode() {
                 {flashcards.length === 0 ? (
                   <p style={{ fontSize: '13px', color: 'var(--text-muted)' }}>Nenhum flashcard pendente para as matérias deste edital.</p>
                 ) : (
-                  <div style={{ maxWidth: '420px', width: '100%', display: 'flex', flexDirection: 'column', gap: '16px' }}>
+                  <div style={{ maxWidth: '420px', width: '100%', display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                     
                     {/* Card 3D Flip */}
                     <div 
@@ -566,14 +566,14 @@ export default function FocusMode() {
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center', 
-                          padding: '24px', 
+                          padding: 'var(--space-lg)', 
                           backfaceVisibility: 'hidden',
                           fontSize: '15px',
                           fontWeight: 600,
                           boxShadow: 'var(--shadow-sm)'
                         }}>
                           <div>
-                            <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Frente</span>
+                            <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--primary)', fontWeight: 700, display: 'block', marginBottom: 'var(--space-xs)' }}>Frente</span>
                             {flashcards[flashcardIndex]?.front}
                           </div>
                         </div>
@@ -588,7 +588,7 @@ export default function FocusMode() {
                           display: 'flex', 
                           alignItems: 'center', 
                           justifyContent: 'center', 
-                          padding: '24px', 
+                          padding: 'var(--space-lg)', 
                           backfaceVisibility: 'hidden',
                           transform: 'rotateY(180deg)',
                           fontSize: '15px',
@@ -596,7 +596,7 @@ export default function FocusMode() {
                           boxShadow: 'var(--shadow-md)'
                         }}>
                           <div>
-                            <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--success)', fontWeight: 700, display: 'block', marginBottom: '8px' }}>Verso (Gabarito)</span>
+                            <span style={{ fontSize: '10px', textTransform: 'uppercase', color: 'var(--success)', fontWeight: 700, display: 'block', marginBottom: 'var(--space-xs)' }}>Verso (Gabarito)</span>
                             {flashcards[flashcardIndex]?.back}
                           </div>
                         </div>
@@ -605,10 +605,10 @@ export default function FocusMode() {
 
                     {/* Navegação Flashcards */}
                     <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-                      <span style={{ fontSize: '12px', color: 'var(--text-secondary)' }}>
+                      <span style={{ fontSize: '0.75rem', color: 'var(--text-secondary)' }}>
                         Card {flashcardIndex + 1} de {flashcards.length}
                       </span>
-                      <div style={{ display: 'flex', gap: '8px' }}>
+                      <div style={{ display: 'flex', gap: 'var(--space-xs)' }}>
                         <button 
                           className="btn btn-secondary btn-sm"
                           disabled={flashcardIndex === 0}
@@ -633,15 +633,15 @@ export default function FocusMode() {
 
             {/* Resumos Panel */}
             {studyTab === 'summaries' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)' }}>
                 {summaries.length === 0 ? (
-                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', marginTop: '24px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--text-muted)', textAlign: 'center', marginTop: 'var(--space-lg)' }}>
                     Nenhum resumo estruturado para leitura neste objetivo.
                   </p>
                 ) : (
                   summaries.map(s => (
-                    <div key={s.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: '16px', background: 'var(--bg-tertiary)' }}>
-                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>{s.title}</h4>
+                    <div key={s.id} style={{ border: '1px solid var(--border-color)', borderRadius: 'var(--radius-md)', padding: 'var(--space-md)', background: 'var(--bg-tertiary)' }}>
+                      <h4 style={{ fontSize: '14px', fontWeight: 800, color: 'var(--text-primary)', marginBottom: 'var(--space-xs)' }}>{s.title}</h4>
                       <div 
                         style={{ fontSize: '13px', color: 'var(--text-secondary)', lineHeight: '1.6', maxHeight: '200px', overflowY: 'auto', whiteSpace: 'pre-wrap' }}
                         dangerouslySetInnerHTML={{ __html: s.content }}
@@ -654,9 +654,9 @@ export default function FocusMode() {
 
             {/* Tutor Virtual RAG Panel */}
             {studyTab === 'tutor' && (
-              <div style={{ display: 'flex', flexDirection: 'column', gap: '12px', height: '320px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', padding: '16px' }}>
+              <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-sm)', height: '320px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)', border: '1px solid var(--border-color)', padding: 'var(--space-md)' }}>
                 {/* Janela de Mensagens */}
-                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: '8px', paddingRight: '4px' }}>
+                <div style={{ flex: 1, overflowY: 'auto', display: 'flex', flexDirection: 'column', gap: 'var(--space-xs)', paddingRight: '4px' }}>
                   {chatMessages.map((m, idx) => (
                     <div 
                       key={idx} 
@@ -684,11 +684,11 @@ export default function FocusMode() {
                 </div>
 
                 {/* Formulário de Input */}
-                <form onSubmit={handleChatSend} style={{ display: 'flex', gap: '8px', borderTop: '1px solid var(--border-color)', paddingTop: '12px' }}>
+                <form onSubmit={handleChatSend} style={{ display: 'flex', gap: 'var(--space-xs)', borderTop: '1px solid var(--border-color)', paddingTop: 'var(--space-sm)' }}>
                   <input
                     type="text"
                     className="form-input"
-                    style={{ flex: 1, margin: 0, fontSize: '13px', padding: '8px' }}
+                    style={{ flex: 1, margin: 0, fontSize: '13px', padding: 'var(--space-xs)' }}
                     placeholder="Faça uma pergunta sobre o assunto..."
                     value={chatInput}
                     onChange={e => setChatInput(e.target.value)}

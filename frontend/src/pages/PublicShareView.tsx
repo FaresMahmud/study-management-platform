@@ -40,14 +40,14 @@ export default function PublicShareView() {
 
   if (isError || !examPrep) {
     return (
-      <div className="flex-center" style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', padding: '24px' }}>
+      <div className="flex-center" style={{ minHeight: '100vh', display: 'flex', justifyContent: 'center', alignItems: 'center', backgroundColor: 'var(--bg-primary)', color: 'var(--text-primary)', padding: 'var(--space-lg)' }}>
         <div className="card" style={{ maxWidth: '480px', padding: '34px', textAlign: 'center', border: '1px solid hsla(0, 72%, 51%, 0.2)' }}>
-          <AlertCircle size={48} className="text-danger" style={{ marginBottom: '16px' }} />
-          <h2 style={{ fontSize: '21px', fontWeight: 800, marginBottom: '8px' }}>Link Expirado ou Inválido</h2>
-          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: '24px' }}>
+          <AlertCircle size={48} className="text-danger" style={{ marginBottom: 'var(--space-md)' }} />
+          <h2 style={{ fontSize: '21px', fontWeight: 800, marginBottom: 'var(--space-xs)' }}>Link Expirado ou Inválido</h2>
+          <p style={{ fontSize: '14px', color: 'var(--text-secondary)', marginBottom: 'var(--space-lg)' }}>
             Este plano de estudos não é público ou o link de compartilhamento foi revogado pelo criador.
           </p>
-          <Link to="/login" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px' }}>
+          <Link to="/login" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
             Acessar o StudyFlow
           </Link>
         </div>
@@ -71,10 +71,10 @@ export default function PublicShareView() {
       
       {/* HEADER DA PÁGINA PÚBLICA */}
       <header style={{ padding: '16px 24px', backgroundColor: 'var(--bg-secondary)', borderBottom: '1px solid var(--border-color)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
-        <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+        <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)' }}>
           <BookOpen size={24} style={{ color: 'var(--primary)' }} />
           <span style={{ fontSize: '18px', fontWeight: 900, letterSpacing: '-0.02em' }}>StudyFlow</span>
-          <span className="badge" style={{ backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', fontSize: '10px', padding: '2px 8px', borderRadius: '12px' }}>Compartilhado</span>
+          <span className="badge" style={{ backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', fontSize: '10px', padding: '2px 8px', borderRadius: 'var(--space-sm)' }}>Compartilhado</span>
         </div>
         <Link to="/register" className="btn btn-secondary btn-sm" style={{ margin: 0 }}>
           Criar Conta Grátis
@@ -97,7 +97,7 @@ export default function PublicShareView() {
           <span style={{ fontSize: '11px', textTransform: 'uppercase', letterSpacing: '0.08em', color: 'var(--primary)', fontWeight: 800 }}>Plano de Preparação Ativo</span>
           <h1 style={{ fontSize: '34px', fontWeight: 900, margin: '8px 0 13px', color: 'var(--text-primary)' }}>{examPrep.title}</h1>
           
-          <div style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '8px 16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '30px', marginBottom: '21px' }}>
+          <div style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)', padding: '8px 16px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', borderRadius: '30px', marginBottom: '21px' }}>
             <Calendar size={16} className="text-primary" />
             <span style={{ fontSize: '13px', fontWeight: 600 }}>Data do Exame: {formatarData(examPrep.examDate)}</span>
           </div>
@@ -115,9 +115,9 @@ export default function PublicShareView() {
         <div style={{ display: 'grid', gridTemplateColumns: '1fr 1fr', gap: '20px', marginBottom: '34px' }}>
           
           {/* META DE NOTA CARD */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <div className="card" style={{ padding: 'var(--space-lg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
             <Target size={32} className="text-primary" style={{ marginBottom: '13px' }} />
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-secondary)' }}>Meta de Nota Alvo</h3>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-secondary)' }}>Meta de Nota Alvo</h3>
             <p style={{ fontSize: '34px', fontWeight: 900, margin: '8px 0', color: 'var(--text-primary)' }}>{examPrep.targetScore}%</p>
             <span className="badge" style={{ backgroundColor: examPrep.targetScore >= 80 ? 'rgba(16, 185, 129, 0.15)' : 'rgba(245, 158, 11, 0.15)', color: examPrep.targetScore >= 80 ? 'var(--success)' : 'var(--warning)', fontSize: '11px', padding: '4px 12px' }}>
               {examPrep.targetScore >= 80 ? 'Objetivo: Excelente' : 'Objetivo: Aprovado'}
@@ -125,10 +125,10 @@ export default function PublicShareView() {
           </div>
 
           {/* CRONOGRAMA CARD */}
-          <div className="card" style={{ padding: '24px', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
+          <div className="card" style={{ padding: 'var(--space-lg)', display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', textAlign: 'center' }}>
             <Clock size={32} className="text-primary" style={{ marginBottom: '13px' }} />
-            <h3 style={{ fontSize: '16px', fontWeight: 800, color: 'var(--text-secondary)' }}>Status da Preparação</h3>
-            <p style={{ fontSize: '24px', fontWeight: 900, margin: '13px 0 8px', color: 'var(--text-primary)' }}>Ativo & Focado</p>
+            <h3 style={{ fontSize: '1rem', fontWeight: 800, color: 'var(--text-secondary)' }}>Status da Preparação</h3>
+            <p style={{ fontSize: '1.25rem', fontWeight: 900, margin: '13px 0 8px', color: 'var(--text-primary)' }}>Ativo & Focado</p>
             <span style={{ fontSize: '13px', color: 'var(--text-secondary)' }}>Metodologia baseada em repetição espaçada</span>
           </div>
 
@@ -149,11 +149,11 @@ export default function PublicShareView() {
               <Sparkles size={28} />
             </div>
           </div>
-          <h2 style={{ fontSize: '21px', fontWeight: 800, marginBottom: '8px' }}>Gostaria de estudar assim com Inteligência Artificial?</h2>
+          <h2 style={{ fontSize: '21px', fontWeight: 800, marginBottom: 'var(--space-xs)' }}>Gostaria de estudar assim com Inteligência Artificial?</h2>
           <p style={{ fontSize: '14px', color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto 24px', lineHeight: 1.5 }}>
             No StudyFlow você faz upload de seus PDFs, gera resumos inteligentes, quizzes personalizados, treina com simulados cronometrados e revisa tudo via flashcards.
           </p>
-          <Link to="/register" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: '8px', padding: '12px 24px', fontWeight: 700 }}>
+          <Link to="/register" className="btn btn-primary" style={{ display: 'inline-flex', alignItems: 'center', gap: 'var(--space-xs)', padding: '12px 24px', fontWeight: 700 }}>
             <span>Começar Agora Gratuitamente</span>
             <ArrowRight size={18} />
           </Link>
@@ -162,7 +162,7 @@ export default function PublicShareView() {
       </main>
 
       {/* FOOTER */}
-      <footer style={{ padding: '24px', textAlign: 'center', borderTop: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '12px', backgroundColor: 'var(--bg-secondary)' }}>
+      <footer style={{ padding: 'var(--space-lg)', textAlign: 'center', borderTop: '1px solid var(--border-color)', color: 'var(--text-muted)', fontSize: '0.75rem', backgroundColor: 'var(--bg-secondary)' }}>
         © {new Date().getFullYear()} StudyFlow. Desenvolvido para máxima performance acadêmica.
       </footer>
 

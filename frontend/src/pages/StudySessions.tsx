@@ -213,7 +213,7 @@ export default function StudySessions() {
       </div>
 
       {subjects.length === 0 && !isLoading && (
-        <div style={{ padding: '1rem 1.5rem', backgroundColor: 'var(--warning-glow)', border: '1px solid var(--warning)', borderRadius: 'var(--radius-md)', color: 'var(--warning)', marginBottom: '2rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+        <div style={{ padding: '1rem 1.5rem', backgroundColor: 'var(--warning-glow)', border: '1px solid var(--warning)', borderRadius: 'var(--radius-md)', color: 'var(--warning)', marginBottom: 'var(--space-lg)', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
           <span>Você precisa criar pelo menos uma matéria antes de registrar sessões de estudo.</span>
           <Link to="/subjects" className="btn btn-secondary btn-sm" style={{ borderColor: 'var(--warning)' }}>
             Criar Matéria
@@ -223,8 +223,8 @@ export default function StudySessions() {
 
       {/* Filter panel */}
       {sessions.length > 0 && (
-        <div className="card" style={{ marginBottom: '2rem', padding: '1rem 1.5rem' }}>
-          <div style={{ display: 'flex', alignItems: 'center', gap: '1rem', flexWrap: 'wrap' }}>
+        <div className="card" style={{ marginBottom: 'var(--space-lg)', padding: '1rem 1.5rem' }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-md)', flexWrap: 'wrap' }}>
             <span style={{ display: 'flex', alignItems: 'center', gap: '0.35rem', color: 'var(--text-secondary)', fontSize: '0.875rem', fontWeight: 600 }}>
               <Filter size={16} />
               Filtrar por:
@@ -281,7 +281,7 @@ export default function StudySessions() {
               {filteredSessions.map((session) => (
                 <tr key={session.id}>
                   <td>
-                    <div style={{ display: 'flex', alignItems: 'center', gap: '0.5rem', fontWeight: 500 }}>
+                    <div style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontWeight: 500 }}>
                       <Calendar size={14} className="text-muted" />
                       {formatDate(session.sessionDate)}
                     </div>
@@ -308,7 +308,7 @@ export default function StudySessions() {
                     </div>
                   </td>
                   <td style={{ textAlign: 'right' }}>
-                    <div style={{ display: 'flex', gap: '0.5rem', justifyContent: 'flex-end' }}>
+                    <div style={{ display: 'flex', gap: 'var(--space-xs)', justifyContent: 'flex-end' }}>
                       <button
                         className="btn btn-secondary btn-sm"
                         style={{ padding: '0.35rem', borderRadius: '4px' }}
@@ -346,7 +346,7 @@ export default function StudySessions() {
             </h2>
 
             {formError && (
-              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.875rem' }}>
+              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: 'var(--space-md)', fontSize: '0.875rem' }}>
                 {formError}
               </div>
             )}

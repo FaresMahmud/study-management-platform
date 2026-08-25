@@ -64,7 +64,7 @@ export default function Register() {
     <div className="auth-wrapper">
       <div className="auth-card">
         <div className="auth-header">
-          <div style={{ display: 'inline-flex', padding: '0.75rem', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', marginBottom: '1rem' }}>
+          <div style={{ display: 'inline-flex', padding: 'var(--space-sm)', borderRadius: '50%', backgroundColor: 'var(--primary-glow)', color: 'var(--primary)', marginBottom: 'var(--space-md)' }}>
             <BookOpen size={32} />
           </div>
           <h1>Crie sua conta</h1>
@@ -117,7 +117,7 @@ export default function Register() {
             />
           </div>
 
-          <div className="form-group" style={{ marginBottom: '2rem' }}>
+          <div className="form-group" style={{ marginBottom: 'var(--space-lg)' }}>
             <label className="form-label" htmlFor="confirmPassword">Confirmar senha</label>
             <input
               id="confirmPassword"

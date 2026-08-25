@@ -59,8 +59,7 @@ services:
       SPRING_DATASOURCE_PASSWORD: study_pass
       SPRING_DATA_REDIS_HOST: redis-dev
       SPRING_DATA_REDIS_PORT: 6379
-      CHROMADB_HOST: chroma-dev
-      CHROMADB_PORT: 8000
+      CHROMA_URL: http://chroma-dev:8000
       APP_CORS_ALLOWED_ORIGINS: "http://localhost:5173"
     ports:
       - "8080:8080"

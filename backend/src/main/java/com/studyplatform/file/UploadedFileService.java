@@ -41,6 +41,9 @@ public class UploadedFileService {
 
     private final Path fileStorageLocation = Paths.get("uploads").toAbsolutePath().normalize();
 
+    /** Tamanho máximo de upload: 50 MB */
+    private static final long MAX_FILE_SIZE = 50L * 1024 * 1024;
+
     private User getAuthenticatedUser() {
         return securityService.getAuthenticatedUser();
     }
@@ -50,6 +53,11 @@ public class UploadedFileService {
         User user = getAuthenticatedUser();
         Subject subject = subjectRepository.findByIdAndUserId(subjectId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Matéria não encontrada"));
+
+        // Validação de tamanho
+        if (file.getSize() > MAX_FILE_SIZE) {
+            throw new BusinessException("O arquivo excede o limite de 50 MB. Tamanho atual: " + (file.getSize() / (1024 * 1024)) + " MB.");
+        }
 
         try {
             Files.createDirectories(this.fileStorageLocation);
@@ -73,10 +81,12 @@ public class UploadedFileService {
                     .build();
 
             UploadedFile saved = uploadedFileRepository.save(uploadedFile);
+            log.info("Arquivo PDF salvo com sucesso. ID: {}, Nome: {}, Tamanho: {} bytes", saved.getId(), originalFileName, file.getSize());
 
             // Dispara extração de texto assíncrona baseada no arquivo salvo em disco
             try {
                 pdfProcessingService.processFileAsync(saved, targetLocation);
+                log.info("Processamento assíncrono de OCR enfileirado para arquivo ID: {}", saved.getId());
             } catch (Exception ex) {
                 log.error("Erro ao enfileirar processamento assíncrono de OCR para o arquivo ID: {}", saved.getId(), ex);
             }

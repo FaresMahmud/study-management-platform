@@ -2,22 +2,22 @@
   display: flex;
   min-height: 100vh;
   background: var(--bg-primary);
-  padding: 40px;
-  gap: 32px;
+  padding: var(--space-lg);
+  gap: var(--space-lg);
 }
 
 .reading-column {
   flex: 6;
   display: flex;
   flex-direction: column;
-  gap: 32px;
+  gap: var(--space-lg);
   max-width: 60%;
 }
 
 .reading-header {
   display: flex;
   flex-direction: column;
-  gap: 6px;
+  gap: var(--space-xs);
 }
 
 .subject-tag {
@@ -38,7 +38,7 @@
 .reading-section {
   display: flex;
   flex-direction: column;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .reading-section h3 {
@@ -62,7 +62,7 @@
   font-size: 14px;
   color: var(--text-primary);
   font-style: italic;
-  padding: 18px 24px !important;
+  padding: var(--space-sm) var(--space-lg) !important;
 }
 
 .test-btn {
@@ -72,12 +72,12 @@
 .quiz-column {
   flex: 4;
   position: sticky;
-  top: 40px;
+  top: var(--space-lg);
   height: fit-content;
 }
 
 .quiz-column-card {
-  padding: 32px !important;
+  padding: var(--space-lg) !important;
 }
 
 .quiz-start-prompt {
@@ -85,7 +85,7 @@
   display: flex;
   flex-direction: column;
   align-items: center;
-  gap: 16px;
+  gap: var(--space-md);
 }
 
 .quiz-start-prompt h2 {
@@ -108,7 +108,7 @@
 @media (max-width: 1024px) {
   .study-session-page {
     flex-direction: column;
-    padding: 24px;
+    padding: var(--space-lg);
   }
   .reading-column {
     max-width: 100%;

@@ -876,7 +876,7 @@ export default function Summaries() {
             </p>
 
             {flashcardError && (
-              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: '1rem', fontSize: '0.85rem' }}>
+              <div style={{ padding: '0.75rem 1rem', backgroundColor: 'var(--danger-glow)', border: '1px solid var(--danger)', borderRadius: 'var(--radius-md)', color: 'var(--danger)', marginBottom: 'var(--space-md)', fontSize: '0.85rem' }}>
                 {flashcardError}
               </div>
             )}

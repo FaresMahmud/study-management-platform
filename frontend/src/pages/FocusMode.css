@@ -1,5 +1,5 @@
 .focus-option {
-  padding: 12px 24px;
+  padding: var(--space-sm) var(--space-lg);
   border-radius: var(--radius-sm);
   border: 1px solid var(--border);
   background: transparent;
