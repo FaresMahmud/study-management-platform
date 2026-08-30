@@ -59,13 +59,158 @@
   animation: fadeIn 0.25s ease-out;
 }
 
-@keyframes fadeIn {
-  from { opacity: 0; transform: translateY(8px); }
-  to { opacity: 1; transform: translateY(0); }
+/* ─── SRS Grid ─── */
+.srs-grid {
+  display: grid;
+  grid-template-columns: repeat(4, 1fr);
+  gap: 16px;
+}
+
+.srs-indicator-card {
+  padding: 13px;
+  border-radius: var(--radius-md);
+  border: 1px solid var(--border-color);
+  text-align: center;
+  background-color: var(--bg-secondary);
+}
+
+/* ─── Flashcard 3D Flip ─── */
+.flashcard-box {
+  perspective: 1000px;
+  width: 100%;
+  min-height: 240px;
+  cursor: pointer;
+}
+
+.flashcard-inner {
+  position: relative;
+  width: 100%;
+  height: 100%;
+  min-height: 240px;
+  transition: transform 0.4s;
+  transform-style: preserve-3d;
+}
+
+.flashcard-inner.flipped {
+  transform: rotateY(180deg);
+}
+
+.flashcard-face {
+  position: absolute;
+  inset: 0;
+  backface-visibility: hidden;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  padding: 24px;
+  border-radius: var(--radius-lg);
+  box-shadow: var(--shadow-lg);
+  border: 1px solid var(--border-color);
+  background-color: var(--bg-secondary);
+}
+
+.flashcard-face.back {
+  transform: rotateY(180deg);
+  border-color: var(--primary);
+  background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(99, 102, 241, 0.05) 100%);
+}
+
+/* ─── FSRS Rating Buttons ─── */
+.fsrs-btn {
+  flex: 1;
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  padding: 10px;
+  border-radius: var(--radius-md);
+  font-weight: 700;
+  font-size: 13px;
+  border: 1px solid var(--border-color);
+  cursor: pointer;
+  transition: all 0.2s;
+}
+
+.fsrs-btn:hover {
+  transform: translateY(-2px);
+}
+
+.fsrs-btn.again { border-color: var(--danger); background-color: var(--danger-glow); color: var(--danger); }
+.fsrs-btn.hard { border-color: var(--warning); background-color: var(--warning-glow); color: var(--warning); }
+.fsrs-btn.good { border-color: var(--primary); background-color: var(--primary-glow); color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
+.fsrs-btn.easy { border-color: var(--success); background-color: var(--success-glow); color: var(--success); }
+
+/* ─── Flashcards Page Root ─── */
+.flashcards-root {
+  display: flex;
+  flex-direction: column;
+  gap: 20px;
+  animation: fadeIn 0.3s ease-out;
+}
+
+.flashcards-title-row {
+  display: flex;
+  justify-content: space-between;
+  align-items: center;
+}
+
+.flashcards-actions {
+  display: flex;
+  gap: var(--space-xs);
+  align-items: center;
+}
+
+.flashcards-divider {
+  width: 1px;
+  height: var(--space-lg);
+  background-color: var(--border-color);
+  margin: 0 8px;
+}
+
+/* ─── Responsive Table ─── */
+@media (max-width: 768px) {
+  .flashcards-table-hide-mobile {
+    display: none;
+  }
+
+  .flashcards-actions {
+    flex-wrap: wrap;
+  }
+
+  .flashcards-divider {
+    display: none;
+  }
+
+  .srs-grid {
+    grid-template-columns: repeat(2, 1fr);
+  }
+
+  .fsrs-btn {
+    padding: 12px 8px;
+    min-height: 44px;
+  }
+
+  .flashcard-box {
+    min-height: 200px;
+  }
+
+  .flashcard-inner {
+    min-height: 200px;
+  }
 }
 
 @media (max-width: 480px) {
   .flashcards-container {
     padding: var(--space-lg) 16px;
   }
+
+  .flashcards-actions .btn-sm {
+    padding: 10px 12px;
+    min-height: 44px;
+  }
+}
+
+@keyframes fadeIn {
+  from { opacity: 0; transform: translateY(8px); }
+  to { opacity: 1; transform: translateY(0); }
 }

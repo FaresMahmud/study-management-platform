@@ -65,8 +65,10 @@ function ProtectedLayout() {
     if (path.startsWith('/workspace')) return 'workspace';
     if (path.startsWith('/subjects')) return 'subjects';
     if (path.startsWith('/flashcards')) return 'flashcards';
+    if (path.startsWith('/simulation')) return 'simulation';
+    if (path.startsWith('/focus')) return 'focus';
     if (path.startsWith('/analytics')) return 'analytics';
-    return 'settings';
+    return '';
   };
 
   const handleTabChange = (tab: string) => {
@@ -74,8 +76,9 @@ function ProtectedLayout() {
     if (tab === 'workspace') navigate('/workspace');
     if (tab === 'subjects') navigate('/subjects');
     if (tab === 'flashcards') navigate('/flashcards');
+    if (tab === 'simulation') navigate('/simulation');
+    if (tab === 'focus') navigate('/focus');
     if (tab === 'analytics') navigate('/analytics');
-    if (tab === 'settings') navigate('/focus');
     // Close mobile sidebar on navigation
     setSidebarMobileOpen(false);
   };

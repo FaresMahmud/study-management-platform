@@ -23,26 +23,6 @@
   padding: 0 4px;
 }
 
-.sidebar-brand {
-  font-size: 22px;
-  font-weight: 800;
-  color: var(--text-primary);
-  margin-bottom: 0;
-  padding-left: 12px;
-  letter-spacing: -0.5px;
-  background: linear-gradient(135deg, #fff 0%, #a5b4fc 100%);
-  -webkit-background-clip: text;
-  -webkit-text-fill-color: transparent;
-  white-space: nowrap;
-  overflow: hidden;
-  transition: opacity 0.2s ease, width 0.2s ease;
-}
-
-.sidebar-brand.hidden {
-  opacity: 0;
-  width: 0;
-}
-
 .sidebar-toggle {
   background: transparent;
   border: none;

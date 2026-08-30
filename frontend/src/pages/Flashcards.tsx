@@ -2,11 +2,14 @@ import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X, Sparkles } from 'lucide-react';
 import React, { useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
+import { useToast } from '../components/ui/Toast';
 import type { Flashcard, Subject } from '../types';
 import { pluralize } from '../utils/format';
+import './Flashcards.css';
 
 export default function Flashcards() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [activeTab, setActiveTab] = useState<'review' | 'manage'>('review');
 
   const [currentIndex, setCurrentIndex] = useState(0);
@@ -49,9 +52,9 @@ export default function Flashcards() {
       queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
       setIaModalOpen(false);
       setIaText('');
-      alert('Flashcards gerados com sucesso!');
+      toast.success('Flashcards gerados com sucesso!');
     } catch {
-      alert('Erro ao gerar flashcards com IA.');
+      toast.error('Erro ao gerar flashcards com IA.');
     } finally {
       setIaLoading(false);
     }
@@ -155,8 +158,9 @@ export default function Flashcards() {
       if (e.code === 'Space') {
         e.preventDefault();
         setShowAnswer(prev => !prev);
+        
       } else if (showAnswer) {
-        if (e.key === '1') handleReview('hard'); // De Novo
+        if (e.key === '1') handleReview('hard'); // De Novo (reseta box)
         if (e.key === '2') handleReview('hard'); // Difícil
         if (e.key === '3') handleReview('good'); // Bom
         if (e.key === '4') handleReview('easy'); // Fácil
@@ -226,80 +230,9 @@ export default function Flashcards() {
   const totalCartoes = allCards.length;
 
   return (
-    <div style={{ display: 'flex', flexDirection: 'column', gap: '20px', animation: 'fadeIn 0.3s ease-out' }}>
+    <div className="flashcards-root">
 
-      <style>{`
-        .srs-grid {
-          display: grid;
-          grid-template-columns: repeat(4, 1fr);
-          gap: 16px;
-        }
-        .srs-indicator-card {
-          padding: 13px;
-          border-radius: var(--radius-md);
-          border: 1px solid var(--border-color);
-          text-align: center;
-          background-color: var(--bg-secondary);
-        }
-        .flashcard-box {
-          perspective: 1000px;
-          width: 100%;
-          min-height: 240px;
-          cursor: pointer;
-        }
-        .flashcard-inner {
-          position: relative;
-          width: 100%;
-          height: 100%;
-          min-height: 240px;
-          transition: transform 0.4s;
-          transform-style: preserve-3d;
-        }
-        .flashcard-inner.flipped {
-          transform: rotateY(180deg);
-        }
-        .flashcard-face {
-          position: absolute;
-          inset: 0;
-          backface-visibility: hidden;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          justify-content: center;
-          padding: 24px;
-          border-radius: var(--radius-xl);
-          box-shadow: var(--shadow-lg);
-          border: 1px solid var(--border-color);
-          background-color: var(--bg-secondary);
-        }
-        .flashcard-face.back {
-          transform: rotateY(180deg);
-          border-color: var(--primary);
-          background: linear-gradient(135deg, var(--bg-secondary) 0%, rgba(99, 102, 241, 0.05) 100%);
-        }
-        .fsrs-btn {
-          flex: 1;
-          display: flex;
-          flex-direction: column;
-          align-items: center;
-          padding: 10px;
-          border-radius: var(--radius-md);
-          font-weight: 700;
-          font-size: 13px;
-          border: 1px solid var(--border-color);
-          cursor: pointer;
-          transition: all 0.2s;
-        }
-        .fsrs-btn:hover {
-          transform: translateY(-2px);
-        }
-        .fsrs-btn.again { border-color: var(--danger); background-color: var(--danger-glow); color: var(--danger); }
-        .fsrs-btn.hard { border-color: var(--warning); background-color: var(--warning-glow); color: var(--warning); }
-        .fsrs-btn.good { border-color: var(--primary); background-color: var(--primary-glow); color: var(--primary); box-shadow: 0 0 10px var(--primary-glow); }
-        .fsrs-btn.easy { border-color: var(--success); background-color: var(--success-glow); color: var(--success); }
-      `}</style>
-
-      <div className="title-section" style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
+      <div className="title-section flashcards-title-row">
         <div>
           <h1 style={{ display: 'flex', alignItems: 'center', gap: 'var(--space-xs)', fontSize: '28px', fontWeight: 800 }}>
             <Brain size={28} style={{ color: 'var(--primary)' }} />
@@ -308,7 +241,7 @@ export default function Flashcards() {
           <p className="subtitle" style={{ fontSize: '13px' }}>Memorização ativa e repetição espaçada usando FSRS</p>
         </div>
 
-        <div style={{ display: 'flex', gap: 'var(--space-xs)', alignItems: 'center' }}>
+        <div className="flashcards-actions">
           <button 
             className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'} btn-sm`} 
             onClick={() => setActiveTab('review')}
@@ -321,7 +254,7 @@ export default function Flashcards() {
             Gerenciar Todos ({allCards.length})
           </button>
           
-          <div style={{ width: '1px', height: 'var(--space-lg)', backgroundColor: 'var(--border-color)', margin: '0 8px' }} />
+          <div className="flashcards-divider" />
           
           <button className="btn btn-secondary btn-sm" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ background: 'linear-gradient(to right, var(--primary), var(--secondary))', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '4px' }}>
             <Sparkles size={14} />
@@ -497,9 +430,9 @@ export default function Flashcards() {
                   <tr>
                     <th>Frente (Pergunta)</th>
                     <th>Verso (Resposta)</th>
-                    <th>Matéria</th>
-                    <th>Estado Leitner</th>
-                    <th>Próxima Revisão</th>
+                    <th className="flashcards-table-hide-mobile">Matéria</th>
+                    <th className="flashcards-table-hide-mobile">Estado Leitner</th>
+                    <th className="flashcards-table-hide-mobile">Próxima Revisão</th>
                     <th style={{ textAlign: 'right' }}>Ações</th>
                   </tr>
                 </thead>
@@ -511,18 +444,18 @@ export default function Flashcards() {
                       <tr key={card.id}>
                         <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }}>{card.front}</td>
                         <td style={{ maxWidth: '200px', overflow: 'hidden', textOverflow: 'ellipsis', whiteSpace: 'nowrap', fontSize: '13px' }}>{card.back}</td>
-                        <td>
+                        <td className="flashcards-table-hide-mobile">
                           <span style={{ display: 'flex', alignItems: 'center', gap: '6px', fontSize: '13px' }}>
                             <span className="color-dot" style={{ backgroundColor: card.subject?.color ?? 'var(--text-muted)', margin: 0 }} />
                             {card.subject?.subjectName ?? 'Sem matéria'}
                           </span>
                         </td>
-                        <td>
+                        <td className="flashcards-table-hide-mobile">
                           <span className={`badge ${card.box === 5 ? 'badge-success' : 'badge-primary'}`} style={{ fontSize: '10px' }}>
                             Caixa {card.box}
                           </span>
                         </td>
-                        <td>
+                        <td className="flashcards-table-hide-mobile">
                           {isDue ? (
                             <span className="badge badge-warning" style={{ fontSize: '10px' }}>Pendente</span>
                           ) : (
@@ -530,10 +463,10 @@ export default function Flashcards() {
                           )}
                         </td>
                         <td style={{ textAlign: 'right' }}>
-                          <button className="btn btn-secondary btn-sm" style={{ padding: '6px', marginRight: '4px' }} onClick={() => abrirEditar(card)}>
+                          <button className="btn btn-secondary btn-sm" style={{ padding: '8px', marginRight: '4px', minWidth: '36px', minHeight: '36px' }} onClick={() => abrirEditar(card)}>
                             <Edit3 size={13} />
                           </button>
-                          <button className="btn btn-danger btn-sm" style={{ padding: '6px' }} onClick={() => deleteMutation.mutate(card.id)}>
+                          <button className="btn btn-danger btn-sm" style={{ padding: '8px', minWidth: '36px', minHeight: '36px' }} onClick={() => deleteMutation.mutate(card.id)}>
                             <Trash2 size={13} />
                           </button>
                         </td>

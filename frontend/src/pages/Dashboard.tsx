@@ -4,7 +4,6 @@ import { HeroSession } from '../components/dashboard/HeroSession';
 import { ActivityGrid } from '../components/dashboard/ActivityGrid';
 import { SubjectProgress } from '../components/dashboard/SubjectProgress';
 import { Card } from '../components/ui/Card';
-import { LoadingSpinner } from '../components/ui/LoadingSpinner';
 import { ErrorMessage } from '../components/ui/ErrorMessage';
 import { EmptyState } from '../components/ui/EmptyState';
 import { Button } from '../components/ui/Button';
@@ -105,7 +104,15 @@ export default function Dashboard() {
     }
   };
 
-  if (loading) return <LoadingSpinner />;
+  if (loading) return (
+    <div className="dashboard-root" style={{ gap: 'var(--space-lg)' }}>
+      <div style={{ height: '28px', width: '200px', borderRadius: '8px', background: 'var(--bg-tertiary)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+      <div style={{ height: '120px', borderRadius: 'var(--radius-lg)', background: 'var(--bg-tertiary)', animation: 'pulse 1.5s ease-in-out infinite' }} />
+      <div style={{ display: 'grid', gridTemplateColumns: 'repeat(4, 1fr)', gap: '16px' }}>
+        {[1,2,3,4].map(i => <div key={i} style={{ height: '60px', borderRadius: 'var(--radius-md)', background: 'var(--bg-tertiary)', animation: 'pulse 1.5s ease-in-out infinite' }} />)}
+      </div>
+    </div>
+  );
   if (error) return <ErrorMessage message="Erro ao conectar com o servidor local" onRetry={handleRefetch} />;
 
   const mappedSubjects = (subjects || []).map(sub => ({

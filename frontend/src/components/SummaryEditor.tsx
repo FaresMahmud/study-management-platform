@@ -4,6 +4,7 @@ import { Sparkles, Brain, FileText, Image, Paperclip, Loader2 } from 'lucide-rea
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { triggerConfetti } from '../utils/confetti';
+import { useToast } from './ui/Toast';
 import type { Summary } from '../types';
 
 interface SummaryEditorProps {
@@ -24,6 +25,7 @@ export default function SummaryEditor({
   onUpgradeRequired
 }: SummaryEditorProps) {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const premium = useAuthStore(state => state.premium);
 
   const [editorTitle, setEditorTitle] = useState('');
@@ -103,13 +105,13 @@ export default function SummaryEditor({
       triggerConfetti();
       queryClient.invalidateQueries({ queryKey: ['flashcards'] });
       queryClient.invalidateQueries({ queryKey: ['flashcards-due'] });
-      alert(`Copiloto IA: Gerados com sucesso ${data.length} flashcards na sua pilha de revisões! 🧠✨`);
+      toast.success(`Copiloto IA: Gerados com sucesso ${data.length} flashcards na sua pilha de revisões! 🧠✨`);
     },
     onError: (err: { response?: { data?: { message?: string } } }) => {
       if (err.response?.data?.message === 'upgrade_required') {
         onUpgradeRequired();
       } else {
-        alert('Erro ao gerar flashcards via inteligência artificial.');
+        toast.error('Erro ao gerar flashcards via inteligência artificial.');
       }
     }
   });
@@ -130,7 +132,7 @@ export default function SummaryEditor({
     }
 
     if (!text || text.length < 30) {
-      alert('Escreva um resumo mais detalhado (mínimo 30 caracteres) ou selecione um trecho de texto no resumo para a IA ler.');
+      toast.info('Escreva um resumo mais detalhado (mínimo 30 caracteres) ou selecione um trecho de texto no resumo para a IA ler.');
       return;
     }
 
@@ -145,7 +147,7 @@ export default function SummaryEditor({
     const selectedText = selection ? selection.toString().trim() : '';
 
     if (!selectedText) {
-      alert('Selecione um texto no seu resumo para usar como a frente do flashcard!');
+      toast.info('Selecione um texto no seu resumo para usar como a frente do flashcard!');
       return;
     }
 
@@ -183,7 +185,7 @@ export default function SummaryEditor({
       handleEditorInput();
     } catch (err) {
       console.error(err);
-      alert('Erro ao fazer upload do anexo para o resumo.');
+      toast.error('Erro ao fazer upload do anexo para o resumo.');
     } finally {
       setSubindoArquivo(false);
       e.target.value = '';
