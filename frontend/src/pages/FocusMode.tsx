@@ -1,15 +1,17 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { ExamPrep, Subject, Flashcard, Summary } from '../types';
 import { Play, Pause, X, Sparkles, AlertTriangle, MessageSquare, BookOpen, Brain, RefreshCw, Headphones } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { triggerConfetti } from '../utils/confetti';
+import { useToast } from '../hooks/useToast';
 import './FocusMode.css';
 
 export default function FocusMode() {
   const navigate = useNavigate();
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   // ─── Estados Principais ────────────────────────────────────────────────
   const [selectedExamPrepId, setSelectedExamPrepId] = useState<number | ''>('');
@@ -156,7 +158,7 @@ export default function FocusMode() {
     }
   });
 
-  const handleSessionFinish = () => {
+  const handleSessionFinish = useCallback(() => {
     setIsRunning(false);
     if (currentSessionId) {
       completeSessionMutation.mutate({
@@ -168,7 +170,7 @@ export default function FocusMode() {
         })
       });
     }
-  };
+  }, [currentSessionId, completeSessionMutation, sessionDuration, focusWarnings]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -207,7 +209,7 @@ export default function FocusMode() {
     const handleKeyDown = (e: KeyboardEvent) => {
       if (e.key === 'F5' || (e.ctrlKey && e.key === 'r') || (e.ctrlKey && e.key === 'w')) {
         e.preventDefault();
-        alert('Modo Foco Ativo: Evite recarregar a página para não quebrar seu ritmo!');
+        toast.info('Modo Foco Ativo: Evite recarregar a página para não quebrar seu ritmo!');
       }
     };
 
@@ -222,7 +224,7 @@ export default function FocusMode() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSessionActive]);
+  }, [isSessionActive, toast]);
 
   const handleStart = () => {
     if (!selectedExamPrepId) return;
@@ -442,10 +444,10 @@ export default function FocusMode() {
       </div>
 
       {/* Conteúdo Principal Split (Esquerda: Timer / Direita: Estudo Ativo) */}
-      <div style={{ display: 'grid', gridTemplateColumns: window.innerWidth > 800 ? '340px 1fr' : '1fr', gap: '34px', flex: 1, overflow: 'hidden' }}>
-        
+      <div className="focus-active-layout split">
+
         {/* LADO ESQUERDO: CONTROLE E CRONÔMETRO */}
-        <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', gap: 'var(--space-lg)', borderRight: window.innerWidth > 800 ? '1px solid var(--border-color)' : 'none', paddingRight: window.innerWidth > 800 ? '34px' : 0 }}>
+        <div className="focus-timer-col split">
           
           {/* Cronômetro Circular SVG */}
           <div style={{ position: 'relative', width: '220px', height: '220px', display: 'flex', alignItems: 'center', justifyContent: 'center' }}>
@@ -617,7 +619,7 @@ export default function FocusMode() {
                           Anterior
                         </button>
                         <button 
-                          className="btn className btn-secondary btn-sm"
+                          className="btn btn-secondary btn-sm"
                           disabled={flashcardIndex === flashcards.length - 1}
                           onClick={() => { setFlashcardIndex(prev => prev + 1); setIsCardFlipped(false); }}
                         >

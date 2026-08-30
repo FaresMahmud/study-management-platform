@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Award, Clock, Compass, Flag } from 'lucide-react';
-import { useEffect, useRef, useState } from 'react';
+import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient, normalizeListResponse } from '../api/client';
 import { triggerConfetti } from '../utils/confetti';
 
@@ -55,12 +55,6 @@ export default function Simulation() {
   // Results
   const [simulationCompleted, setSimulationCompleted] = useState(false);
   const [resultScore, setResultScore] = useState<number | null>(null);
-
-  const handleAutoSubmit = () => {
-    if (simulationId) {
-      finishSimulationMutation.mutate({ id: simulationId, answers });
-    }
-  };
 
   const { data: examPreps = [] } = useQuery<ExamPrep[]>({
     queryKey: ['exam-preps'],
@@ -136,6 +130,12 @@ export default function Simulation() {
       }
     }
   });
+
+  const handleAutoSubmit = useCallback(() => {
+    if (simulationId) {
+      finishSimulationMutation.mutate({ id: simulationId, answers });
+    }
+  }, [simulationId, answers, finishSimulationMutation]);
 
   useEffect(() => {
     if (simulationStarted && !simulationCompleted) {

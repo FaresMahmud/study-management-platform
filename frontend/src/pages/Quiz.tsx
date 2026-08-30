@@ -4,6 +4,7 @@ import { useState } from 'react';
 import { apiClient } from '../api/client';
 import type { Subject } from '../types';
 import { triggerConfetti } from '../utils/confetti';
+import { useToast } from '../hooks/useToast';
 
 interface ExamPrep {
   id: number;
@@ -69,6 +70,7 @@ const PREDEFINED_QUESTIONS: Record<string, Question[]> = {
 
 export default function Quiz() {
   const queryClient = useQueryClient();
+  const toast = useToast();
 
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>('');
   const [selectedExamPrepId, setSelectedExamPrepId] = useState<number | ''>('');
@@ -117,7 +119,7 @@ export default function Quiz() {
       return apiClient.post('/api/flashcards', newCard);
     },
     onSuccess: () => {
-      alert('Pergunta convertida em flashcard com sucesso! 🧠');
+      toast.success('Pergunta convertida em flashcard com sucesso! 🧠');
     }
   });
 
@@ -127,7 +129,7 @@ export default function Quiz() {
     },
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['goals'] });
-      alert('Tentativa de quiz salva com sucesso! Maestria atualizada.');
+      toast.success('Tentativa de quiz salva com sucesso! Maestria atualizada.');
     }
   });
 
@@ -170,7 +172,7 @@ export default function Quiz() {
 
   const handleSaveResult = () => {
     if (!selectedExamPrepId) {
-      alert('Selecione uma preparação para salvar.');
+      toast.info('Selecione uma preparação para salvar.');
       return;
     }
     saveAttemptMutation.mutate({
@@ -184,7 +186,7 @@ export default function Quiz() {
   const convertToFlashcard = () => {
     const q = questions[currentIdx];
     if (!selectedSubjectId) {
-      alert('Selecione uma matéria associada na configuração inicial antes de salvar.');
+      toast.info('Selecione uma matéria associada na configuração inicial antes de salvar.');
       return;
     }
     addFlashcardMutation.mutate({

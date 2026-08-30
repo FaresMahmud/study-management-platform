@@ -3,6 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { triggerConfetti } from '../utils/confetti';
+import { useToast } from '../hooks/useToast';
 
 interface FlashcardCreatorModalProps {
   isOpen: boolean;
@@ -19,6 +20,7 @@ export default function FlashcardCreatorModal({
   subjectId,
   summaryId
 }: FlashcardCreatorModalProps) {
+  const toast = useToast();
   const [front, setFront] = useState('');
   const [back, setBack] = useState('');
   const [error, setError] = useState('');
@@ -44,7 +46,7 @@ export default function FlashcardCreatorModal({
     onSuccess: () => {
       triggerConfetti();
       onClose();
-      alert('Flashcard criado com sucesso! 🎉');
+      toast.success('Flashcard criado com sucesso! 🎉');
     }
   });
 

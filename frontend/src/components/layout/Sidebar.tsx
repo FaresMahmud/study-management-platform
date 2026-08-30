@@ -1,5 +1,5 @@
 import React, { useState, useEffect } from 'react';
-import { LayoutDashboard, BookOpen, FolderOpen, Brain, TrendingUp, Settings, Play, Pause, Square, ChevronLeft, ChevronRight } from 'lucide-react';
+import { LayoutDashboard, BookOpen, FolderOpen, Brain, TrendingUp, Play, Pause, Square, ChevronLeft, ChevronRight, Target, Headphones } from 'lucide-react';
 import { usePodcastStore } from '../../store/podcastStore';
 import './Sidebar.css';
 
@@ -15,8 +15,9 @@ const menuItems = [
   { id: 'workspace', label: 'Área de Estudo', icon: BookOpen },
   { id: 'subjects', label: 'Matérias', icon: FolderOpen },
   { id: 'flashcards', label: 'Flashcards', icon: Brain },
+  { id: 'simulation', label: 'Simulados', icon: Target },
+  { id: 'focus', label: 'Modo Foco', icon: Headphones },
   { id: 'analytics', label: 'Estatísticas', icon: TrendingUp },
-  { id: 'settings', label: 'Configurações', icon: Settings },
 ];
 
 export function Sidebar({ activeTab, setActiveTab, isMobileOpen, onMobileClose }: SidebarProps) {
@@ -27,10 +28,6 @@ export function Sidebar({ activeTab, setActiveTab, isMobileOpen, onMobileClose }
   });
 
   // Persistir estado no localStorage
-  useEffect(() => {
-    localStorage.setItem('sidebar-collapsed', String(collapsed));
-  }, [collapsed]);
-
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', String(collapsed));
   }, [collapsed]);

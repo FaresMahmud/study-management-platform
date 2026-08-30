@@ -18,3 +18,45 @@
   border-color: var(--accent);
   color: white;
 }
+
+/* ─── Focus Active Layout (Timer + Study split) ─── */
+.focus-active-layout {
+  display: grid;
+  gap: 34px;
+  flex: 1;
+  overflow: hidden;
+}
+
+.focus-active-layout.split {
+  grid-template-columns: 340px 1fr;
+}
+
+.focus-active-layout.stacked {
+  grid-template-columns: 1fr;
+}
+
+.focus-timer-col {
+  display: flex;
+  flex-direction: column;
+  align-items: center;
+  justify-content: center;
+  gap: var(--space-lg);
+}
+
+.focus-timer-col.split {
+  border-right: 1px solid var(--border-color);
+  padding-right: 34px;
+}
+
+@media (max-width: 800px) {
+  .focus-active-layout {
+    grid-template-columns: 1fr !important;
+  }
+
+  .focus-timer-col.split {
+    border-right: none;
+    padding-right: 0;
+    border-bottom: 1px solid var(--border-color);
+    padding-bottom: 24px;
+  }
+}

@@ -67,5 +67,5 @@ export function useGamification(sessions: Session[] = [], goals: Goal[] = [], to
     const zone = avgMastery < 60 ? 'revisao' : avgMastery < 85 ? 'aprendizado' : 'maestria';
 
     return { streakDays: streak, totalStudyTime: totalTime, masteryBySubject, zone };
-  }, [sessions, goals]);
+  }, [sessions, goals, todayStr]);
 }

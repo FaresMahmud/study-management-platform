@@ -13,7 +13,7 @@ export function ExamTimer({ timeLimitMinutes, onTimeUp }: TimerProps) {
     if (seconds <= 0) { onTimeUp(); return; }
     const t = setInterval(() => setSeconds(s => s - 1), 1000);
     return () => clearInterval(t);
-  }, [seconds]);
+  }, [seconds, onTimeUp]);
 
   const min = Math.floor(seconds / 60);
   const sec = seconds % 60;

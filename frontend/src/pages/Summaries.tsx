@@ -27,7 +27,7 @@ import {
   VolumeX,
   X
 } from 'lucide-react';
-import React, { useEffect, useRef, useState } from 'react';
+import React, { useCallback, useEffect, useRef, useState } from 'react';
 import { useLocation } from 'react-router-dom';
 import { apiClient, normalizeListResponse } from '../api/client';
 import type { SpringPage, Subject, Summary } from '../types';
@@ -147,25 +147,6 @@ export default function Summaries() {
     };
   }, [isZenMode]);
 
-  // Pomodoro countdown logic
-  useEffect(() => {
-    let interval: ReturnType<typeof setInterval> | null = null;
-    if (pomodoroActive && pomodoroTime > 0) {
-      interval = setInterval(() => {
-        setPomodoroTime(t => {
-          if (t <= 1) {
-            handlePomodoroFinished();
-            return 0;
-          }
-          return t - 1;
-        });
-      }, 1000);
-    }
-    return () => {
-      if (interval) clearInterval(interval);
-    };
-  }, [pomodoroActive, pomodoroTime]);
-
   const enviarNotificacao = (titulo: string, corpo: string) => {
     if ('Notification' in window && Notification.permission === 'granted') {
       try {
@@ -179,24 +160,6 @@ export default function Summaries() {
   const requestNotificationPermission = () => {
     if ('Notification' in window && Notification.permission === 'default') {
       Notification.requestPermission();
-    }
-  };
-
-  const handlePomodoroFinished = () => {
-    setPomodoroActive(false);
-    playBeepNotification();
-    triggerConfetti();
-
-    if (pomodoroType === 'study') {
-      enviarNotificacao('Hora da Pausa! ☕', 'Sua sessão de foco de 25m terminou. Descanse por 5 minutos.');
-      alert('Sessão de foco concluída! Hora de um descanso de 5 minutos.');
-      setPomodoroType('break');
-      setPomodoroTime(5 * 60);
-    } else {
-      enviarNotificacao('Hora de Voltar ao Foco! 📚', 'Seu tempo de descanso terminou. Pronto para focar novamente?');
-      alert('Descanso concluído! Pronto para mais uma sessão de foco?');
-      setPomodoroType('study');
-      setPomodoroTime(25 * 60);
     }
   };
 
@@ -218,6 +181,43 @@ export default function Summaries() {
       // Ignore audio errors
     }
   };
+
+  const handlePomodoroFinished = useCallback(() => {
+    setPomodoroActive(false);
+    playBeepNotification();
+    triggerConfetti();
+
+    if (pomodoroType === 'study') {
+      enviarNotificacao('Hora da Pausa! ☕', 'Sua sessão de foco de 25m terminou. Descanse por 5 minutos.');
+      alert('Sessão de foco concluída! Hora de um descanso de 5 minutos.');
+      setPomodoroType('break');
+      setPomodoroTime(5 * 60);
+    } else {
+      enviarNotificacao('Hora de Voltar ao Foco! 📚', 'Seu tempo de descanso terminou. Pronto para focar novamente?');
+      alert('Descanso concluído! Pronto para mais uma sessão de foco?');
+      setPomodoroType('study');
+      setPomodoroTime(25 * 60);
+    }
+  }, [pomodoroType]);
+
+  // Pomodoro countdown logic
+  useEffect(() => {
+    let interval: ReturnType<typeof setInterval> | null = null;
+    if (pomodoroActive && pomodoroTime > 0) {
+      interval = setInterval(() => {
+        setPomodoroTime(t => {
+          if (t <= 1) {
+            handlePomodoroFinished();
+            return 0;
+          }
+          return t - 1;
+        });
+      }, 1000);
+    }
+    return () => {
+      if (interval) clearInterval(interval);
+    };
+  }, [pomodoroActive, pomodoroTime, handlePomodoroFinished]);
 
   // Synthesize rain/white noise using Web Audio API (highly lightweight & offline friendly)
   const startAmbientSound = (type: 'rain' | 'white') => {
