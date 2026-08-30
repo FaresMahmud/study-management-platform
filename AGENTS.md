@@ -20,7 +20,7 @@ O sistema combina:
 - preparação para exames (com quizzes e simulados);
 - visualização e anotação de PDFs;
 - tutor inteligente baseado em RAG (Retrieval-Augmented Generation);
-- geração de conteúdo com IA (Google Gemini);
+- geração de conteúdo com IA (Google Gemini ou Nvidia NIM, selecionável via `AI_PROVIDER`);
 - geração de podcasts/áudios de estudo por TTS (Google Translate TTS);
 - gamificação e analytics (streaks, zona de aprendizado, tópicos fortes/frágeis);
 - recursos Premium (usuários com flag `premium` têm acesso estendido a funcionalidades de IA).
@@ -133,6 +133,7 @@ O backend está localizado em `backend/`.
 - Flyway (versionamento de schema)
 - ChromaDB (banco vetorial para RAG)
 - Google Gemini (modelos: gemini-2.5-flash para texto, text-embedding-004 para embeddings)
+- Nvidia NIM (opcional — modelo meta/llama-3.1-8b-instruct para texto, compatível com OpenAI)
 - Google Translate TTS (serviço de áudio)
 - JJWT 0.12.5 (gerenciamento de tokens)
 
@@ -145,7 +146,7 @@ O backend concentra:
 - processamento de PDFs (extração, chunking);
 - geração de embeddings (Google Gemini text-embedding-004);
 - consultas semânticas (ChromaDB busca vetorial);
-- integração com IA (Gemini text e multimodal);
+- integração com IA (Gemini ou Nvidia NIM para texto, Gemini para multimodal);
 - geração de podcasts (TTS via Google Translate API);
 - geração de áudio (MP3, streaming);
 - APIs consumidas pelo frontend (REST endpoints versionados em /api/v1/);
@@ -199,17 +200,27 @@ O ChromaDB é utilizado principalmente no pipeline de RAG (Retrieval-Augmented G
 
 # 5. Inteligência Artificial
 
-A integração principal é feita com o **Google Gemini**.
+A integração de IA suporta dois provedores de geração de texto, selecionáveis via variável de ambiente `AI_PROVIDER`:
+
+- **Gemini** (Google) — provedor padrão
+- **Nvidia NIM** (opcional) — formato OpenAI-compatible
+
+Embeddings e multimodal (imagens) sempre usam Gemini, independente do provider selecionado.
 
 ## Modelos
 
 ### Geração de texto
 
+Provedores suportados (selecionável via `AI_PROVIDER`):
+
 ```text
-gemini-2.5-flash
+gemini (default) → gemini-2.5-flash
+nvidia           → meta/llama-3.1-8b-instruct (ou outro modelo Nvidia)
 ```
 
-Utilizado para geração de conteúdo, explicações, quizzes, flashcards, roteiros etc.
+Utilizado para geração de conteúdo, explicações, quizzes, flashcards, roteiros etc. A abstração `TextGenerationProvider` (que estende `QuestionGenerator`) permite trocar o provider sem alterar os consumidores.
+
+> Embeddings e multimodal (imagens) sempre usam Gemini, independente do provider de texto selecionado.
 
 ### Embeddings
 
@@ -231,8 +242,23 @@ As chaves de API são lidas via Spring `@Value` a partir de variáveis de ambien
 
 - `gemini.api.key` — chave da API Google Generative Language
 - `gemini.text.model` — modelo de texto (padrão: `gemini-2.5-flash`)
+- `nvidia.api.key` — chave da API Nvidia NIM (opcional)
+- `nvidia.model` — modelo Nvidia (padrão: `meta/llama-3.1-8b-instruct`)
+- `ai.provider` — provedor ativo: `gemini` (default) ou `nvidia`
 
 > Chaves nunca devem ser hardcodadas — permanecer em variáveis de ambiente/.env.
+
+### Arquitetura de providers
+
+A interface `TextGenerationProvider` (que herda `QuestionGenerator`) abstrai a geração de texto. O `AiProviderConfig` seleciona o bean `@Primary` baseado em `AI_PROVIDER`. Sem fallback automático.
+
+```text
+TextGenerationProvider (interface)
+├── GeminiService (default)
+└── NvidiaNimService (quando AI_PROVIDER=nvidia)
+```
+
+`EmbeddingGenerator` continua exclusivamente em `GeminiService` — embeddings e multimodal não são afetados pela seleção de provider.
 
 ---
 
@@ -257,7 +283,7 @@ file       → Upload e gestão de arquivos (PDFs), associados a Subject
 annotation → Anotações de PDF por página (type, conteúdo texto)
 podcast    → Geração de áudio TTS a partir de roteiro de preparação de exame
 tts        → Text-to-Speech (Google Translate API, chunking em 150 chars, fallback silencioso)
-ai         → Gemini API (texto, embeddings, multimodal/imagem), RAG pipeline, QuestionGenerator e EmbeddingGenerator interfaces
+ai         → Gemini API (texto, embeddings, multimodal/imagem) + Nvidia NIM (texto), RAG pipeline, TextGenerationProvider, QuestionGenerator e EmbeddingGenerator interfaces
 ```
 
 Cada módulo deve ser analisado dentro do padrão arquitetural já utilizado pelo projeto antes de novas implementações.
@@ -653,7 +679,7 @@ Chunks relevantes + metadata (file name, page number, subject)
       ↓
 Prompt construído com contexto grounded (NÃO chat livre)
       ↓
-Gemini (gemini-2.5-flash) — gera resposta baseada APENAS no contexto fornecido
+Provider de texto (Gemini ou Nvidia NIM via AI_PROVIDER) — gera resposta baseada APENAS no contexto fornecido
 ```
 
 O tutor deve responder **ESTRITAMENTE com base no contexto recuperado** dos materiais do usuário.
@@ -788,7 +814,7 @@ implementam geração de conteúdo de áudio (podcast de estudos).
 ```text
 Preparação de exame
         ↓
-IA cria roteiro (Gemini)
+IA cria roteiro (Gemini ou Nvidia NIM via AI_PROVIDER)
         ↓
 Definição de dificuldade (fácil / médio / difícil)
         ↓
@@ -811,7 +837,7 @@ difícil
 
 ### Implementação técnica
 
-- **Geração de roteiro**: O Gemini gera o roteiro do podcast baseado no material do `ExamPrep` (matérias, resumos, flashcards);
+- **Geração de roteiro**: O provider de IA (Gemini ou Nvidia NIM via `AI_PROVIDER`) gera o roteiro do podcast baseado no material do `ExamPrep` (matérias, resumos, flashcards);
 - **TTS**: `TtsService.textToSpeech(text, targetPath)`:
   - Remove formatação HTML/markdown do roteiro;
   - Divide em trechos menores que 150 caracteres (limite do Google Translate TTS);
@@ -1197,13 +1223,13 @@ Processamento
  ↓
 Chunking
  ↓
-Embedding
+Embedding (Gemini)
  ↓
 ChromaDB
  ↓
 Busca
  ↓
-Gemini
+Provider de texto (Gemini/Nvidia NIM)
  ↓
 Tutor
 ```

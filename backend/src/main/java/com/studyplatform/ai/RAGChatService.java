@@ -6,6 +6,7 @@ import com.studyplatform.file.PdfChunk;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
 import org.springframework.stereotype.Service;
+import org.springframework.transaction.annotation.Transactional;
 
 import java.util.ArrayList;
 import java.util.List;
@@ -19,8 +20,10 @@ import java.util.List;
 public class RAGChatService {
 
     private final VectorStoreService vectorStoreService;
+    private final TextGenerationProvider textGenerationProvider;
     private final GeminiService geminiService;
 
+    @Transactional(readOnly = true)
     public ChatResponseDTO askQuestion(Long examPrepId, String question, Boolean socratic, String imageMimeType, String imageBase64) {
         log.info("Processando pergunta RAG para o examPrepId: {}. Pergunta: {}. Modo Socrático: {}. Imagem: {}", examPrepId, question, socratic, imageMimeType);
 
@@ -71,8 +74,8 @@ public class RAGChatService {
             systemPrompt += "\n4. MODO SOCRÁTICO ATIVO: Não entregue a resposta pronta nem a resolução direta da questão do estudante. Em vez disso, explique teoricamente o conceito por trás da dúvida de forma simplificada e faça uma ou mais perguntas que provoquem a reflexão ou orientem o raciocínio do aluno para que ele consiga deduzir e chegar à resposta correta por conta própria.";
         }
 
-        // Mock Fallback se a API Key do Gemini não estiver configurada
-        if (!geminiService.isConfigured()) {
+        // Mock Fallback se nenhum provedor de IA estiver configurado
+        if (!textGenerationProvider.isConfigured()) {
             String mockAnswer = "Olá! Eu sou o seu Tutor Inteligente StudyFlow (Modo Demonstração). \n\n" +
                     "Recebi sua dúvida: \"" + question + "\"\n\n" +
                     (imageBase64 != null ? "Análise Visual de Imagem: Recebi a imagem do exercício/fórmula enviada. " : "") +
@@ -90,9 +93,16 @@ public class RAGChatService {
         try {
             String answer;
             if (imageBase64 != null && !imageBase64.trim().isEmpty()) {
-                answer = geminiService.generateMultimodalContent(systemPrompt, imageMimeType, imageBase64);
+                // Multimodal (imagem) sempre usa Gemini, pois Nvidia NIM não suporta
+                if (geminiService.isConfigured()) {
+                    answer = geminiService.generateMultimodalContent(systemPrompt, imageMimeType, imageBase64);
+                } else {
+                    answer = "No momento, o processamento de imagens não está disponível. " +
+                            "O provedor de IA atual não suporta análise visual. " +
+                            "Por favor, envie sua pergunta em texto.";
+                }
             } else {
-                answer = geminiService.generateContent(systemPrompt);
+                answer = textGenerationProvider.generateContent(systemPrompt);
             }
             return ChatResponseDTO.builder()
                     .answer(answer)

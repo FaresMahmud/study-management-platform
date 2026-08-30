@@ -95,6 +95,8 @@ CHROMADB_HOST=localhost
 CHROMADB_PORT=8000
 JWT_SECRET=test-secret-key-for-ci-only-min-256-bits-length
 GEMINI_API_KEY=${{ secrets.GEMINI_API_KEY }}
+NVIDIA_API_KEY=${{ secrets.NVIDIA_API_KEY }}
+AI_PROVIDER=${{ vars.AI_PROVIDER || 'gemini' }}
 ```
 
 ---
@@ -184,10 +186,12 @@ steps:
 
 ## Secrets Necessários (GitHub Actions)
 
-| Secret | Descrição | Obrigatório |
+| Secret / Variable | Descrição | Obrigatório |
 |---|---|---|
 | `VITE_API_URL` | URL da API para build frontend | Sim (prod) |
 | `GEMINI_API_KEY` | Chave Google Gemini para testes | Sim |
+| `NVIDIA_API_KEY` | Chave Nvidia NIM (opcional) | Não |
+| `AI_PROVIDER` (variable) | Provedor de IA ativo (default: `gemini`) | Não |
 | `GITHUB_TOKEN` | Fornecido automaticamente | Auto |
 
 **Configure em:** Settings → Secrets and variables → Actions

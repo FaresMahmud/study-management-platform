@@ -16,6 +16,7 @@ Não há gateway/BFF intermediário. O frontend fala direto com o backend. O bac
 - Banco relacional (MySQL em dev, PostgreSQL/Neon em prod)
 - ChromaDB (banco vetorial) — externo, porta 8000
 - Google Gemini API — externa (texto, embeddings, multimodal)
+- Nvidia NIM API — externa (texto, compatível com OpenAI, opcional via `AI_PROVIDER=nvidia`)
 - Google Translate TTS — externa (áudio de podcast)
 - Redis (opcional) — cache, com fallback in-memory
 - OAuth2 providers (Google, GitHub) — login social
@@ -51,7 +52,7 @@ com.studyplatform
 ├── examprep                          (inclui quiz, simulation)
 ├── file                              (inclui annotation, pdf chunks)
 ├── podcast
-├── ai                                (tutor RAG, Gemini, TTS, vector store)
+├── ai                                (tutor RAG, Gemini, Nvidia NIM, TTS, vector store, TextGenerationProvider)
 └── shared                            (cross-cutting)
     ├── config                        (SecurityConfig, CacheConfig, JpaConfig, OpenApi, RateLimiting)
     ├── exception                     (GlobalExceptionHandler, BusinessException, ResourceNotFoundException, ErrorResponseDTO)

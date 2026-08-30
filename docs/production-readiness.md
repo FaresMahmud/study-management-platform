@@ -17,6 +17,7 @@ Checklist completo e decisões de arquitetura para deploy em produção.
 | Banco de Dados | ✅ | PostgreSQL/Neon prod, Flyway migrations |
 | ChromaDB | ✅ | Vector store isolado, healthcheck |
 | Gemini/TTS | ✅ | API keys via env, fallback graceful |
+| Nvidia NIM | ✅ | API key via env, provider selection (`AI_PROVIDER`) |
 | Variáveis de Ambiente | ✅ | Documentadas, sem hardcoded, secrets no CI |
 | Docker | ✅ | Multi-stage, resource limits, healthchecks |
 | CI/CD | ✅ | GitHub Actions, test → build → deploy |
@@ -281,15 +282,32 @@ curl -f http://chroma:8000/api/v1/heartbeat
 
 ---
 
-## Gemini AI & TTS
+## IA — Provedores de Geração de Texto
 
-### Modelos Utilizados
+### Provedores Suportados
 
-| Tarefa | Modelo | Configuração |
+| Provedor | Modelo Padrão | Uso |
 |---|---|---|
-| Chat/Resumos/Quizzes | `gemini-2.5-flash` | temperature=0.7, topP=0.9 |
-| Embeddings | `text-embedding-004` | 768 dims |
-| Multimodal (PDF vision) | `gemini-2.5-flash` | image + text |
+| **Gemini** (Google) | `gemini-2.5-flash` | Texto, embeddings, multimodal (imagens) |
+| **Nvidia NIM** (opcional) | `meta/llama-3.1-8b-instruct` | Apenas geração de texto |
+
+### Seleção de Provider
+
+A propriedade `AI_PROVIDER` controla qual provedor é usado para geração de texto:
+- `gemini` (default) — usa `GeminiService`
+- `nvidia` — usa `NvidiaNimService` (formato OpenAI-compatible)
+
+Embeddings e multimodal (imagens) sempre usam Gemini, independente do provider selecionado.
+
+### Variáveis de Ambiente
+
+```env
+GEMINI_API_KEY=AIza...          # Obrigatório para Gemini
+NVIDIA_API_KEY=nvapi-...        # Opcional — apenas se AI_PROVIDER=nvidia
+NVIDIA_MODEL=meta/llama-3.1-8b-instruct  # Modelo da Nvidia (opcional)
+AI_PROVIDER=gemini              # gemini (default) ou nvidia
+# GOOGLE_TTS_API_KEY=...        # Futuro: Cloud TTS oficial
+```
 
 ### TTS (Text-to-Speech)
 
@@ -297,13 +315,6 @@ curl -f http://chroma:8000/api/v1/heartbeat
 - **Limitações:** ~200 chars/request, rate limited
 - **Produção:** Migrar para **Google Cloud TTS** ou **ElevenLabs**
 - **Fallback:** Graceful degradation — erro não quebra fluxo
-
-### Variáveis de Ambiente
-
-```env
-GEMINI_API_KEY=AIza...          # Obrigatório para IA
-# GOOGLE_TTS_API_KEY=...        # Futuro: Cloud TTS oficial
-```
 
 ---
 
@@ -320,6 +331,9 @@ GEMINI_API_KEY=AIza...          # Obrigatório para IA
 | `SPRING_DATASOURCE_PASSWORD` | Sim | DB password |
 | `APP_CORS_ALLOWED_ORIGINS` | Sim | CSV de origens |
 | `GEMINI_API_KEY` | Sim* | Para features IA (*opcional se desabilitado) |
+| `NVIDIA_API_KEY` | Não | Chave Nvidia NIM (opcional, usar com `AI_PROVIDER=nvidia`) |
+| `NVIDIA_MODEL` | Não | Modelo da Nvidia (default: `meta/llama-3.1-8b-instruct`) |
+| `AI_PROVIDER` | Não | Provedor de IA ativo: `gemini` (default) ou `nvidia` |
 | `SPRING_DATA_REDIS_HOST` | Não | Default: localhost |
 | `SPRING_DATA_REDIS_PORT` | Não | Default: 6379 |
 | `CHROMADB_HOST` | Não | Default: localhost |
@@ -422,6 +436,7 @@ Ver [`ci-cd.md`](ci-cd.md) para detalhes completos.
 - [ ] `.env.production` preenchido com valores reais
 - [ ] `JWT_SECRET` ≥ 32 chars, gerado aleatoriamente
 - [ ] `GEMINI_API_KEY` válida com quota
+- [ ] `NVIDIA_API_KEY` válida (se `AI_PROVIDER=nvidia`)
 - [ ] `APP_CORS_ALLOWED_ORIGINS` apenas domínios de produção
 - [ ] `VITE_API_URL` aponta para API de produção (HTTPS)
 - [ ] Banco PostgreSQL/Neon acessível, migrations aplicadas

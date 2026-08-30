@@ -19,7 +19,7 @@
 | **Simulados** | Provas cronometradas com score final |
 | **Resumos** | Textos ricos (HTML) associados a matérias |
 | **PDFs e Anotações** | Upload, indexação via Tika/RAG, anotações por página |
-| **Tutor RAG** | Perguntas ao material estudado via Gemini + ChromaDB |
+| **Tutor RAG** | Perguntas ao material estudado via Gemini ou Nvidia NIM + ChromaDB |
 | **Podcasts** | Geração de áudio a partir de roteiros via Google Translate TTS |
 | **Analytics** | Zona de aprendizado (Comfort/Panic/Learning), streak, tópicos fracos/fortes |
 | **Premium** | Recursos avançados de IA liberados por flag `User.premium` |
@@ -69,12 +69,12 @@
   1. Busca vetorial `VectorStoreService.searchSimilar(examPrepId, query, 5)` → top-5 chunks
   2. Se vazia → mensagem fixa "Não encontrei material relevante..." (NÃO chat livre)
   3. Prompt construído com chunks + instrução `socratic` se ativado
-  4. Gemini `gemini-2.5-flash` grounded retorna resposta
-- Modo multimodal: imagens enviadas via Gemini `generateMultimodalContent`
+  4. Provider selecionado via `AI_PROVIDER` (`gemini` ou `nvidia`) retorna resposta
+- Modo multimodal: imagens enviadas via Gemini `generateMultimodalContent` (independente do provider de texto)
 
 ### 8. Geração de Podcast
 - `POST /api/v1/ai/podcast/stream` com `examPrepId` e `difficulty` (EASY/MEDIUM/HARD)
-- `GeminiService` gera roteiro (texto) → `TtsService` divide em chunks ≤150 chars → Google Translate TTS → MP3s concatenados
+- Provider de IA (Gemini ou Nvidia NIM via `AI_PROVIDER`) gera roteiro (texto) → `TtsService` divide em chunks ≤150 chars → Google Translate TTS → MP3s concatenados
 - Endpoint é `permitAll` (sem JWT obrigatório)
 
 ### 8. Analytics e Dashboard
@@ -109,7 +109,7 @@ O sistema é organizado nos seguintes subsistemas, conforme documentado em `docs
 - **Frontend**: React 19 + Vite 8 + TypeScript, Axios + React Query + Zustand
 - **Banco Relacional**: MySQL (dev), PostgreSQL/Neon (prod), Flyway V1–V12
 - **Banco Vetorial**: ChromaDB (coleções `examprep_{id}`)
-- **IA / RAG**: Gemini (texto, embeddings, multimodal), TTS Google Translate, vector store HTTP
+- **IA / RAG**: Gemini (texto, embeddings, multimodal) ou Nvidia NIM (texto, via `AI_PROVIDER`), TTS Google Translate, vector store HTTP
 - **Autenticação**: JWT HS256 stateless, Spring Security 6, OAuth2 (Google/GitHub mock em dev)
 - **Cache**: Redis com fallback `ConcurrentMapCacheManager` (TTL: studySessions 1h, leaderboard 5min, aiContent 24h)
 - **Eventos**: `ApplicationEventPublisher` com `SubjectDeletedEvent`, `ExamPrepActivityListener @Async`

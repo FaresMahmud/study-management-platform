@@ -14,7 +14,6 @@ import org.springframework.stereotype.Service;
 import com.fasterxml.jackson.databind.ObjectMapper;
 import com.studyplatform.shared.exception.BusinessException;
 
-import com.studyplatform.examprep.QuestionGenerator;
 import com.studyplatform.ai.vector.EmbeddingGenerator;
 import lombok.RequiredArgsConstructor;
 import lombok.extern.slf4j.Slf4j;
@@ -22,7 +21,7 @@ import lombok.extern.slf4j.Slf4j;
 @Slf4j
 @Service
 @RequiredArgsConstructor
-public class GeminiService implements QuestionGenerator, EmbeddingGenerator {
+public class GeminiService implements TextGenerationProvider, EmbeddingGenerator {
 
     private final ObjectMapper objectMapper;
 

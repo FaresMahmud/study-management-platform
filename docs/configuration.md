@@ -53,6 +53,9 @@ spring.profiles.active=${SPRING_PROFILES_ACTIVE:dev}
 | `HIKARI_MAX_POOL_SIZE` | `10` | prod | tamanho máximo do pool |
 | `HIKARI_MIN_IDLE` | `2` | prod | conexões mínimas ociosas |
 | `GEMINI_API_KEY` | vazio | `GeminiService.isConfigured()` | se vazio, cai em mock fallback |
+| `NVIDIA_API_KEY` | vazio | `NvidiaNimService.isConfigured()` | chave da Nvidia NIM API (compatível com OpenAI) |
+| `NVIDIA_MODEL` | `meta/llama-3.1-8b-instruct` | `NvidiaNimService` | modelo de texto da Nvidia |
+| `AI_PROVIDER` | `gemini` | `AiProviderConfig` | provedor de IA ativo: `gemini` ou `nvidia` |
 | `CHROMA_URL` | `http://localhost:8000` | `VectorStoreService` | URL do ChromaDB |
 | `GOOGLE_CLIENT_ID` | `google-mock-id` | OAuth2 | valor real em prod |
 | `GOOGLE_CLIENT_SECRET` | `google-mock-secret` | OAuth2 | valor real em prod |
@@ -71,6 +74,9 @@ JWT_EXPIRATION=86400000
 DB_USERNAME=root
 DB_PASSWORD=<senha local>
 GEMINI_API_KEY=<chave opcional>
+NVIDIA_API_KEY=<chave opcional>
+NVIDIA_MODEL=meta/llama-3.1-8b-instruct
+AI_PROVIDER=gemini
 CHROMA_URL=http://localhost:8000
 CORS_ALLOWED_ORIGINS=http://localhost:5173
 ```
@@ -222,6 +228,21 @@ Roda em `http://localhost:5173`. Apontando para `http://localhost:8080/api` por 
   - `GeminiService.generateMultimodalContent` (texto + imagem)
   - `GeminiService.getEmbedding` (vetores para ChromaDB)
 
+## Nvidia NIM API (alternativa para geração de texto)
+
+- **Modelo padrão**: `meta/llama-3.1-8b-instruct` (configurável via `nvidia.model`).
+- **Endpoint base**: `https://integrate.api.nvidia.com/v1/chat/completions` (compatível com OpenAI).
+- **Autenticação**: header `Authorization: Bearer <NVIDIA_API_KEY>`.
+- **Config**: `nvidia.api.key=${NVIDIA_API_KEY:}` e `nvidia.model=${NVIDIA_MODEL:meta/llama-3.1-8b-instruct}` em `application.properties`.
+- **Seleção de provider**: a propriedade `AI_PROVIDER` (`gemini` ou `nvidia`) define qual provedor de geração de texto é usado. Default: `gemini`.
+- **Sem fallback automático**: se o provider configurado não estiver disponível, o sistema mantém Gemini com log de warning.
+- **Embeddings**: continuam usando exclusivamente Gemini (Nvidia NIM não suporta embeddings nesta conta).
+- **Multimodal (imagens)**: continuam usando Gemini independentemente do provider selecionado.
+- **Onde aparece**:
+  - `NvidiaNimService.generateContent` (texto via chat completion)
+  - `AiProviderConfig` (seleciona o bean `TextGenerationProvider` ativo)
+  - `TextGenerationProvider` (interface de abstração usada por `AiService`, `RAGChatService`, `ExamSimulationService`)
+
 ## TTS (Text-to-Speech)
 
 - **Provedor**: Google Translate TTS (chamada HTTP direta, sem API key).
@@ -257,6 +278,7 @@ Boas práticas:
 | Logging | DEBUG (`com.studyplatform`, SQL, security) | INFO/WARN |
 | OAuth2 | IDs mock | IDs reais via env |
 | Gemini | opcional (mock fallback) | esperado configurado |
+| Nvidia NIM | não usado | opcional (`AI_PROVIDER=nvidia`) |
 | Redis | opcional (fallback in-memory) | opcional |
 | HikariCP | default | otimizado (max=10, min=2, keepalive=60s) |
 | Porta | 8080 | 8080 ou variável |

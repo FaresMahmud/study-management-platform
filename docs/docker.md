@@ -55,6 +55,8 @@ services:
       - SPRING_PROFILES_ACTIVE=dev
       - JWT_SECRET=dev-secret-key-min-256-bits-length-here
       - GEMINI_API_KEY=${GEMINI_API_KEY}
+      - NVIDIA_API_KEY=${NVIDIA_API_KEY:-}
+      - AI_PROVIDER=${AI_PROVIDER:-gemini}
 ```
 
 ---
@@ -188,6 +190,9 @@ server {
 | `JWT_SECRET` | Chave HS256 (≥32 chars) | `chave-super-secreta-256-bits-minimo` |
 | `APP_CORS_ALLOWED_ORIGINS` | Origens CORS permitidas | `https://app.dominio.com,https://api.dominio.com` |
 | `GEMINI_API_KEY` | Chave Google Gemini | `AIza...` |
+| `NVIDIA_API_KEY` | Chave Nvidia NIM (opcional) | `nvapi-...` |
+| `NVIDIA_MODEL` | Modelo Nvidia (opcional) | `meta/llama-3.1-8b-instruct` |
+| `AI_PROVIDER` | Provedor de IA ativo | `gemini` ou `nvidia` |
 | `VITE_API_URL` | URL pública da API | `https://api.dominio.com` |
 | `HIKARI_MAX_POOL_SIZE` | Pool máximo conexões | `10` |
 | `HIKARI_MIN_IDLE` | Conexões mínimas idle | `2` |

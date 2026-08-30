@@ -14,10 +14,6 @@ import com.studyplatform.user.User;
 import com.studyplatform.user.UserRepository;
 import com.studyplatform.examprep.ExamPrep;
 import java.io.IOException;
-import java.net.URI;
-import java.net.http.HttpClient;
-import java.net.http.HttpRequest;
-import java.net.http.HttpResponse;
 import java.time.LocalDateTime;
 import java.util.ArrayList;
 import java.util.List;
@@ -36,7 +32,7 @@ public class AiService {
     private final FlashcardRepository flashcardRepository;
     private final FlashcardMapper flashcardMapper;
     private final ObjectMapper objectMapper;
-    private final GeminiService geminiService;
+    private final TextGenerationProvider textGenerationProvider;
     private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
     private final com.studyplatform.file.PdfChunkRepository pdfChunkRepository;
     private final com.studyplatform.file.UploadedFileRepository uploadedFileRepository;
@@ -92,7 +88,7 @@ public class AiService {
         }
 
         // Se a chave não estiver configurada, gera perguntas simuladas (mock inteligente) para não quebrar a experiência
-        if (!geminiService.isConfigured()) {
+        if (!textGenerationProvider.isConfigured()) {
             return generateMockFlashcards(sourceText, user, subject);
         }
 
@@ -126,7 +122,7 @@ public class AiService {
         }
     }
 
-    private List<Map<String, String>> callGeminiApi(String text) throws IOException, InterruptedException {
+    private List<Map<String, String>> callGeminiApi(String text) throws Exception {
         String prompt = "Com base no seguinte texto de estudo, crie de 3 a 5 flashcards contendo uma pergunta direta na frente (\"front\") e a resposta curta no verso (\"back\").\n" +
                 "Retorne estritamente um array JSON sem formatação markdown, tags ou blocos de código.\n" +
                 "Exemplo:\n" +
@@ -134,7 +130,7 @@ public class AiService {
                 "Texto para analisar:\n" +
                 text;
 
-        String response = geminiService.generateContent(prompt);
+        String response = textGenerationProvider.generateContent(prompt);
         return objectMapper.readValue(response, new TypeReference<List<Map<String, String>>>() {});
     }
 
@@ -234,7 +230,7 @@ public class AiService {
         }
 
         String scriptText;
-        if (!geminiService.isConfigured()) {
+        if (!textGenerationProvider.isConfigured()) {
             // Fallback local caso a chave não esteja configurada
             scriptText = "Olá estudante! Bem-vindo ao StudyFlow Podcast. " +
                     "Hoje vamos revisar o edital de " + examPrep.getTitle() + " no nível de dificuldade " + difficultyLevel.name() + ". " +
@@ -249,7 +245,7 @@ public class AiService {
                         "Nível de profundidade/dificuldade do roteiro: " + difficultyLevel.name() + ". " +
                         "Retorne APENAS o roteiro final de leitura de áudio, sem rubricas, marcas de ator, colchetes ou instruções técnicas de fala.\n\n" +
                         "Conteúdo do edital:\n" + textContext;
-                scriptText = geminiService.generateContent(prompt);
+                scriptText = textGenerationProvider.generateContent(prompt);
             } catch (Exception e) {
                 scriptText = "Olá! Bem-vindo ao podcast do StudyFlow. Vamos revisar o edital do exame: " + examPrep.getTitle() + ". " +
                         "Continue revisando seu material e simulados com dedicação diariamente.";
