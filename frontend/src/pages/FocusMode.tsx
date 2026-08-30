@@ -1,11 +1,11 @@
-import React, { useState, useEffect } from 'react';
+import React, { useCallback, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { ExamPrep, Subject, Flashcard, Summary } from '../types';
 import { Play, Pause, X, Sparkles, AlertTriangle, MessageSquare, BookOpen, Brain, RefreshCw, Headphones } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { triggerConfetti } from '../utils/confetti';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../hooks/useToast';
 import './FocusMode.css';
 
 export default function FocusMode() {
@@ -158,7 +158,7 @@ export default function FocusMode() {
     }
   });
 
-  const handleSessionFinish = () => {
+  const handleSessionFinish = useCallback(() => {
     setIsRunning(false);
     if (currentSessionId) {
       completeSessionMutation.mutate({
@@ -170,7 +170,7 @@ export default function FocusMode() {
         })
       });
     }
-  };
+  }, [currentSessionId, completeSessionMutation, sessionDuration, focusWarnings]);
 
   useEffect(() => {
     let interval: ReturnType<typeof setInterval> | null = null;
@@ -224,7 +224,7 @@ export default function FocusMode() {
       window.removeEventListener('beforeunload', handleBeforeUnload);
       window.removeEventListener('keydown', handleKeyDown);
     };
-  }, [isSessionActive]);
+  }, [isSessionActive, toast]);
 
   const handleStart = () => {
     if (!selectedExamPrepId) return;

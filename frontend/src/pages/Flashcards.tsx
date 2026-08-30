@@ -1,8 +1,8 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X, Sparkles } from 'lucide-react';
-import React, { useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useState } from 'react';
 import { apiClient } from '../api/client';
-import { useToast } from '../components/ui/Toast';
+import { useToast } from '../hooks/useToast';
 import type { Flashcard, Subject } from '../types';
 import { pluralize } from '../utils/format';
 import './Flashcards.css';
@@ -127,12 +127,6 @@ export default function Flashcards() {
     },
   });
 
-  const handleReview = (quality: 'easy' | 'good' | 'hard') => {
-    if (currentIndex >= dueCards.length) return;
-    const card = dueCards[currentIndex];
-    reviewMutation.mutate({ id: card.id, quality });
-  };
-
   const reviewMutation = useMutation({
     mutationFn: async (payload: { id: number; quality: 'easy' | 'good' | 'hard' }) => {
       return (await apiClient.post<Flashcard>(`/api/flashcards/${payload.id}/review?quality=${payload.quality}`)).data;
@@ -146,6 +140,12 @@ export default function Flashcards() {
       setCurrentIndex(i => i + 1);
     },
   });
+
+  const handleReview = useCallback((quality: 'easy' | 'good' | 'hard') => {
+    if (currentIndex >= dueCards.length) return;
+    const card = dueCards[currentIndex];
+    reviewMutation.mutate({ id: card.id, quality });
+  }, [currentIndex, dueCards, reviewMutation]);
 
   // Keyboard Navigation shortcuts (1, 2, 3, 4) + Space for Flip
   useEffect(() => {

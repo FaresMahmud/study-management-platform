@@ -1,5 +1,7 @@
-import React, { createContext, useCallback, useContext, useRef, useState } from 'react';
+import React, { useCallback, useRef, useState } from 'react';
 import { X } from 'lucide-react';
+import { ToastContext } from './ToastContext';
+import type { ToastContextValue } from './ToastContext';
 import './Toast.css';
 
 type ToastType = 'success' | 'error' | 'info';
@@ -10,14 +12,6 @@ interface ToastItem {
   message: string;
   exiting: boolean;
 }
-
-interface ToastContextValue {
-  success: (message: string) => void;
-  error: (message: string) => void;
-  info: (message: string) => void;
-}
-
-const ToastContext = createContext<ToastContextValue | null>(null);
 
 const ICONS: Record<ToastType, string> = {
   success: '✓',
@@ -80,12 +74,4 @@ export function ToastProvider({ children }: { children: React.ReactNode }) {
       )}
     </ToastContext.Provider>
   );
-}
-
-export function useToast(): ToastContextValue {
-  const ctx = useContext(ToastContext);
-  if (!ctx) {
-    throw new Error('useToast deve ser usado dentro de um ToastProvider');
-  }
-  return ctx;
 }

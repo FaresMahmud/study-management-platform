@@ -3,7 +3,7 @@ import { useMutation } from '@tanstack/react-query';
 import { X } from 'lucide-react';
 import { apiClient } from '../api/client';
 import { triggerConfetti } from '../utils/confetti';
-import { useToast } from './ui/Toast';
+import { useToast } from '../hooks/useToast';
 
 interface FlashcardCreatorModalProps {
   isOpen: boolean;

@@ -186,7 +186,7 @@ export default function PdfViewer({
   }, [activeFileId]);
 
   // Draw highlights and drawings
-  const drawStoredHighlights = () => {
+  const drawStoredHighlights = useCallback(() => {
     const canvas = overlayCanvasRef.current;
     if (!canvas) return;
     const ctx = canvas.getContext('2d');
@@ -224,7 +224,7 @@ export default function PdfViewer({
         }
       }
     });
-  };
+  }, [dbAnnotations]);
 
   // Render PDF page
   const renderPage = useCallback(async () => {

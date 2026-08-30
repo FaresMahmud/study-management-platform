@@ -16,7 +16,7 @@ export function QuizPanel({ questions, onComplete }: QuizPanelProps) {
   const [selectedId, setSelectedId] = useState<string | null>(null);
   const [results, setResults] = useState<('correct' | 'wrong')[]>([]);
 
-  useEffect(() => { start(); return () => stop(); }, []);
+  useEffect(() => { start(); return () => stop(); }, [start, stop]);
   const current = questions[idx];
 
   const handleNext = () => {

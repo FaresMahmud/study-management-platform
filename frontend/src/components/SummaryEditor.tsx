@@ -4,7 +4,7 @@ import { Sparkles, Brain, FileText, Image, Paperclip, Loader2 } from 'lucide-rea
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { triggerConfetti } from '../utils/confetti';
-import { useToast } from './ui/Toast';
+import { useToast } from '../hooks/useToast';
 import type { Summary } from '../types';
 
 interface SummaryEditorProps {

@@ -581,7 +581,7 @@ function TimerVisor({
 
       return () => clearInterval(interval);
     }
-  }, [isRunning, isPaused, modo, tipoSessao]);
+  }, [isRunning, isPaused, modo, tipoSessao, onFinished, onTick]);
 
   const formatarTimer = (s: number): string => {
     const h = Math.floor(s / 3600);
