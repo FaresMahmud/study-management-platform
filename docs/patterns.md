@@ -211,7 +211,7 @@ public class ExamPrepActivityListener {
 
 ---
 
-### 11. RAG Pipeline (PDF → Chunk → Embedding → ChromaDB → Retrieval → Gemini)
+### 11. RAG Pipeline (PDF → Chunk → Embedding → ChromaDB → Retrieval → Provider de texto)
 
 **O que é:** Fluxo completo implementado em múltiplos serviços.
 
@@ -220,25 +220,29 @@ public class ExamPrepActivityListener {
 - `PdfProcessingService` (implícito) → extrai texto via **Apache Tika** → cria `PdfChunk` entities
 - `EmbeddingService` (interface) → `GeminiService.getEmbedding(text)` chama `text-embedding-004`
 - `VectorStoreService` → HTTP para ChromaDB: `storeChunks(collection, chunks)`, `searchSimilar(examPrepId, query, 5)`
-- `RAGChatService.askQuestion(examPrepId, question, socratic, imageMimeType, imageBase64)` → orquestra retrieval + prompt
+- `RAGChatService.askQuestion(examPrepId, question, socratic, imageMimeType, imageBase64)` → orquestra retrieval + prompt usando `TextGenerationProvider`
 
-**Comportamento "sem contexto":** Se `searchSimilar` retorna vazio → resposta fixa "Não encontrei material relevante..." (NÃO cai em chat livre com Gemini).
+**Comportamento "sem contexto":** Se `searchSimilar` retorna vazio → resposta fixa "Não encontrei material relevante..." (NÃO cai em chat livre).
 
 **Modo Socrático:** Flag `socratic=true` adiciona instrução 4 ao system prompt: "MODO SOCRÁTICO ATIVO: conduza o usuário..."
 
-**Multimodal:** `imageMimeType` + `imageBase64` → `GeminiService.generateMultimodalContent(prompt, imageMimeType, imageBase64)`.
+**Multimodal:** `imageMimeType` + `imageBase64` → `GeminiService.generateMultimodalContent(prompt, imageMimeType, imageBase64)` (sempre Gemini, independente do provider de texto).
 
 **Fallback ChromaDB:** `VectorStoreService.fallbackSearch` faz busca por palavra-chave no `PdfChunkRepository` (LIKE em `chunkText`).
 
 ---
 
-### 12. AI Generation Interfaces (`QuestionGenerator`, `EmbeddingGenerator`)
+### 12. AI Generation Interfaces (`TextGenerationProvider`, `QuestionGenerator`, `EmbeddingGenerator`)
 
-**O que é:** Interfaces que desacoplam a implementação (Gemini) dos consumidores.
+**O que é:** Interfaces que desacoplam a implementação dos consumidores. `TextGenerationProvider` (que herda `QuestionGenerator`) é a abstração principal para geração de texto, permitindo trocar entre Gemini e Nvidia NIM via `AI_PROVIDER`.
 
-**Onde aparece:** `com.studyplatform.ai.QuestionGenerator`, `com.studyplatform.ai.EmbeddingGenerator` — ambos implementados por `GeminiService`.
+**Onde aparece:**
+- `com.studyplatform.ai.TextGenerationProvider` — interface de geração de texto (bean `@Primary` selecionado por `AiProviderConfig`)
+- `com.studyplatform.ai.QuestionGenerator` — interface base (`isConfigured()` + `generateContent()`)
+- `com.studyplatform.ai.EmbeddingGenerator` — interface de embeddings (sempre `GeminiService`)
+- Implementações: `GeminiService` (texto + embeddings + multimodal), `NvidiaNimService` (apenas texto)
 
-**Como seguir:** Injete a interface no service consumidor (ex.: `QuizGeneratorService` usa `QuestionGenerator`).
+**Como seguir:** Injete `TextGenerationProvider` no service consumidor para geração de texto (ex.: `AiService`, `RAGChatService`). Para embeddings, injete `EmbeddingGenerator`. Para multimodal, use `GeminiService` diretamente.
 
 ---
 
@@ -465,7 +469,7 @@ export function useExamPreps() {
    - [ ] Se precisar de estado global → novo store em `store/`
 
 3. **Integrações (se aplicável):**
-   - [ ] RAG: `VectorStoreService` + `GeminiService` + `RAGChatService`
+   - [ ] RAG: `VectorStoreService` + `GeminiService` (embeddings) + `TextGenerationProvider` (texto) + `RAGChatService`
    - [ ] Eventos: publique `ApplicationEvent` + crie `@EventListener` se cross-feature
    - [ ] Cache: `@Cacheable` em leituras pesadas + TTL em `CacheConfig`
 

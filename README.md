@@ -20,7 +20,7 @@ O **Study Management Platform** é uma aplicação full-stack que ajuda estudant
 | **Quizzes & Simulados** | Correção automática, scoring, tentativas cronometradas |
 | **Resumos** | Editor rico (HTML) associado a matérias |
 | **PDFs e Anotações** | Upload, indexação via RAG, anotações por página |
-| **Tutor RAG** | Perguntas ao material estudado via Gemini + ChromaDB |
+| **Tutor RAG** | Perguntas ao material estudado via Gemini ou Nvidia NIM + ChromaDB |
 | **Podcasts** | Geração de áudio a partir de roteiros via Google Translate TTS |
 | **Analytics** | Zona de aprendizado (Comfort/Panic/Learning), streak, tópicos fortes/fracos |
 | **Premium** | Recursos avançados de IA liberados por flag de usuário |
@@ -38,6 +38,7 @@ O **Study Management Platform** é uma aplicação full-stack que ajuda estudant
 - **Redis** (opcional, com fallback in-memory) para cache
 - **ChromaDB** para armazenamento vetorial (RAG)
 - **Google Gemini** (texto `gemini-2.5-flash`, embeddings `text-embedding-004`, multimodal)
+- **Nvidia NIM** (opcional — texto via `meta/llama-3.1-8b-instruct`, compatível com OpenAI)
 - **Google Translate TTS** para geração de podcasts
 - **Swagger/OpenAPI** em `/swagger-ui.html`
 - **SpringDoc OpenAPI** + **Testcontainers** para testes de integração

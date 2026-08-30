@@ -35,7 +35,7 @@ study-management-platform/
 │       │   │   ├── examprep/                  # Inclui quiz, simulation
 │       │   │   ├── file/                      # Inclui annotation, pdf chunks
 │       │   │   ├── podcast/
-│       │   │   ├── ai/                        # Gemini, RAG, TTS, Vector Store
+│       │   │   ├── ai/                        # Gemini, Nvidia NIM, RAG, TTS, Vector Store, TextGenerationProvider
 │       │   │   └── shared/                    # Cross-cutting
 │       │   │       ├── config/                # SecurityConfig, CacheConfig, JpaConfig, OpenApi, RateLimiting
 │       │   │       ├── exception/             # GlobalExceptionHandler, BusinessException, ResourceNotFoundException

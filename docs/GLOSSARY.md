@@ -59,19 +59,22 @@
 
 | Termo | Significado |
 |---|---|
-| **RAG (Retrieval-Augmented Generation)** | Pipeline que recupera trechos relevantes do material do usuário e os injeta no prompt do Gemini. Arquivo principal: `backend/.../ai/RAGChatService.java`. |
+| **RAG (Retrieval-Augmented Generation)** | Pipeline que recupera trechos relevantes do material do usuário e os injeta no prompt do provider de IA (Gemini ou Nvidia NIM). Arquivo principal: `backend/.../ai/RAGChatService.java`. |
 | **Embedding** | Vetor numérico que representa semanticamente um texto. Gerado via Gemini `text-embedding-004`. Arquivo: `backend/.../ai/vector/EmbeddingService.java`. |
 | **VectorStore / ChromaDB** | Banco vetorial onde `PdfChunk` são indexados. URL padrão `http://localhost:8000`. Arquivo: `backend/.../ai/vector/VectorStoreService.java`. |
 | **Chunk** | Fragmento de texto de um PDF usado tanto para embedding quanto para o contexto do tutor. |
 | **Similaridade (cosine)** | Métrica usada pela busca vetorial. `VectorStoreService.searchSimilar(examPrepId, query, 5)` retorna os top-N mais próximos. |
-| **Tutor** | Endpoint `POST /api/v1/chat/ask` que orquestra retrieval + Gemini. Implementado em `RAGChatService.askQuestion`. |
+| **Tutor** | Endpoint `POST /api/v1/chat/ask` que orquestra retrieval + geração de texto via provider ativo (Gemini ou Nvidia NIM). Implementado em `RAGChatService.askQuestion`. |
 | **Modo Socrático** | Flag `socratic: true` na requisição ao tutor. Altera o prompt para conduzir em vez de entregar a resposta. |
 | **Modo Multimodal** | Envio de `imageMimeType` + `imageBase64` para análise visual via `GeminiService.generateMultimodalContent`. |
 | **"Sem contexto"** | Quando a busca no ChromaDB retorna vazia. O sistema responde com mensagem fixa, **não** cai em chat livre. |
 | **Mock Fallback** | Quando `GEMINI_API_KEY` está vazia. O `RAGChatService` retorna resposta simulada para fins de demo. Simulados (`ExamSimulationService`) não possuem mock — exigem Gemini configurado. |
 | **Podcast / TTS** | Geração de áudio a partir de roteiro via Google Translate TTS. Arquivo: `backend/.../ai/TtsService.java`. |
-| **QuestionGenerator** | Interface implementada por `GeminiService` para geração de questões. |
-| **EmbeddingGenerator** | Interface implementada por `GeminiService` para geração de embeddings. |
+| **QuestionGenerator** | Interface que define `isConfigured()` + `generateContent(String)`. Implementada por `GeminiService` e herdada por `TextGenerationProvider`. |
+| **TextGenerationProvider** | Interface que estende `QuestionGenerator` para marcar semanticamente provedores de geração de texto. Implementada por `GeminiService` e `NvidiaNimService`. Bean `@Primary` selecionado via `AI_PROVIDER`. Arquivo: `backend/.../ai/TextGenerationProvider.java`. |
+| **NvidiaNimService** | Implementação de `TextGenerationProvider` para a API Nvidia NIM (formato OpenAI-compatible). Gera apenas texto — não suporta embeddings nem multimodal. Configurado via `NVIDIA_API_KEY` e `AI_PROVIDER=nvidia`. Arquivo: `backend/.../ai/NvidiaNimService.java`. |
+| **AiProviderConfig** | Configuração Spring que seleciona o `TextGenerationProvider` ativo baseado em `AI_PROVIDER` (`gemini` ou `nvidia`). Sem fallback automático. Arquivo: `backend/.../ai/AiProviderConfig.java`. |
+| **EmbeddingGenerator** | Interface implementada por `GeminiService` para geração de embeddings. Sempre usa Gemini independente do provider de texto. |
 | **Roteiro** | Texto gerado por IA usado como entrada do TTS. |
 
 ## Autenticação & autorização
