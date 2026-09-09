@@ -36,6 +36,8 @@ public class AiService {
     private final com.studyplatform.examprep.ExamPrepRepository examPrepRepository;
     private final com.studyplatform.file.PdfChunkRepository pdfChunkRepository;
     private final com.studyplatform.file.UploadedFileRepository uploadedFileRepository;
+    private final com.studyplatform.summary.SummaryRepository summaryRepository;
+    private final com.studyplatform.summary.SummaryMapper summaryMapper;
     private final AiGeneratedContentRepository aiGeneratedContentRepository;
     private final TtsService ttsService;
     private final com.studyplatform.shared.security.SecurityService securityService;
@@ -105,7 +107,7 @@ public class AiService {
                             .front(front.trim())
                             .back(back.trim())
                             .box(LeitnerBox.initial())
-                            .nextReviewDate(LocalDateTime.now().plusDays(1))
+                            .nextReviewDate(LocalDateTime.now().minusMinutes(1))
                             .user(user)
                             .subject(subject)
                             .build();
@@ -162,7 +164,7 @@ public class AiService {
                         .front(front)
                         .back(back)
                         .box(LeitnerBox.initial())
-                        .nextReviewDate(LocalDateTime.now().plusDays(1))
+                        .nextReviewDate(LocalDateTime.now().minusMinutes(1))
                         .user(user)
                         .subject(subject)
                         .build();
@@ -182,7 +184,7 @@ public class AiService {
                     .front("Qual é o ponto central do texto: \"" + titlePreview + "\"?")
                     .back("Resposta de estudo ativo com base no texto completo: " + text)
                     .box(LeitnerBox.initial())
-                    .nextReviewDate(LocalDateTime.now().plusDays(1))
+                    .nextReviewDate(LocalDateTime.now().minusMinutes(1))
                     .user(user)
                     .subject(subject)
                     .build();
@@ -276,5 +278,85 @@ public class AiService {
             }
         }
         return targetPath;
+    }
+
+    @Transactional
+    public com.studyplatform.summary.dto.SummaryResponseDTO generateSummary(String text, Long subjectId, Long fileId) {
+        User user = getAuthenticatedUser();
+        Subject subject = subjectRepository.findByIdAndUserId(subjectId, user.getId())
+                .orElseThrow(() -> new ResourceNotFoundException("Matéria não encontrada"));
+
+        String sourceText = text;
+        if (sourceText == null || sourceText.trim().isEmpty()) {
+            if (fileId != null) {
+                List<com.studyplatform.file.PdfChunk> chunks = pdfChunkRepository.findByUploadedFileId(fileId);
+                StringBuilder sb = new StringBuilder();
+                for (com.studyplatform.file.PdfChunk chunk : chunks) {
+                    sb.append(chunk.getChunkText()).append("\n");
+                    if (sb.length() > 25000) break;
+                }
+                sourceText = sb.toString();
+            } else {
+                List<com.studyplatform.file.UploadedFile> files = uploadedFileRepository.findByUserIdAndSubjectId(user.getId(), subjectId);
+                StringBuilder sb = new StringBuilder();
+                for (com.studyplatform.file.UploadedFile file : files) {
+                    List<com.studyplatform.file.PdfChunk> chunks = pdfChunkRepository.findByUploadedFileId(file.getId());
+                    for (com.studyplatform.file.PdfChunk chunk : chunks) {
+                        sb.append(chunk.getChunkText()).append("\n");
+                        if (sb.length() > 25000) break;
+                    }
+                    if (sb.length() > 25000) break;
+                }
+                sourceText = sb.toString();
+            }
+        }
+
+        if (sourceText == null || sourceText.trim().isEmpty()) {
+            throw new BusinessException("Nenhum conteúdo encontrado para gerar o resumo. Faça upload de um PDF ou digite/selecione um trecho de texto.");
+        }
+
+        String summaryContent;
+        String summaryTitle = "Resumo IA - " + subject.getSubjectName();
+
+        if (textGenerationProvider.isConfigured()) {
+            try {
+                String prompt = "Você é um professor e tutor de alto nível acadêmico. " +
+                        "Com base no material de estudo a seguir, crie um resumo didático, estruturado e aprofundado.\n" +
+                        "Formate o conteúdo estritamente em HTML limpo usando tags como <h2>, <h3>, <p>, <ul>, <li>, <strong> e <blockquote> para destaques.\n" +
+                        "Não inclua tags <html>, <head>, <body> ou blocos de código markdown (como ```html).\n\n" +
+                        "Material de estudo:\n" + sourceText;
+                summaryContent = textGenerationProvider.generateContent(prompt);
+                if (summaryContent != null) {
+                    summaryContent = summaryContent.replace("```html", "").replace("```", "").trim();
+                }
+            } catch (Exception e) {
+                summaryContent = generateMockSummaryHtml(sourceText, subject.getSubjectName());
+            }
+        } else {
+            summaryContent = generateMockSummaryHtml(sourceText, subject.getSubjectName());
+        }
+
+        com.studyplatform.summary.Summary summary = com.studyplatform.summary.Summary.builder()
+                .title(summaryTitle)
+                .content(summaryContent)
+                .user(user)
+                .subject(subject)
+                .build();
+
+        com.studyplatform.summary.Summary saved = summaryRepository.save(summary);
+        return summaryMapper.toResponseDTO(saved);
+    }
+
+    private String generateMockSummaryHtml(String text, String subjectName) {
+        String preview = text.substring(0, Math.min(250, text.length())).trim();
+        return "<h2>Visão Geral: " + subjectName + "</h2>" +
+                "<p>Este resumo inteligente foi sintetizado a partir do seu material didático para maximizar a retenção dos conceitos centrais.</p>" +
+                "<h3>Tópicos Fundamentais</h3>" +
+                "<ul>" +
+                "<li><strong>Conceito Central:</strong> " + preview + "...</li>" +
+                "<li><strong>Aplicações Práticas:</strong> Pontos cruciais frequentemente cobrados em exames e avaliações.</li>" +
+                "<li><strong>Fixação Ativa:</strong> Pratique flashcards e resolva simulados com base neste conteúdo.</li>" +
+                "</ul>" +
+                "<blockquote>Dica do Tutor: Revise este resumo periodicamente utilizando repetição espaçada.</blockquote>";
     }
 }

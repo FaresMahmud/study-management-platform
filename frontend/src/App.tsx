@@ -39,6 +39,9 @@ function ProtectedLayout() {
   const isAuthenticated = useAuthStore((state) => state.isAuthenticated);
   const [onboardingOpen, setOnboardingOpen] = useState(false);
   const [sidebarMobileOpen, setSidebarMobileOpen] = useState(false);
+  const [isSidebarCollapsed, setIsSidebarCollapsed] = useState(() => {
+    return localStorage.getItem('sidebar-collapsed') === 'true';
+  });
   const navigate = useNavigate();
   const location = useLocation();
 
@@ -104,8 +107,9 @@ function ProtectedLayout() {
         setActiveTab={handleTabChange}
         isMobileOpen={sidebarMobileOpen}
         onMobileClose={() => setSidebarMobileOpen(false)}
+        onCollapseChange={setIsSidebarCollapsed}
       />
-      <main className="dashboard-main">
+      <main className={`dashboard-main ${isSidebarCollapsed ? 'sidebar-collapsed' : ''}`}>
         <Outlet />
       </main>
       <OnboardingModal isOpen={onboardingOpen} onClose={() => setOnboardingOpen(false)} />

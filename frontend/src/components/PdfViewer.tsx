@@ -39,7 +39,9 @@ export default function PdfViewer({
   const [scale, setScale] = useState(1.0);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [overlayCanvasSize, setOverlayCanvasSize] = useState({ width: 0, height: 0 });
-  const hasInitializedPdf = useRef(false);
+  const loadedFileIdRef = useRef<number | null>(null);
+  const [dragPositions, setDragPositions] = useState<Record<number, { x: number; y: number }>>({});
+  const [draggingAnnId, setDraggingAnnId] = useState<number | null>(null);
 
   // Ferramentas de anotação
   const [annotationTool, setAnnotationTool] = useState<'none' | 'highlight' | 'note' | 'drawing' | 'textbox'>('none');
@@ -88,6 +90,83 @@ export default function PdfViewer({
     }
   });
 
+  // Reset local drag positions when page changes
+  useEffect(() => {
+    setDragPositions({});
+  }, [pageNum, activeFileId]);
+
+  // Handler for dragging sticky notes and textboxes across the PDF
+  const handleStartDrag = (
+    e: React.MouseEvent,
+    ann: FileAnnotation,
+    currentX: number,
+    currentY: number
+  ) => {
+    if ((e.target as HTMLElement).closest('button')) return;
+    e.stopPropagation();
+    e.preventDefault();
+
+    const overlay = overlayCanvasRef.current;
+    if (!overlay || !ann.id) return;
+
+    const startClientX = e.clientX;
+    const startClientY = e.clientY;
+    let didMove = false;
+    setDraggingAnnId(ann.id);
+
+    const onMouseMove = (moveEvent: MouseEvent) => {
+      const deltaX = moveEvent.clientX - startClientX;
+      const deltaY = moveEvent.clientY - startClientY;
+
+      if (Math.abs(deltaX) > 2 || Math.abs(deltaY) > 2) {
+        didMove = true;
+      }
+
+      const canvasW = overlayCanvasSize.width || overlay.width || 800;
+      const canvasH = overlayCanvasSize.height || overlay.height || 1100;
+      const newX = Math.max(15, Math.min(canvasW - 15, currentX + deltaX));
+      const newY = Math.max(15, Math.min(canvasH - 15, currentY + deltaY));
+
+      setDragPositions(prev => ({
+        ...prev,
+        [ann.id!]: { x: newX, y: newY }
+      }));
+    };
+
+    const onMouseUp = (upEvent: MouseEvent) => {
+      window.removeEventListener('mousemove', onMouseMove);
+      window.removeEventListener('mouseup', onMouseUp);
+      setDraggingAnnId(null);
+
+      if (didMove && ann.id) {
+        const deltaX = upEvent.clientX - startClientX;
+        const deltaY = upEvent.clientY - startClientY;
+        const canvasW = overlayCanvasSize.width || overlay.width || 800;
+        const canvasH = overlayCanvasSize.height || overlay.height || 1100;
+        const finalX = Math.max(15, Math.min(canvasW - 15, currentX + deltaX));
+        const finalY = Math.max(15, Math.min(canvasH - 15, currentY + deltaY));
+
+        try {
+          const parsed = JSON.parse(ann.content);
+          const updatedContent = JSON.stringify({
+            ...parsed,
+            x: Math.round(finalX),
+            y: Math.round(finalY)
+          });
+          saveAnnotationMutation.mutate({
+            ...ann,
+            content: updatedContent
+          });
+        } catch (err) {
+          console.error('Falha ao atualizar posição da anotação:', err);
+        }
+      }
+    };
+
+    window.addEventListener('mousemove', onMouseMove);
+    window.addEventListener('mouseup', onMouseUp);
+  };
+
   // Load PDF document
   useEffect(() => {
     if (!activeFileId) {
@@ -95,13 +174,13 @@ export default function PdfViewer({
         setPdfDoc(null);
         setPageNum(1);
       }, 0);
-      hasInitializedPdf.current = false;
+      loadedFileIdRef.current = null;
       return;
     }
 
-    // Avoid re-loading if already loaded for this file
-    if (hasInitializedPdf.current) return;
-    hasInitializedPdf.current = true;
+    // Avoid re-loading if already loaded for this exact file
+    if (loadedFileIdRef.current === activeFileId) return;
+    loadedFileIdRef.current = activeFileId;
 
     const loadPdf = async () => {
       setPdfLoading(true);
@@ -142,12 +221,14 @@ export default function PdfViewer({
             const textPreview = new TextDecoder('utf-8', { fatal: false }).decode(rawData.slice(0, 500));
             console.log('[PdfViewer] Response is NOT a PDF. Content preview:', textPreview);
             alert('O servidor não retornou um PDF válido. Verifique se o arquivo existe e é um PDF legível.');
+            loadedFileIdRef.current = null;
             return;
           }
         }
 
         if (!rawData || rawData.byteLength === 0) {
           alert('O servidor retornou um arquivo PDF vazio.');
+          loadedFileIdRef.current = null;
           return;
         }
 
@@ -162,6 +243,7 @@ export default function PdfViewer({
           setPageNum(1);
         }, 0);
       } catch (err) {
+        loadedFileIdRef.current = null;
         console.error('Erro ao renderizar o PDF:', err);
         let msg = 'Não foi possível ler o PDF do servidor.';
         if (err && typeof err === 'object' && 'response' in err) {
@@ -544,23 +626,37 @@ export default function PdfViewer({
             if (ann.type === 'note') {
               try {
                 const note = JSON.parse(ann.content);
+                const posX = dragPositions[ann.id!]?.x ?? note.x;
+                const posY = dragPositions[ann.id!]?.y ?? note.y;
+                const isDraggingThis = draggingAnnId === ann.id;
                 return (
                   <div 
                     key={ann.id}
+                    onMouseDown={(e) => handleStartDrag(e, ann, posX, posY)}
                     style={{ 
                       position: 'absolute', 
-                      left: `${(note.x / (overlayCanvasSize.width || 1)) * 100}%`,
-                      top: `${(note.y / (overlayCanvasSize.height || 1)) * 100}%`,
-                      zIndex: 10,
-                      transform: 'translate(-50%, -50%)'
+                      left: `${(posX / (overlayCanvasSize.width || 1)) * 100}%`,
+                      top: `${(posY / (overlayCanvasSize.height || 1)) * 100}%`,
+                      zIndex: isDraggingThis ? 30 : 10,
+                      transform: 'translate(-50%, -50%)',
+                      cursor: isDraggingThis ? 'grabbing' : 'grab',
+                      userSelect: 'none',
                     }}
                     className="pdf-sticky-container"
                   >
-                    <div className="pdf-sticky-bubble" title={note.text}>
+                    <div 
+                      className="pdf-sticky-bubble" 
+                      title={`${note.text} (Arraste para reposicionar)`}
+                      style={{ 
+                        boxShadow: isDraggingThis ? '0 0 14px var(--primary)' : undefined,
+                        transform: isDraggingThis ? 'scale(1.15)' : undefined,
+                        transition: isDraggingThis ? 'none' : 'transform 0.15s, box-shadow 0.15s',
+                      }}
+                    >
                       <MessageSquare size={16} fill="var(--primary)" color="white" />
                       <div className="pdf-sticky-tooltip">
                         <span>{note.text}</span>
-                        <button onClick={() => { if (confirm('Excluir esta nota?')) deleteAnnotationMutation.mutate(ann.id!); }}>
+                        <button onClick={(e) => { e.stopPropagation(); if (confirm('Excluir esta nota?')) deleteAnnotationMutation.mutate(ann.id!); }}>
                           <Trash2 size={12} style={{ color: 'var(--danger)' }} />
                         </button>
                       </div>
@@ -575,17 +671,21 @@ export default function PdfViewer({
             if (ann.type === 'textbox') {
               try {
                 const box = JSON.parse(ann.content);
+                const posX = dragPositions[ann.id!]?.x ?? box.x;
+                const posY = dragPositions[ann.id!]?.y ?? box.y;
+                const isDraggingThis = draggingAnnId === ann.id;
                 return (
                   <div
                     key={ann.id}
+                    onMouseDown={(e) => handleStartDrag(e, ann, posX, posY)}
                     style={{
                       position: 'absolute',
-                      left: `${(box.x / (overlayCanvasSize.width || 1)) * 100}%`,
-                      top: `${(box.y / (overlayCanvasSize.height || 1)) * 100}%`,
-                      zIndex: 10,
+                      left: `${(posX / (overlayCanvasSize.width || 1)) * 100}%`,
+                      top: `${(posY / (overlayCanvasSize.height || 1)) * 100}%`,
+                      zIndex: isDraggingThis ? 30 : 10,
                       color: 'var(--text-primary)',
                       backgroundColor: 'var(--bg-secondary)',
-                      border: '1px solid var(--border-color)',
+                      border: isDraggingThis ? '1px solid var(--primary)' : '1px solid var(--border-color)',
                       borderRadius: 'var(--radius-sm)',
                       padding: '4px 8px',
                       fontSize: '0.8rem',
@@ -593,14 +693,17 @@ export default function PdfViewer({
                       display: 'flex',
                       alignItems: 'center',
                       gap: '6px',
-                      boxShadow: '0 2px 8px rgba(0,0,0,0.15)',
-                      whiteSpace: 'nowrap'
+                      boxShadow: isDraggingThis ? '0 6px 20px rgba(99, 102, 241, 0.4)' : '0 2px 8px rgba(0,0,0,0.15)',
+                      whiteSpace: 'nowrap',
+                      cursor: isDraggingThis ? 'grabbing' : 'grab',
+                      userSelect: 'none',
                     }}
+                    title="Arraste para reposicionar"
                   >
                     <span>{box.text}</span>
                     <button 
                       style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
-                      onClick={() => { if (confirm('Excluir este texto?')) deleteAnnotationMutation.mutate(ann.id!); }}
+                      onClick={(e) => { e.stopPropagation(); if (confirm('Excluir este texto?')) deleteAnnotationMutation.mutate(ann.id!); }}
                     >
                       <X size={12} style={{ color: 'var(--danger)' }} />
                     </button>

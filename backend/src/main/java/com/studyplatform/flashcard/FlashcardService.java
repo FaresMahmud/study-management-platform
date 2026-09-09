@@ -114,4 +114,11 @@ public class FlashcardService {
                 .orElseThrow(() -> new ResourceNotFoundException("Cartão não encontrado"));
         flashcardRepository.delete(flashcard);
     }
+
+    @org.springframework.context.event.EventListener
+    @Transactional
+    public void handleSubjectDeleted(com.studyplatform.subject.SubjectDeletedEvent event) {
+        List<Flashcard> flashcards = flashcardRepository.findBySubjectId(event.subjectId());
+        flashcardRepository.deleteAll(flashcards);
+    }
 }

@@ -15,4 +15,6 @@ public interface SummaryRepository extends JpaRepository<Summary, Long> {
     Optional<Summary> findByIdAndUserId(Long id, Long userId);
 
     List<Summary> findByUserIdAndSubjectId(Long userId, Long subjectId);
+
+    List<Summary> findBySubjectId(Long subjectId);
 }

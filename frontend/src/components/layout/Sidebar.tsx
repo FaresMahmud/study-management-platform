@@ -8,6 +8,7 @@ interface SidebarProps {
   setActiveTab: (tab: string) => void;
   isMobileOpen?: boolean;
   onMobileClose?: () => void;
+  onCollapseChange?: (collapsed: boolean) => void;
 }
 
 const menuItems = [
@@ -20,17 +21,18 @@ const menuItems = [
   { id: 'analytics', label: 'Estatísticas', icon: TrendingUp },
 ];
 
-export function Sidebar({ activeTab, setActiveTab, isMobileOpen, onMobileClose }: SidebarProps) {
+export function Sidebar({ activeTab, setActiveTab, isMobileOpen, onMobileClose, onCollapseChange }: SidebarProps) {
   const { currentTrackUrl, currentTrackTitle, isPlaying, currentTime, duration, pauseTrack, resumeTrack, stopTrack } = usePodcastStore();
   const [collapsed, setCollapsed] = useState(() => {
     const saved = localStorage.getItem('sidebar-collapsed');
     return saved !== null ? saved === 'true' : false;
   });
 
-  // Persistir estado no localStorage
+  // Persistir estado no localStorage e notificar pai
   useEffect(() => {
     localStorage.setItem('sidebar-collapsed', String(collapsed));
-  }, [collapsed]);
+    onCollapseChange?.(collapsed);
+  }, [collapsed, onCollapseChange]);
 
   const formatTime = (time: number) => {
     if (isNaN(time)) return '00:00';
@@ -42,7 +44,7 @@ export function Sidebar({ activeTab, setActiveTab, isMobileOpen, onMobileClose }
   const sidebarWidth = collapsed ? 72 : 260;
 
   return (
-    <aside className={`sidebar ${isMobileOpen ? 'mobile-open' : ''}`} style={{ width: sidebarWidth }}>
+    <aside className={`sidebar ${collapsed ? 'collapsed' : ''} ${isMobileOpen ? 'mobile-open' : ''}`} style={{ width: sidebarWidth }}>
       <div className="sidebar-header">
         {!collapsed && <div className="sidebar-brand">StudyFlow</div>}
         <button

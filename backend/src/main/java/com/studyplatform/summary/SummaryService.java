@@ -106,6 +106,13 @@ public class SummaryService {
         summaryRepository.delete(summary);
     }
 
+    @org.springframework.context.event.EventListener
+    @Transactional
+    public void handleSubjectDeleted(com.studyplatform.subject.SubjectDeletedEvent event) {
+        List<Summary> summaries = summaryRepository.findBySubjectId(event.subjectId());
+        summaryRepository.deleteAll(summaries);
+    }
+
     private String sanitizeHtml(String html) {
         if (html == null) {
             return "";

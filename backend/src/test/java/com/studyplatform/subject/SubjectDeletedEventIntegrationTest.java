@@ -6,6 +6,14 @@ import com.studyplatform.session.StudySession;
 import com.studyplatform.session.StudySessionRepository;
 import com.studyplatform.user.User;
 import com.studyplatform.user.UserRepository;
+import com.studyplatform.flashcard.Flashcard;
+import com.studyplatform.flashcard.FlashcardRepository;
+import com.studyplatform.summary.Summary;
+import com.studyplatform.summary.SummaryRepository;
+import com.studyplatform.file.UploadedFile;
+import com.studyplatform.file.UploadedFileRepository;
+import com.studyplatform.file.FileAnnotationRepository;
+import com.studyplatform.file.PdfChunkRepository;
 import org.junit.jupiter.api.BeforeEach;
 import org.junit.jupiter.api.DisplayName;
 import org.junit.jupiter.api.Test;
@@ -26,7 +34,7 @@ import static org.mockito.Mockito.*;
 
 @SpringBootTest
 @ActiveProfiles("test")
-@DisplayName("SubjectDeletedEvent — Teste de Integração (Goals & Sessions)")
+@DisplayName("SubjectDeletedEvent — Teste de Integração (Goals & Sessions & Cascades)")
 public class SubjectDeletedEventIntegrationTest {
 
     @Autowired
@@ -42,6 +50,21 @@ public class SubjectDeletedEventIntegrationTest {
     private StudySessionRepository studySessionRepository;
 
     @Autowired
+    private FlashcardRepository flashcardRepository;
+
+    @Autowired
+    private SummaryRepository summaryRepository;
+
+    @Autowired
+    private UploadedFileRepository uploadedFileRepository;
+
+    @Autowired
+    private PdfChunkRepository pdfChunkRepository;
+
+    @Autowired
+    private FileAnnotationRepository fileAnnotationRepository;
+
+    @Autowired
     private UserRepository userRepository;
 
     @MockBean
@@ -53,6 +76,11 @@ public class SubjectDeletedEventIntegrationTest {
     @BeforeEach
     void setUp() {
         // Limpar repositórios para evitar poluição
+        fileAnnotationRepository.deleteAll();
+        pdfChunkRepository.deleteAll();
+        uploadedFileRepository.deleteAll();
+        flashcardRepository.deleteAll();
+        summaryRepository.deleteAll();
         studySessionRepository.deleteAll();
         goalRepository.deleteAll();
         subjectRepository.deleteAll();
@@ -101,6 +129,37 @@ public class SubjectDeletedEventIntegrationTest {
                 .build();
         studySessionRepository.save(session);
 
+        // ARRANGE - Criar flashcard associado
+        Flashcard flashcard = Flashcard.builder()
+                .front("O que é mitocôndria?")
+                .back("Organela responsável pela respiração celular.")
+                .box(new com.studyplatform.flashcard.LeitnerBox(1))
+                .nextReviewDate(java.time.LocalDateTime.now())
+                .subject(subject)
+                .user(user)
+                .build();
+        flashcardRepository.save(flashcard);
+
+        // ARRANGE - Criar resumo associado
+        Summary summary = Summary.builder()
+                .title("Resumo de Citologia")
+                .content("<p>Conteúdo de biologia celular</p>")
+                .subject(subject)
+                .user(user)
+                .build();
+        summaryRepository.save(summary);
+
+        // ARRANGE - Criar arquivo associado
+        UploadedFile file = UploadedFile.builder()
+                .fileName("citologia.pdf")
+                .filePath("citologia_test.pdf")
+                .contentType("application/pdf")
+                .fileSize(1024L)
+                .subject(subject)
+                .user(user)
+                .build();
+        uploadedFileRepository.save(file);
+
         // ACT
         subjectService.delete(subject.getId());
 
@@ -115,6 +174,18 @@ public class SubjectDeletedEventIntegrationTest {
         // ASSERT - Sessões foram limpas
         List<StudySession> associatedSessions = studySessionRepository.findBySubjectId(subject.getId());
         assertThat(associatedSessions).isEmpty();
+
+        // ASSERT - Flashcards foram limpos
+        List<Flashcard> associatedFlashcards = flashcardRepository.findBySubjectId(subject.getId());
+        assertThat(associatedFlashcards).isEmpty();
+
+        // ASSERT - Resumos foram limpos
+        List<Summary> associatedSummaries = summaryRepository.findBySubjectId(subject.getId());
+        assertThat(associatedSummaries).isEmpty();
+
+        // ASSERT - Arquivos foram limpos
+        List<UploadedFile> associatedFiles = uploadedFileRepository.findBySubjectId(subject.getId());
+        assertThat(associatedFiles).isEmpty();
     }
 
     @Test

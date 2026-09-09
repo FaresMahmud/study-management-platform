@@ -1,8 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Award, Clock, Compass, Flag } from 'lucide-react';
+import { Award, Clock, Compass, Flag, Plus } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
 import { apiClient, normalizeListResponse } from '../api/client';
 import { triggerConfetti } from '../utils/confetti';
+import ExamWizard from '../components/wizard/ExamWizard';
 
 interface ExamPrep {
   id: number;
@@ -55,6 +56,7 @@ export default function Simulation() {
   // Results
   const [simulationCompleted, setSimulationCompleted] = useState(false);
   const [resultScore, setResultScore] = useState<number | null>(null);
+  const [showWizard, setShowWizard] = useState(false);
 
   const { data: examPreps = [] } = useQuery<ExamPrep[]>({
     queryKey: ['exam-preps'],
@@ -63,6 +65,12 @@ export default function Simulation() {
       return normalizeListResponse<ExamPrep>(res.data);
     }
   });
+
+  useEffect(() => {
+    if (examPreps.length > 0 && selectedExamPrepId === '') {
+      setSelectedExamPrepId(examPreps[0].id);
+    }
+  }, [examPreps, selectedExamPrepId]);
 
   const selectedPrep = examPreps.find(ep => ep.id === selectedExamPrepId);
 
@@ -264,11 +272,38 @@ export default function Simulation() {
           </div>
 
           <div className="form-group" style={{ marginBottom: '20px' }}>
-            <label className="form-label">Selecione o Exame Alvo</label>
-            <select className="form-input" value={selectedExamPrepId} onChange={e => setSelectedExamPrepId(e.target.value ? Number(e.target.value) : '')}>
-              <option value="">Escolher Exame...</option>
-              {examPreps.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
-            </select>
+            <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
+              <label className="form-label" style={{ margin: 0 }}>Selecione o Exame Alvo</label>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => setShowWizard(true)}
+                style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '4px 10px' }}
+              >
+                <Plus size={14} />
+                <span>Nova Prova</span>
+              </button>
+            </div>
+
+            {examPreps.length === 0 ? (
+              <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
+                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
+                  Nenhuma prova cadastrada ainda. Crie seu plano de estudos para iniciar o simulado!
+                </p>
+                <button
+                  type="button"
+                  className="btn btn-primary btn-sm"
+                  onClick={() => setShowWizard(true)}
+                >
+                  + Cadastrar Primeira Prova
+                </button>
+              </div>
+            ) : (
+              <select className="form-input" value={selectedExamPrepId} onChange={e => setSelectedExamPrepId(e.target.value ? Number(e.target.value) : '')}>
+                <option value="">Escolher Exame...</option>
+                {examPreps.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
+              </select>
+            )}
           </div>
 
           <button className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedExamPrepId} onClick={handleStartSimulation}>
@@ -383,6 +418,16 @@ export default function Simulation() {
           </div>
 
         </div>
+      )}
+
+      {showWizard && (
+        <ExamWizard
+          onClose={() => setShowWizard(false)}
+          onFinished={() => {
+            setShowWizard(false);
+            queryClient.invalidateQueries({ queryKey: ['exam-preps'] });
+          }}
+        />
       )}
     </div>
   );

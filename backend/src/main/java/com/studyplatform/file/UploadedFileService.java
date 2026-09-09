@@ -35,6 +35,7 @@ public class UploadedFileService {
 
     private final UploadedFileRepository uploadedFileRepository;
     private final FileAnnotationRepository fileAnnotationRepository;
+    private final PdfChunkRepository pdfChunkRepository;
     private final SubjectRepository subjectRepository;
     private final PdfProcessingService pdfProcessingService;
     private final com.studyplatform.shared.security.SecurityService securityService;
@@ -135,12 +136,37 @@ public class UploadedFileService {
             Path path = this.fileStorageLocation.resolve(uploadedFile.getFilePath()).normalize();
             Files.deleteIfExists(path);
 
+            List<PdfChunk> chunks = pdfChunkRepository.findByUploadedFileId(fileId);
+            pdfChunkRepository.deleteAll(chunks);
+
             List<FileAnnotation> annotations = fileAnnotationRepository.findByUploadedFileId(fileId);
             fileAnnotationRepository.deleteAll(annotations);
 
             uploadedFileRepository.delete(uploadedFile);
         } catch (IOException ex) {
             throw new BusinessException("Erro ao deletar o arquivo do disco: " + ex.getMessage());
+        }
+    }
+
+    @org.springframework.context.event.EventListener
+    @Transactional
+    public void handleSubjectDeleted(com.studyplatform.subject.SubjectDeletedEvent event) {
+        List<UploadedFile> files = uploadedFileRepository.findBySubjectId(event.subjectId());
+        for (UploadedFile file : files) {
+            try {
+                Path path = this.fileStorageLocation.resolve(file.getFilePath()).normalize();
+                Files.deleteIfExists(path);
+            } catch (Exception ex) {
+                log.warn("Erro ao deletar arquivo físico {}: {}", file.getFilePath(), ex.getMessage());
+            }
+
+            List<PdfChunk> chunks = pdfChunkRepository.findByUploadedFileId(file.getId());
+            pdfChunkRepository.deleteAll(chunks);
+
+            List<FileAnnotation> annotations = fileAnnotationRepository.findByUploadedFileId(file.getId());
+            fileAnnotationRepository.deleteAll(annotations);
+
+            uploadedFileRepository.delete(file);
         }
     }
 

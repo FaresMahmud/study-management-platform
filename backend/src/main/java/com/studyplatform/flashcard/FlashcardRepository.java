@@ -17,5 +17,7 @@ public interface FlashcardRepository extends JpaRepository<Flashcard, Long> {
 
     List<Flashcard> findByUserIdAndSubjectId(Long userId, Long subjectId);
 
+    List<Flashcard> findBySubjectId(Long subjectId);
+
     List<Flashcard> findByUserIdAndNextReviewDateBefore(Long userId, LocalDateTime date);
 }

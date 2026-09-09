@@ -40,6 +40,13 @@ public class AiController {
         return ResponseEntity.ok(cards);
     }
 
+    @Operation(summary = "Gerar resumo inteligente via IA", description = "Sintetiza tópicos e conceitos em HTML estruturado a partir do texto ou arquivo PDF")
+    @PostMapping("/generate-summary")
+    public ResponseEntity<com.studyplatform.summary.dto.SummaryResponseDTO> generateSummary(@RequestBody SummaryGenerationRequest request) {
+        com.studyplatform.summary.dto.SummaryResponseDTO summary = aiService.generateSummary(request.getText(), request.getSubjectId(), request.getFileId());
+        return ResponseEntity.ok(summary);
+    }
+
     @Operation(summary = "Gerar roteiro de podcast e áudio sintetizado", description = "Gera o script explicativo via Gemini e sintetiza para áudio MP3")
     @PostMapping("/podcast/generate")
     public ResponseEntity<java.util.Map<String, Object>> generatePodcast(@RequestBody PodcastRequest request) {
@@ -79,6 +86,13 @@ public class AiController {
     public static class GenerationRequest {
         private String text;
         private Long subjectId;
+    }
+
+    @Data
+    public static class SummaryGenerationRequest {
+        private String text;
+        private Long subjectId;
+        private Long fileId;
     }
 
     @Data

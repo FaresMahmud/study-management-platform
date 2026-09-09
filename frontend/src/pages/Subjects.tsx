@@ -4,6 +4,7 @@ import { Activity, ArrowRight, BookOpen, ChevronDown, ChevronUp, Clock, Edit2, F
 import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient, normalizeListResponse } from '../api/client';
+import { useToast } from '../hooks/useToast';
 import type { SpringPage, Subject, Summary, Goal, Flashcard, StudySession } from '../types';
 
 const PREDEFINED_COLORS = [
@@ -19,6 +20,7 @@ const PREDEFINED_COLORS = [
 
 export default function Subjects() {
   const queryClient = useQueryClient();
+  const toast = useToast();
   const [isModalOpen, setIsModalOpen] = useState(false);
   const [editingSubject, setEditingSubject] = useState<Subject | null>(null);
 
@@ -85,6 +87,7 @@ export default function Subjects() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
       closeModal();
+      toast.success('Matéria criada com sucesso!');
     },
     onError: (err) => {
       let msg = 'Erro ao criar matéria.';
@@ -100,6 +103,7 @@ export default function Subjects() {
         msg = String(err.response.data.message);
       }
       setFormError(msg);
+      toast.error(msg);
     }
   });
 
@@ -115,6 +119,7 @@ export default function Subjects() {
     onSuccess: () => {
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
       closeModal();
+      toast.success('Matéria atualizada com sucesso!');
     },
     onError: (err) => {
       let msg = 'Erro ao atualizar matéria.';
@@ -127,6 +132,7 @@ export default function Subjects() {
         msg = String(err.response.data.message);
       }
       setFormError(msg);
+      toast.error(msg);
     }
   });
 
@@ -139,7 +145,21 @@ export default function Subjects() {
       queryClient.invalidateQueries({ queryKey: ['subjects'] });
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['flashcards'] });
+      queryClient.invalidateQueries({ queryKey: ['summaries'] });
+      toast.success('Matéria excluída com sucesso!');
     },
+    onError: (err: unknown) => {
+      let msg = 'Erro ao excluir matéria.';
+      if (axios.isAxiosError(err)) {
+        if (err.response?.data && typeof err.response.data === 'object' && 'message' in err.response.data) {
+          msg = String(err.response.data.message);
+        } else if (err.message) {
+          msg = err.message;
+        }
+      }
+      toast.error(msg);
+    }
   });
 
   const openCreateModal = () => {

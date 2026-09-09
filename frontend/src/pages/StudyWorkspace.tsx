@@ -1,7 +1,9 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Plus, Sparkles, Upload } from 'lucide-react';
-import React, { useRef, useState } from 'react';
+import { BookOpen, Plus, Sparkles, Upload, FileText } from 'lucide-react';
+import React, { useRef, useState, useEffect } from 'react';
 import { apiClient, normalizeListResponse } from '../api/client';
+import { useAuthStore } from '../store/authStore';
+import { useToast } from '../hooks/useToast';
 import type { PDFFile, SpringPage, Subject, Summary } from '../types';
 import { triggerConfetti } from '../utils/confetti';
 import { truncate } from '../utils/format';
@@ -13,6 +15,8 @@ import SummaryEditor from '../components/SummaryEditor';
 
 export default function StudyWorkspace() {
   const queryClient = useQueryClient();
+  const toast = useToast();
+  const premium = useAuthStore(state => state.premium);
 
   // ─── Estados de Navegação e Layout ────────────────────────────────────
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>('');
@@ -57,6 +61,25 @@ export default function StudyWorkspace() {
 
   const activeSummary = summaries.find(s => s.id === activeSummaryId);
 
+  // ─── Auto-seleção inteligente para evitar tela vazia ──────────────────
+  useEffect(() => {
+    if (!selectedSubjectId && subjects.length > 0) {
+      setSelectedSubjectId(subjects[0].id);
+    }
+  }, [subjects, selectedSubjectId]);
+
+  useEffect(() => {
+    if (pdfFiles.length > 0 && (!activeFileId || !pdfFiles.some(f => f.id === activeFileId))) {
+      setActiveFileId(pdfFiles[0].id);
+    }
+  }, [pdfFiles, activeFileId]);
+
+  useEffect(() => {
+    if (summaries.length > 0 && (!activeSummaryId || !summaries.some(s => s.id === activeSummaryId))) {
+      setActiveSummaryId(summaries[0].id);
+    }
+  }, [summaries, activeSummaryId]);
+
   // ─── Mutations de Arquivos e Resumos ──────────────────────────────────
   const [uploadError, setUploadError] = useState<string | null>(null);
 
@@ -69,12 +92,14 @@ export default function StudyWorkspace() {
     onSuccess: (data) => {
       setUploadError(null);
       queryClient.invalidateQueries({ queryKey: ['pdf-files', selectedSubjectId] });
-      setActiveFileId(data.id); // Abre o arquivo recém-enviado
+      setActiveFileId(data.id); // Abre o arquivo recém-enviado imediatamente
       triggerConfetti();
+      toast.success(`PDF "${data.fileName}" carregado e pronto para estudo! 📄✨`);
     },
     onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       const msg = error.response?.data?.message || error.message || 'Erro ao enviar o arquivo.';
       setUploadError(msg);
+      toast.error(msg);
     }
   });
 
@@ -85,7 +110,30 @@ export default function StudyWorkspace() {
     onSuccess: (data) => {
       queryClient.setQueryData<Summary[]>(['summaries-by-subject', selectedSubjectId], (old = []) => [...old, data]);
       queryClient.invalidateQueries({ queryKey: ['summaries-by-subject', selectedSubjectId] });
-      setActiveSummaryId(data.id); // Foca no resumo recém-criado
+      setActiveSummaryId(data.id); // Foca na página recém-criada
+      toast.success('Nova página de anotações criada com sucesso! 📝');
+    }
+  });
+
+  // Mutação para geração de resumo inteligente por IA a partir do PDF
+  const generateSummaryMutation = useMutation({
+    mutationFn: async (payload: { subjectId: number; fileId?: number | null; text?: string }) => {
+      return (await apiClient.post<Summary>('/api/ai/generate-summary', payload)).data;
+    },
+    onSuccess: (data) => {
+      queryClient.setQueryData<Summary[]>(['summaries-by-subject', selectedSubjectId], (old = []) => [...old, data]);
+      queryClient.invalidateQueries({ queryKey: ['summaries-by-subject', selectedSubjectId] });
+      setActiveSummaryId(data.id);
+      triggerConfetti();
+      toast.success('Resumo Inteligente sintetizado com sucesso pelo Copiloto IA! ✨');
+    },
+    onError: (err: unknown) => {
+      const axiosErr = err as { response?: { data?: { message?: string } } };
+      if (axiosErr?.response?.data?.message === 'upgrade_required') {
+        setPaywallModalOpen(true);
+      } else {
+        toast.error(axiosErr?.response?.data?.message || 'Erro ao sintetizar resumo com IA.');
+      }
     }
   });
 
@@ -98,16 +146,27 @@ export default function StudyWorkspace() {
     formData.append('file', file);
     formData.append('subjectId', String(selectedSubjectId));
     uploadMutation.mutate(formData);
-    // Limpa o input para permitir re-upload do mesmo arquivo
     e.target.value = '';
   };
 
   const handleCreateSummary = () => {
     if (!selectedSubjectId) return;
     createSummaryMutation.mutate({
-      title: 'Sem título',
+      title: `Página ${summaries.length + 1}`,
       content: '',
       subjectId: Number(selectedSubjectId)
+    });
+  };
+
+  const handleGenerateAiSummary = () => {
+    if (!selectedSubjectId) return;
+    if (!premium) {
+      setPaywallModalOpen(true);
+      return;
+    }
+    generateSummaryMutation.mutate({
+      subjectId: Number(selectedSubjectId),
+      fileId: activeFileId
     });
   };
 
@@ -179,20 +238,6 @@ export default function StudyWorkspace() {
               ))}
             </select>
 
-            {/* Seletor do Resumo */}
-            <select
-              className="form-input dropdown-label"
-              style={{ width: '100%', maxWidth: '240px', margin: 0 }}
-              value={activeSummaryId || ''}
-              onChange={(e) => setActiveSummaryId(e.target.value ? Number(e.target.value) : null)}
-              title={activeSummaryId ? summaries.find(s => s.id === activeSummaryId)?.title : "Nenhum resumo selecionado"}
-            >
-              <option value="" title="Nenhum resumo selecionado">Nenhum resumo selecionado</option>
-              {summaries.map(s => (
-                <option key={s.id} value={s.id} title={s.title}>{truncate(s.title, 22)}</option>
-              ))}
-            </select>
-
             {/* Upload PDF */}
             <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', margin: 0, display: 'flex', alignItems: 'center', gap: '4px', opacity: uploadMutation.isPending ? 0.6 : 1 }}>
               <Upload size={14} />
@@ -200,10 +245,25 @@ export default function StudyWorkspace() {
               <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploadMutation.isPending} />
             </label>
 
-            {/* Criar Resumo */}
-            <button className="btn btn-primary btn-sm" onClick={handleCreateSummary} style={{ display: 'flex', alignItems: 'center', gap: '4px' }}>
-              <Plus size={14} />
-              Resumo
+            {/* Botão de destaque: Gerar Resumo Inteligente com IA */}
+            <button
+              className="btn btn-primary btn-sm"
+              onClick={handleGenerateAiSummary}
+              disabled={generateSummaryMutation.isPending}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                border: 'none',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontWeight: 700,
+                boxShadow: '0 2px 10px rgba(99, 102, 241, 0.35)',
+              }}
+              title="Gerar resumo inteligente do PDF ou matéria usando Inteligência Artificial"
+            >
+              <Sparkles size={14} className={generateSummaryMutation.isPending ? "animate-spin" : ""} />
+              <span>{generateSummaryMutation.isPending ? 'Sintetizando...' : '✨ Resumo IA'}</span>
             </button>
 
             {/* Split layout toggle buttons */}
@@ -268,13 +328,99 @@ export default function StudyWorkspace() {
             />
           </div>
 
-          {/* LADO DIREITO: EDITOR DE TEXTO */}
+          {/* LADO DIREITO: EDITOR DE TEXTO & PÁGINAS */}
           <div style={{ width: `${100 - splitRatio}%`, display: splitRatio === 100 ? 'none' : 'flex', flexDirection: 'column', height: '100%', overflow: 'hidden', backgroundColor: 'var(--bg-primary)' }}>
+            {/* Barra explícita de abas de páginas ao lado do PDF */}
+            <div style={{
+              display: 'flex',
+              alignItems: 'center',
+              justifyContent: 'space-between',
+              padding: '8px 12px',
+              borderBottom: '1px solid var(--border-color)',
+              backgroundColor: 'var(--bg-secondary)',
+              gap: '8px',
+              flexShrink: 0
+            }}>
+              {/* Abas das páginas existentes */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', overflowX: 'auto', flex: 1, scrollbarWidth: 'none' }}>
+                <span style={{ fontSize: '0.72rem', fontWeight: 700, color: 'var(--text-muted)', textTransform: 'uppercase', letterSpacing: '0.5px', marginRight: '4px', flexShrink: 0 }}>
+                  Páginas:
+                </span>
+                {summaries.length === 0 ? (
+                  <span style={{ fontSize: '0.8rem', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                    Nenhuma página criada
+                  </span>
+                ) : (
+                  summaries.map(s => (
+                    <button
+                      key={s.id}
+                      onClick={() => setActiveSummaryId(s.id)}
+                      style={{
+                        padding: '4px 10px',
+                        fontSize: '0.78rem',
+                        fontWeight: activeSummaryId === s.id ? 700 : 500,
+                        backgroundColor: activeSummaryId === s.id ? 'var(--primary)' : 'var(--bg-tertiary)',
+                        color: activeSummaryId === s.id ? '#ffffff' : 'var(--text-secondary)',
+                        border: '1px solid',
+                        borderColor: activeSummaryId === s.id ? 'var(--primary)' : 'var(--border-color)',
+                        borderRadius: 'var(--radius-sm)',
+                        cursor: 'pointer',
+                        whiteSpace: 'nowrap',
+                        transition: 'all 0.15s ease'
+                      }}
+                      title={s.title}
+                    >
+                      {truncate(s.title || 'Sem título', 18)}
+                    </button>
+                  ))
+                )}
+              </div>
+
+              {/* Botões de Ação para Criar Página ou Resumo IA */}
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', flexShrink: 0 }}>
+                <button
+                  className="btn btn-secondary btn-sm"
+                  onClick={handleCreateSummary}
+                  style={{ display: 'flex', alignItems: 'center', gap: '4px', padding: '4px 8px', fontSize: '0.78rem', fontWeight: 600 }}
+                  title="Criar nova página de anotações em branco ao lado do PDF"
+                >
+                  <Plus size={14} style={{ color: 'var(--primary)' }} />
+                  <span>+ Criar Página</span>
+                </button>
+
+                <button
+                  className="btn btn-primary btn-sm"
+                  onClick={handleGenerateAiSummary}
+                  disabled={generateSummaryMutation.isPending}
+                  style={{
+                    background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                    border: 'none',
+                    color: 'white',
+                    display: 'flex',
+                    alignItems: 'center',
+                    gap: '4px',
+                    padding: '4px 10px',
+                    fontSize: '0.78rem',
+                    fontWeight: 700,
+                    boxShadow: '0 2px 8px rgba(99, 102, 241, 0.35)',
+                    cursor: 'pointer'
+                  }}
+                  title="Sintetizar resumo inteligente via IA (PRO)"
+                >
+                  <Sparkles size={13} className={generateSummaryMutation.isPending ? "animate-spin" : ""} />
+                  <span>{generateSummaryMutation.isPending ? 'Sintetizando...' : '✨ Resumo IA'}</span>
+                </button>
+              </div>
+            </div>
+
             <SummaryEditor
               selectedSubjectId={selectedSubjectId}
               activeSummaryId={activeSummaryId}
               activeSummary={activeSummary}
               editorRef={editorRef}
+              onCreatePage={handleCreateSummary}
+              onGenerateAiSummary={handleGenerateAiSummary}
+              isGeneratingSummary={generateSummaryMutation.isPending}
               onManualFlashcardClick={handleManualFlashcardClick}
               onUpgradeRequired={() => setPaywallModalOpen(true)}
             />

@@ -1,4 +1,5 @@
 import React, { useState, useEffect } from 'react';
+import { useQueryClient } from '@tanstack/react-query';
 import { WizardStepIndicator } from './WizardStepIndicator';
 import { SubjectSelector } from './SubjectSelector';
 import { DatePicker } from './DatePicker';
@@ -16,6 +17,7 @@ interface ExamWizardProps {
 }
 
 export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
+  const queryClient = useQueryClient();
   const [step, setStep] = useState(1);
   const [subjects, setSubjects] = useState<Subject[]>([]);
   const [subjectId, setSubjectId] = useState<number | null>(null);
@@ -30,7 +32,12 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
   const loadSubjects = () => apiClient.get<Subject[]>('/api/subjects').then(r => setSubjects(r.data));
   useEffect(() => { loadSubjects(); }, []);
 
-  const createSubject = (name: string) => apiClient.post('/api/subjects', { subjectName: name, color: '#6366f1' }).then(loadSubjects);
+  const createSubject = (name: string, color?: string) => 
+    apiClient.post<Subject>('/api/subjects', { subjectName: name, color: color || '#6366f1' })
+      .then(r => {
+        loadSubjects();
+        if (r.data?.id) setSubjectId(r.data.id);
+      });
 
   const handleSubmit = async () => {
     if (!subjectId) return;
@@ -38,6 +45,29 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
     setErrorMsg('');
     try {
       const todayStr = new Date().toISOString().split('T')[0];
+      const selectedSubject = subjects.find(s => s.id === subjectId);
+
+      // 1. Criar preparação para exame (ExamPrep)
+      const examPrepRes = await apiClient.post('/api/v1/exam-preps', {
+        title: selectedSubject ? `Preparação: ${selectedSubject.subjectName}` : `Plano de Estudos - ${score}%`,
+        examDate: date,
+        targetScore: score,
+        status: 'ACTIVE'
+      });
+      const createdExamPrepId = examPrepRes.data?.id;
+
+      // 2. Associar a matéria ao exame criado
+      if (subjectId && createdExamPrepId) {
+        try {
+          await apiClient.put(`/api/v1/subjects/${subjectId}`, {
+            subjectName: selectedSubject?.subjectName,
+            examPrepId: createdExamPrepId
+          });
+        } catch (linkErr) {
+          console.warn('Aviso: não foi possível vincular matéria ao exame:', linkErr);
+        }
+      }
+
       await apiClient.post('/api/goals', { 
         subjectId, 
         targetMastery: score, 
@@ -67,6 +97,13 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
         });
       }
       
+      queryClient.invalidateQueries({ queryKey: ['subjects'] });
+      queryClient.invalidateQueries({ queryKey: ['pdf-files'] });
+      queryClient.invalidateQueries({ queryKey: ['summaries'] });
+      queryClient.invalidateQueries({ queryKey: ['exam-preps'] });
+      queryClient.invalidateQueries({ queryKey: ['goals'] });
+      queryClient.invalidateQueries({ queryKey: ['sessions'] });
+
       onFinished();
     } catch (err: unknown) {
       console.error('Erro no onboarding:', err);

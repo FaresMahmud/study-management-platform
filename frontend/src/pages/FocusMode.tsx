@@ -2,10 +2,11 @@ import React, { useCallback, useState, useEffect } from 'react';
 import { useQuery, useMutation, useQueryClient } from '@tanstack/react-query';
 import { apiClient } from '../api/client';
 import type { ExamPrep, Subject, Flashcard, Summary } from '../types';
-import { Play, Pause, X, Sparkles, AlertTriangle, MessageSquare, BookOpen, Brain, RefreshCw, Headphones } from 'lucide-react';
+import { Play, Pause, X, Sparkles, AlertTriangle, MessageSquare, BookOpen, Brain, RefreshCw, Headphones, Plus } from 'lucide-react';
 import { useNavigate } from 'react-router-dom';
 import { triggerConfetti } from '../utils/confetti';
 import { useToast } from '../hooks/useToast';
+import ExamWizard from '../components/wizard/ExamWizard';
 import './FocusMode.css';
 
 export default function FocusMode() {
@@ -39,6 +40,7 @@ export default function FocusMode() {
   // Flashcards no Modo Foco
   const [flashcardIndex, setFlashcardIndex] = useState(0);
   const [isCardFlipped, setIsCardFlipped] = useState(false);
+  const [showWizard, setShowWizard] = useState(false);
 
   // Queries
   const { data: examPreps = [] } = useQuery<ExamPrep[]>({
@@ -142,6 +144,11 @@ export default function FocusMode() {
       setIsSessionActive(true);
       setIsRunning(true);
       triggerConfetti();
+    },
+    onError: (err: unknown) => {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = axiosErr?.response?.data?.message || axiosErr?.message || 'Erro ao iniciar sessão Pomodoro.';
+      toast.error(msg);
     }
   });
 
@@ -155,6 +162,11 @@ export default function FocusMode() {
       queryClient.invalidateQueries({ queryKey: ['sessions'] });
       triggerConfetti();
       playChime(true); // Toca chime festivo
+    },
+    onError: (err: unknown) => {
+      const axiosErr = err as { response?: { data?: { message?: string } }; message?: string };
+      const msg = axiosErr?.response?.data?.message || axiosErr?.message || 'Erro ao salvar conclusão da sessão.';
+      toast.error(msg);
     }
   });
 
@@ -298,20 +310,47 @@ export default function FocusMode() {
           <div style={{ display: 'flex', flexDirection: 'column', gap: 'var(--space-md)', textAlign: 'left' }}>
             {/* Escolha do Objetivo */}
             <div>
-              <label style={{ display: 'block', marginBottom: 'var(--space-xs)', fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
-                Objetivo Vinculado
-              </label>
-              <select 
-                className="form-input" 
-                style={{ width: '100%', margin: 0 }}
-                value={selectedExamPrepId} 
-                onChange={e => setSelectedExamPrepId(e.target.value ? Number(e.target.value) : '')}
-              >
-                <option value="">Selecione um Objetivo...</option>
-                {examPreps.map(e => (
-                  <option key={e.id} value={e.id}>{e.title}</option>
-                ))}
-              </select>
+              <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: 'var(--space-xs)' }}>
+                <label style={{ margin: 0, fontSize: '11px', fontWeight: 700, textTransform: 'uppercase', letterSpacing: '0.05em', color: 'var(--text-secondary)' }}>
+                  Objetivo Vinculado
+                </label>
+                <button
+                  type="button"
+                  className="btn btn-secondary btn-sm"
+                  onClick={() => setShowWizard(true)}
+                  style={{ display: 'inline-flex', alignItems: 'center', gap: '4px', fontSize: '12px', padding: '2px 8px' }}
+                >
+                  <Plus size={12} />
+                  <span>Novo Objetivo</span>
+                </button>
+              </div>
+
+              {examPreps.length === 0 ? (
+                <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px dashed var(--border-color)', textAlign: 'center', marginBottom: '8px' }}>
+                  <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '10px' }}>
+                    Você ainda não cadastrou nenhuma prova ou objetivo.
+                  </p>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => setShowWizard(true)}
+                  >
+                    + Criar Plano de Prova / Objetivo
+                  </button>
+                </div>
+              ) : (
+                <select 
+                  className="form-input" 
+                  style={{ width: '100%', margin: 0 }}
+                  value={selectedExamPrepId} 
+                  onChange={e => setSelectedExamPrepId(e.target.value ? Number(e.target.value) : '')}
+                >
+                  <option value="">Selecione um Objetivo...</option>
+                  {examPreps.map(e => (
+                    <option key={e.id} value={e.id}>{e.title}</option>
+                  ))}
+                </select>
+              )}
             </div>
 
             {/* Duração da Sessão */}
@@ -348,6 +387,16 @@ export default function FocusMode() {
             </button>
           </div>
         </div>
+
+        {showWizard && (
+          <ExamWizard
+            onClose={() => setShowWizard(false)}
+            onFinished={() => {
+              setShowWizard(false);
+              queryClient.invalidateQueries({ queryKey: ['examPreps'] });
+            }}
+          />
+        )}
       </div>
     );
   }

@@ -12,6 +12,9 @@ interface SummaryEditorProps {
   activeSummaryId: number | null;
   activeSummary: Summary | undefined;
   editorRef: React.RefObject<HTMLDivElement | null>;
+  onCreatePage?: () => void;
+  onGenerateAiSummary?: () => void;
+  isGeneratingSummary?: boolean;
   onManualFlashcardClick: (selectedText: string) => void;
   onUpgradeRequired: () => void;
 }
@@ -21,6 +24,9 @@ export default function SummaryEditor({
   activeSummaryId,
   activeSummary,
   editorRef,
+  onCreatePage,
+  onGenerateAiSummary,
+  isGeneratingSummary = false,
   onManualFlashcardClick,
   onUpgradeRequired
 }: SummaryEditorProps) {
@@ -194,12 +200,65 @@ export default function SummaryEditor({
 
   if (!activeSummaryId) {
     return (
-      <div className="flex-center" style={{ flex: 1, flexDirection: 'column', color: 'var(--text-secondary)', padding: 'var(--space-md)' }}>
-        <FileText size={48} style={{ color: 'var(--text-muted)', marginBottom: '1rem' }} />
-        <h3>Nenhum resumo aberto</h3>
-        <p style={{ fontSize: '0.85rem', color: 'var(--text-muted)', marginTop: '4px', textAlign: 'center' }}>
-          Crie um novo resumo do zero ou selecione um documento existente para sincronizar com sua aula.
-        </p>
+      <div className="flex-center" style={{ flex: 1, flexDirection: 'column', color: 'var(--text-secondary)', padding: 'var(--space-xl)', textAlign: 'center', gap: '16px' }}>
+        <div style={{
+          width: '64px',
+          height: '64px',
+          borderRadius: '50%',
+          backgroundColor: 'rgba(99, 102, 241, 0.1)',
+          display: 'flex',
+          alignItems: 'center',
+          justifyContent: 'center',
+          marginBottom: '8px'
+        }}>
+          <FileText size={32} style={{ color: 'var(--primary)' }} />
+        </div>
+        <div>
+          <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '6px' }}>
+            Nenhuma página aberta
+          </h3>
+          <p style={{ fontSize: '0.88rem', color: 'var(--text-muted)', maxWidth: '400px', margin: '0 auto', lineHeight: 1.5 }}>
+            Crie uma página em branco para tomar notas ao lado do PDF ou use o Copiloto IA para sintetizar tópicos automaticamente.
+          </p>
+        </div>
+
+        <div style={{ display: 'flex', gap: '12px', flexWrap: 'wrap', justifyContent: 'center', marginTop: '8px' }}>
+          {onCreatePage && (
+            <button
+              type="button"
+              className="btn btn-secondary"
+              onClick={onCreatePage}
+              style={{ display: 'flex', alignItems: 'center', gap: '8px', padding: '10px 18px', fontWeight: 600, fontSize: '0.9rem' }}
+            >
+              <FileText size={16} style={{ color: 'var(--primary)' }} />
+              <span>+ Criar Página em Branco</span>
+            </button>
+          )}
+
+          {onGenerateAiSummary && (
+            <button
+              type="button"
+              className="btn btn-primary"
+              onClick={onGenerateAiSummary}
+              disabled={isGeneratingSummary}
+              style={{
+                background: 'linear-gradient(135deg, #6366f1 0%, #a855f7 100%)',
+                border: 'none',
+                color: 'white',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '8px',
+                padding: '10px 18px',
+                fontWeight: 700,
+                fontSize: '0.9rem',
+                boxShadow: '0 4px 14px rgba(99, 102, 241, 0.35)'
+              }}
+            >
+              <Sparkles size={16} className={isGeneratingSummary ? "animate-spin" : ""} />
+              <span>{isGeneratingSummary ? 'Sintetizando com IA...' : '✨ Gerar Resumo Inteligente (IA)'}</span>
+            </button>
+          )}
+        </div>
       </div>
     );
   }
@@ -222,11 +281,23 @@ export default function SummaryEditor({
           </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0 }}>
+        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
+          {onGenerateAiSummary && (
+            <button
+              className="btn btn-secondary btn-sm"
+              onClick={onGenerateAiSummary}
+              disabled={isGeneratingSummary}
+              title="Gerar novo resumo inteligente via IA a partir do material"
+              style={{ display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(168, 85, 247, 0.4)', color: 'var(--secondary)' }}
+            >
+              <Sparkles size={13} className={isGeneratingSummary ? "animate-spin" : ""} />
+              <span>{isGeneratingSummary ? "Sintetizando..." : "+ Resumo IA"}</span>
+            </button>
+          )}
           <button 
             className="btn btn-secondary btn-sm" 
             onClick={handleCreateFlashcardFromSelection} 
-            title="Criar Flashcard Manual"
+            title="Criar Flashcard Manual da seleção"
             style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <Brain size={14} />
@@ -249,7 +320,7 @@ export default function SummaryEditor({
             title="Gerar Flashcards automaticamente com Inteligência Artificial"
           >
             <Sparkles size={14} className={generateAiMutation.isPending ? "animate-spin" : ""} />
-            <span>{generateAiMutation.isPending ? "Gerando..." : "Gerar com IA"}</span>
+            <span>{generateAiMutation.isPending ? "Gerando..." : "Flashcards IA"}</span>
           </button>
         </div>
       </div>

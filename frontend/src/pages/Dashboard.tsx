@@ -25,6 +25,39 @@ export default function Dashboard() {
   const userName = useAuthStore(state => state.userName) || 'Estudante';
   const [showWizard, setShowWizard] = useState(false);
 
+  // Meta diária configurável
+  const [dailyGoalMinutes, setDailyGoalMinutes] = useState<number>(() => {
+    const saved = localStorage.getItem('daily_study_goal_minutes');
+    return saved ? Number(saved) : 60;
+  });
+
+  const [dailyTasks, setDailyTasks] = useState<{ id: string; label: string; done: boolean }[]>(() => {
+    const todayKey = `daily_tasks_${new Date().toISOString().split('T')[0]}`;
+    const saved = localStorage.getItem(todayKey);
+    if (saved) {
+      try { return JSON.parse(saved); } catch { /* ignore */ }
+    }
+    return [
+      { id: '1', label: 'Revisar flashcards pendentes', done: true },
+      { id: '2', label: 'Estudar material teórico (30m)', done: false },
+      { id: '3', label: 'Completar uma sessão de simulado', done: false },
+    ];
+  });
+
+  const handleUpdateDailyGoal = (newTarget: number) => {
+    setDailyGoalMinutes(newTarget);
+    localStorage.setItem('daily_study_goal_minutes', String(newTarget));
+  };
+
+  const handleToggleTask = (taskId: string) => {
+    setDailyTasks(prev => {
+      const updated = prev.map(t => t.id === taskId ? { ...t, done: !t.done } : t);
+      const todayKey = `daily_tasks_${new Date().toISOString().split('T')[0]}`;
+      localStorage.setItem(todayKey, JSON.stringify(updated));
+      return updated;
+    });
+  };
+
   // Chat states
   const [chatOpen, setChatOpen] = useState(false);
   const [chatInput, setChatInput] = useState('');
@@ -115,10 +148,11 @@ export default function Dashboard() {
   );
   if (error) return <ErrorMessage message="Erro ao conectar com o servidor local" onRetry={handleRefetch} />;
 
-  const mappedSubjects = (subjects || []).map(sub => ({
+  const SUBJECT_PALETTE = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#14b8a6', '#ef4444', '#3b82f6'];
+  const mappedSubjects = (subjects || []).map((sub, idx) => ({
     name: sub.subjectName,
     progress: gamification.masteryBySubject.find(m => m.subjectId === sub.id)?.mastery || 40,
-    color: sub.color || '#6366f1',
+    color: sub.color || SUBJECT_PALETTE[idx % SUBJECT_PALETTE.length],
     topicsCount: 10,
     studyTime: '4h 20m',
   }));
@@ -198,13 +232,11 @@ export default function Dashboard() {
             <FadeIn delay={300}>
               <Card className="summary-card" style={{ height: '100%' }}>
                 <DailyGoal
-                  targetMinutes={60}
+                  targetMinutes={dailyGoalMinutes}
                   studiedMinutes={gamification.totalStudyTime}
-                  tasks={[
-                    { id: '1', label: 'Revisar flashcards pendentes', done: true },
-                    { id: '2', label: 'Estudar material teórico (30m)', done: gamification.totalStudyTime >= 30 },
-                    { id: '3', label: 'Completar uma sessão de simulado', done: false },
-                  ]}
+                  tasks={dailyTasks}
+                  onUpdateTarget={handleUpdateDailyGoal}
+                  onToggleTask={handleToggleTask}
                 />
               </Card>
             </FadeIn>

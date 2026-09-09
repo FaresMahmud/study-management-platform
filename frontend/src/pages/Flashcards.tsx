@@ -1,6 +1,6 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X, Sparkles } from 'lucide-react';
-import React, { useCallback, useEffect, useState } from 'react';
+import React, { useCallback, useEffect, useMemo, useState } from 'react';
 import { apiClient } from '../api/client';
 import { useToast } from '../hooks/useToast';
 import type { Flashcard, Subject } from '../types';
@@ -15,6 +15,8 @@ export default function Flashcards() {
   const [currentIndex, setCurrentIndex] = useState(0);
   const [showAnswer, setShowAnswer] = useState(false);
   const [reviewedCount, setReviewedCount] = useState(0);
+  const [studyMode, setStudyMode] = useState<'due' | 'all'>('due');
+  const [selectedSubjectIdFilter, setSelectedSubjectIdFilter] = useState<number | 'all'>('all');
 
   // Manage state (create/edit modal)
   const [modalOpen, setModalOpen] = useState(false);
@@ -53,6 +55,11 @@ export default function Flashcards() {
       setIaModalOpen(false);
       setIaText('');
       toast.success('Flashcards gerados com sucesso!');
+      setSelectedSubjectIdFilter(Number(iaSubjectId));
+      setStudyMode('all');
+      setCurrentIndex(0);
+      setShowAnswer(false);
+      setActiveTab('review');
     } catch {
       toast.error('Erro ao gerar flashcards com IA.');
     } finally {
@@ -93,6 +100,14 @@ export default function Flashcards() {
     queryKey: ['flashcards-due'],
     queryFn: async () => (await apiClient.get<Flashcard[]>('/api/flashcards/due')).data,
   });
+
+  const activeDeck = useMemo(() => {
+    let pool = studyMode === 'all' ? allCards : dueCards;
+    if (selectedSubjectIdFilter !== 'all') {
+      pool = pool.filter(c => c.subject?.id === selectedSubjectIdFilter);
+    }
+    return pool;
+  }, [studyMode, allCards, dueCards, selectedSubjectIdFilter]);
 
   // Mutations
   const createMutation = useMutation({
@@ -142,15 +157,15 @@ export default function Flashcards() {
   });
 
   const handleReview = useCallback((quality: 'easy' | 'good' | 'hard') => {
-    if (currentIndex >= dueCards.length) return;
-    const card = dueCards[currentIndex];
+    if (currentIndex >= activeDeck.length) return;
+    const card = activeDeck[currentIndex];
     reviewMutation.mutate({ id: card.id, quality });
-  }, [currentIndex, dueCards, reviewMutation]);
+  }, [currentIndex, activeDeck, reviewMutation]);
 
   // Keyboard Navigation shortcuts (1, 2, 3, 4) + Space for Flip
   useEffect(() => {
     const handleKeyDown = (e: KeyboardEvent) => {
-      if (activeTab !== 'review' || dueCards.length === 0 || currentIndex >= dueCards.length) return;
+      if (activeTab !== 'review' || activeDeck.length === 0 || currentIndex >= activeDeck.length) return;
 
       // Don't trigger shortcuts inside text inputs
       if (document.activeElement?.tagName === 'INPUT' || document.activeElement?.tagName === 'TEXTAREA') return;
@@ -169,7 +184,7 @@ export default function Flashcards() {
 
     window.addEventListener('keydown', handleKeyDown);
     return () => window.removeEventListener('keydown', handleKeyDown);
-  }, [activeTab, dueCards, currentIndex, showAnswer, handleReview]);
+  }, [activeTab, activeDeck, currentIndex, showAnswer, handleReview]);
 
   const abrirCriar = () => {
     setEditingCard(null);
@@ -244,11 +259,11 @@ export default function Flashcards() {
         <div className="flashcards-actions">
           <button 
             className={`btn ${activeTab === 'review' ? 'btn-primary' : 'btn-secondary'} btn-sm`} 
-            onClick={() => setActiveTab('review')}
-            disabled={dueCards.length === 0}
+            onClick={() => { setActiveTab('review'); reiniciarRevisoes(); }}
+            disabled={allCards.length === 0}
           >
             <Layers size={16} style={{ marginRight: '4px' }} />
-            {dueCards.length === 0 ? 'Revisões em dia ✅' : `Revisar (${dueCards.length})`}
+            {dueCards.length === 0 ? `Praticar (${allCards.length})` : `Revisar (${dueCards.length})`}
           </button>
           <button className={`btn ${activeTab === 'manage' ? 'btn-primary' : 'btn-secondary'} btn-sm`} onClick={() => setActiveTab('manage')}>
             Gerenciar Todos ({allCards.length})
@@ -270,6 +285,40 @@ export default function Flashcards() {
       {activeTab === 'review' ? (
         /* ================= TELA DE REVISÃO ATIVA FSRS ================= */
         <div style={{ maxWidth: '800px', margin: '0 auto', width: '100%' }}>
+
+          {/* Seletor de Modo de Estudo e Filtro de Matéria */}
+          <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', flexWrap: 'wrap', gap: '8px', marginBottom: '16px' }}>
+            <div style={{ display: 'flex', gap: '6px' }}>
+              <button
+                type="button"
+                className={`btn btn-sm ${studyMode === 'due' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => { setStudyMode('due'); reiniciarRevisoes(); }}
+              >
+                Revisão Agendada ({dueCards.length})
+              </button>
+              <button
+                type="button"
+                className={`btn btn-sm ${studyMode === 'all' ? 'btn-primary' : 'btn-secondary'}`}
+                onClick={() => { setStudyMode('all'); reiniciarRevisoes(); }}
+              >
+                Modo Livre / Todos ({allCards.length})
+              </button>
+            </div>
+
+            {selectedSubjectIdFilter !== 'all' && (
+              <div style={{ display: 'flex', alignItems: 'center', gap: '6px', background: 'var(--bg-secondary)', border: '1px solid var(--border-color)', padding: '4px 10px', borderRadius: 'var(--radius-sm)', fontSize: '12px' }}>
+                <span>Deck: <strong>{subjects.find(s => s.id === selectedSubjectIdFilter)?.subjectName}</strong></span>
+                <button
+                  type="button"
+                  onClick={() => { setSelectedSubjectIdFilter('all'); reiniciarRevisoes(); }}
+                  style={{ background: 'none', border: 'none', cursor: 'pointer', color: 'var(--text-muted)' }}
+                  title="Ver todas as matérias"
+                >
+                  <X size={12} />
+                </button>
+              </div>
+            )}
+          </div>
 
           {/* Header e Fila SRS */}
           <div className="srs-grid" style={{ marginBottom: '20px' }}>
@@ -293,20 +342,29 @@ export default function Flashcards() {
 
           {loadingDue ? (
             <div className="flex-center" style={{ height: '240px' }}>Carregando revisões...</div>
-          ) : dueCards.length === 0 ? (
+          ) : activeDeck.length === 0 ? (
             <div className="card empty-state" style={{ textAlign: 'center', padding: '34px' }}>
               <Check size={48} style={{ color: 'var(--success)', marginBottom: '13px' }} />
-              <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Nada para revisar hoje! 🎉</h2>
-              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '21px' }}>Suas revisões estão em dia. Que tal carregar novos arquivos e PDFs?</p>
-              <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center' }}>
-                <button className="btn btn-primary" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ background: 'linear-gradient(to right, var(--primary), var(--secondary))', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
+              <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Nada para revisar aqui! 🎉</h2>
+              <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '21px' }}>
+                {studyMode === 'due' && allCards.length > 0 
+                  ? `Suas revisões agendadas estão em dia. Você tem ${allCards.length} flashcards disponíveis no modo livre!` 
+                  : 'Nenhum flashcard encontrado para esta seleção. Que tal criar novos ou gerar com IA?'}
+              </p>
+              <div style={{ display: 'flex', gap: 'var(--space-sm)', justifyContent: 'center', flexWrap: 'wrap' }}>
+                {studyMode === 'due' && allCards.length > 0 && (
+                  <button className="btn btn-primary" onClick={() => { setStudyMode('all'); reiniciarRevisoes(); }}>
+                    Praticar Todos ({allCards.length})
+                  </button>
+                )}
+                <button className="btn btn-secondary" onClick={() => { setIaSubjectId(subjects.length > 0 ? subjects[0].id : ''); setIaModalOpen(true); }} style={{ background: 'linear-gradient(to right, var(--primary), var(--secondary))', border: 'none', color: 'white', display: 'flex', alignItems: 'center', gap: '6px' }}>
                   <Sparkles size={16} />
                   Gerar Flashcards com IA
                 </button>
                 <button className="btn btn-secondary" onClick={() => { setEditingCard(null); setFormFront(''); setFormBack(''); setFormSubjectId(subjects.length > 0 ? subjects[0].id : ''); setModalOpen(true); }}>Criar Manualmente</button>
               </div>
             </div>
-          ) : currentIndex >= dueCards.length ? (
+          ) : currentIndex >= activeDeck.length ? (
             <div className="card empty-state" style={{ textAlign: 'center', padding: '34px' }}>
               <Check size={48} style={{ color: 'var(--success)', marginBottom: '13px' }} />
               <h2 style={{ fontSize: '21px', fontWeight: 800 }}>Sessão Concluída!</h2>
@@ -317,8 +375,8 @@ export default function Flashcards() {
             <div>
               {/* Área de Estudo Ativo */}
               <div style={{ display: 'flex', justifyContent: 'space-between', fontSize: '0.75rem', color: 'var(--text-muted)', marginBottom: 'var(--space-xs)' }}>
-                <span>Revisando {currentIndex + 1} de {dueCards.length}</span>
-                <span>Matéria: <strong>{dueCards[currentIndex].subject?.subjectName ?? 'Sem matéria'}</strong></span>
+                <span>Revisando {currentIndex + 1} de {activeDeck.length} ({studyMode === 'all' ? 'Modo Livre' : 'FSRS'})</span>
+                <span>Matéria: <strong>{activeDeck[currentIndex].subject?.subjectName ?? 'Sem matéria'}</strong></span>
               </div>
 
               <div className="flashcard-box" onClick={() => setShowAnswer(prev => !prev)} style={{ marginBottom: '20px' }}>
@@ -326,18 +384,18 @@ export default function Flashcards() {
                   {/* FRENTE */}
                   <div className="flashcard-face front">
                     <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--text-muted)', letterSpacing: '0.05em', marginBottom: 'var(--space-md)' }}>Frente</span>
-                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.4 }}>{dueCards[currentIndex].front}</h3>
+                    <h3 style={{ fontSize: '1.25rem', fontWeight: 800, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.4 }}>{activeDeck[currentIndex].front}</h3>
                     <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)', position: 'absolute', bottom: 'var(--space-md)' }}>Clique ou Pressione Space para revelar</span>
                   </div>
 
                   {/* VERSO */}
                   <div className="flashcard-face back">
                     <span style={{ fontSize: '11px', textTransform: 'uppercase', color: 'var(--primary)', letterSpacing: '0.05em', marginBottom: 'var(--space-md)' }}>Verso</span>
-                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.5 }}>{dueCards[currentIndex].back}</h3>
+                    <h3 style={{ fontSize: '18px', fontWeight: 600, color: 'var(--text-primary)', textAlign: 'center', lineHeight: 1.5 }}>{activeDeck[currentIndex].back}</h3>
 
-                    {dueCards[currentIndex].summaryTitle && (
+                    {activeDeck[currentIndex].summaryTitle && (
                       <div className="explanation-box" style={{ width: '100%', marginTop: '20px', padding: '10px', background: 'var(--bg-tertiary)', borderRadius: 'var(--radius-md)' }}>
-                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Origem do PDF: {dueCards[currentIndex].summaryTitle}</span>
+                        <span style={{ fontSize: '11px', color: 'var(--text-muted)' }}>Origem do PDF: {activeDeck[currentIndex].summaryTitle}</span>
                       </div>
                     )}
                   </div>
@@ -379,17 +437,23 @@ export default function Flashcards() {
               {subjects.map(subj => {
                 const count = allCards.filter(c => c.subject?.id === subj.id).length;
                 return (
-                  <div key={subj.id} className="card" style={{ padding: 'var(--space-md)', borderLeft: `4px solid ${subj.color}` }}>
+                  <div key={subj.id} className="card" style={{ padding: 'var(--space-md)', borderLeft: `4px solid ${subj.color || 'var(--primary)'}` }}>
                     <h4 style={{ fontSize: '14px', fontWeight: 700 }}>{subj.subjectName}</h4>
                     <p style={{ fontSize: '0.75rem', color: 'var(--text-secondary)', marginTop: '4px' }}>{pluralize(count, 'cartão', 'cartões')} carregados</p>
 
                     <button
-                      onClick={() => { setActiveTab('review'); reiniciarRevisoes(); }}
+                      onClick={() => {
+                        setSelectedSubjectIdFilter(subj.id);
+                        setStudyMode('all');
+                        setCurrentIndex(0);
+                        setShowAnswer(false);
+                        setActiveTab('review');
+                      }}
                       className="btn btn-secondary btn-sm"
                       style={{ width: '100%', marginTop: '13px', fontSize: '0.75rem' }}
                       disabled={count === 0}
                     >
-                      Estudar Deck
+                      Estudar Deck ({count})
                     </button>
                   </div>
                 );

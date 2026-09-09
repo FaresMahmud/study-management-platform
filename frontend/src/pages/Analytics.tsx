@@ -197,15 +197,16 @@ export default function Analytics() {
   };
 
   // ─── Dados do gráfico empilhado (Temporal) ──────────────────────────────────
+  const PALETTE_CORES = ['#6366f1', '#10b981', '#f59e0b', '#ec4899', '#8b5cf6', '#06b6d4', '#f97316', '#14b8a6', '#ef4444', '#3b82f6'];
   const dadosBase: EntradaGrafico[] = subjects
-    .map(subj => {
+    .map((subj, idx) => {
       const sessoesOrdenadas = sessions
         .filter(s => s.subject?.id === subj.id)
         .sort((a, b) => new Date(a.sessionDate).getTime() - new Date(b.sessionDate).getTime());
       if (sessoesOrdenadas.length === 0) return null;
       return {
         name: subj.subjectName,
-        color: subj.color || '#6366f1',
+        color: subj.color || PALETTE_CORES[idx % PALETTE_CORES.length],
         totalHours: Number((sessoesOrdenadas.reduce((acc, s) => acc + s.duration, 0) / 60).toFixed(2)),
         sessionDates: sessoesOrdenadas.map(s => s.sessionDate),
         sessionDurations: sessoesOrdenadas.map(s => s.duration),
@@ -242,7 +243,7 @@ export default function Analytics() {
     const atual = mapaDias.get(s.sessionDate) ?? { totalMins: 0, materias: [] };
     atual.totalMins += s.duration;
     const nome = s.subject?.subjectName ?? '—';
-    const cor = s.subject?.color ?? 'var(--primary)';
+    const cor = s.subject?.color || PALETTE_CORES[(s.subject?.id ?? 0) % PALETTE_CORES.length];
     const matIdx = atual.materias.findIndex(m => m.nome === nome);
     if (matIdx >= 0) atual.materias[matIdx].mins += s.duration;
     else atual.materias.push({ nome, cor, mins: s.duration });
