@@ -1,6 +1,7 @@
 import React from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Target, Upload, Compass, CheckCircle2, Circle, ArrowRight } from 'lucide-react';
+import { track } from '../../utils/analytics';
 
 interface FirstStepsChecklistProps {
   hasGoals: boolean;
@@ -31,7 +32,10 @@ export function FirstStepsChecklist({
       description: 'Contagem regressiva e ritmo de estudos',
       icon: <Target size={20} style={{ color: hasGoals ? 'var(--success, #22c55e)' : 'var(--primary)' }} />,
       done: hasGoals,
-      action: onDefineGoal,
+      action: () => {
+        track('first_steps_checklist_clicked', { step: 1 });
+        onDefineGoal();
+      },
       cta: 'Configurar'
     },
     {
@@ -40,7 +44,10 @@ export function FirstStepsChecklist({
       description: 'A IA gera questões e resumos',
       icon: <Upload size={20} style={{ color: hasPdfs ? 'var(--success, #22c55e)' : 'var(--secondary, #a855f7)' }} />,
       done: hasPdfs,
-      action: onUploadPdf,
+      action: () => {
+        track('first_steps_checklist_clicked', { step: 2 });
+        onUploadPdf();
+      },
       cta: 'Enviar'
     },
     {
@@ -49,7 +56,10 @@ export function FirstStepsChecklist({
       description: 'Teste seus conhecimentos sob pressão',
       icon: <Compass size={20} style={{ color: hasSimulations ? 'var(--success, #22c55e)' : 'var(--warning, #f59e0b)' }} />,
       done: hasSimulations,
-      action: () => navigate('/simulation'),
+      action: () => {
+        track('first_steps_checklist_clicked', { step: 3 });
+        navigate('/simulation');
+      },
       cta: 'Iniciar'
     }
   ];

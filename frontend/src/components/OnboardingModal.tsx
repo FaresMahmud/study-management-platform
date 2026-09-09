@@ -1,4 +1,4 @@
-import React, { useState, useRef } from 'react';
+import React, { useState, useRef, useEffect } from 'react';
 import {
   X,
   Upload,
@@ -7,9 +7,11 @@ import {
   Check,
   Plus,
   AlertCircle,
-  Loader2
+  Loader2,
+  RefreshCw
 } from 'lucide-react';
 import { apiClient } from '../api/client';
+import { track } from '../utils/analytics';
 
 interface OnboardingModalProps {
   isOpen: boolean;
@@ -55,16 +57,47 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
   const [isDragging, setIsDragging] = useState(false);
   const [uploadedFileName, setUploadedFileName] = useState('');
   const [uploadSuccess, setUploadSuccess] = useState(false);
+  const [selectedFile, setSelectedFile] = useState<File | null>(null);
+  const [uploadFailed, setUploadFailed] = useState(false);
 
   // Status de loading e erro
   const [loading, setLoading] = useState(false);
   const [errorMessage, setErrorMessage] = useState<string | null>(null);
 
   const fileInputRef = useRef<HTMLInputElement>(null);
+  const hasTrackedStart = useRef(false);
+
+  // ─── Analytics: onboarding_started e onboarding_step_viewed ────────────
+  useEffect(() => {
+    if (isOpen) {
+      if (!hasTrackedStart.current) {
+        hasTrackedStart.current = true;
+        track('onboarding_started');
+      }
+      track('onboarding_step_viewed', { step: step + 1 });
+    }
+  }, [isOpen, step]);
+
+  // ─── Tecla ESC para fechar salvando ──────────────────────────────────
+  useEffect(() => {
+    if (!isOpen) return;
+    const handleKeyDown = (e: KeyboardEvent) => {
+      if (e.key === 'Escape') {
+        handleDismiss();
+      }
+    };
+    window.addEventListener('keydown', handleKeyDown);
+    return () => window.removeEventListener('keydown', handleKeyDown);
+  }, [isOpen, step, examTitle, examDate, targetScore, selectedSubjects, examPrepId, createdSubjectIds]);
 
   if (!isOpen) return null;
 
   const handleFinishOnboarding = () => {
+    track('onboarding_completed', {
+      created_exam: Boolean(examPrepId || examTitle.trim()),
+      subjects_count: selectedSubjects.length,
+      uploaded_pdf: uploadSuccess
+    });
     localStorage.setItem('study_onboarded', 'true');
     localStorage.setItem('onboarding_completed_at', new Date().toISOString());
     localStorage.setItem('show_onboarding_welcome', 'true');
@@ -72,9 +105,33 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
   };
 
   const handleDismiss = () => {
-    // Salva progresso para não reabrir
+    track('onboarding_dismissed', { last_step: step + 1 });
     localStorage.setItem('study_onboarded', 'true');
     localStorage.setItem('onboarding_completed_at', new Date().toISOString());
+    localStorage.setItem('onboarding_dismissed_at', new Date().toISOString());
+
+    // Se o usuário já preencheu a prova mas ainda não clicou em Avançar, salva em background
+    if (step === 0 && examTitle.trim() && !examPrepId) {
+      const dateToUse = examDate.trim() || new Date(Date.now() + 180 * 24 * 60 * 60 * 1000).toISOString().split('T')[0];
+      apiClient.post('/api/v1/exam-preps', {
+        title: examTitle.trim(),
+        examDate: dateToUse,
+        targetScore,
+        status: 'ACTIVE'
+      }).catch(() => {});
+    }
+
+    // Se está no passo 1 e não salvou matérias ainda, salva em background
+    if (step === 1 && createdSubjectIds.length === 0 && selectedSubjects.length > 0) {
+      selectedSubjects.forEach(s => {
+        apiClient.post<{ id: number }>('/api/subjects', { subjectName: s.name, color: s.color }).then(res => {
+          if (examPrepId && res.data?.id) {
+            apiClient.put(`/api/v1/subjects/${res.data.id}`, { subjectName: s.name, examPrepId }).catch(() => {});
+          }
+        }).catch(() => {});
+      });
+    }
+
     onClose();
   };
 
@@ -138,7 +195,6 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
 
     try {
       const ids: number[] = [];
-      // Se nenhuma matéria selecionada, criamos uma geral padrão
       const subjectsToCreate = selectedSubjects.length > 0
         ? selectedSubjects
         : [{ name: 'Geral', color: '#6366f1' }];
@@ -151,7 +207,6 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
           });
           if (res.data?.id) {
             ids.push(res.data.id);
-            // Vincula com o examPrep se tiver
             if (examPrepId) {
               try {
                 await apiClient.put(`/api/v1/subjects/${res.data.id}`, {
@@ -159,7 +214,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                   examPrepId
                 });
               } catch {
-                // Ignore se falhar vinculação de exame
+                // Ignore
               }
             }
           }
@@ -172,22 +227,32 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
       setStep(2);
     } catch (err: unknown) {
       console.error('Erro ao salvar matérias:', err);
-      // Avança mesmo com erro parcial para não bloquear o usuário
       setStep(2);
     } finally {
       setLoading(false);
     }
   };
 
-  // ─── ETAPA 3: Upload de PDF ───────────────────────────────────────────
+  // ─── ETAPA 3: Upload de PDF com Validação Prévia e Retry ───────────────
   const processFileUpload = async (file: File) => {
-    if (!file.name.toLowerCase().endsWith('.pdf')) {
-      setErrorMessage('Por favor, selecione um arquivo em formato PDF.');
+    setSelectedFile(file);
+    setUploadFailed(false);
+    track('pdf_upload_started', { source: 'onboarding' });
+
+    // Validação ANTES de iniciar upload: tipo (PDF)
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+    if (!isPdf) {
+      setErrorMessage('Formato não suportado — envie um arquivo PDF.');
+      setUploadFailed(true);
+      track('pdf_upload_failed', { reason: 'type', source: 'onboarding' });
       return;
     }
 
+    // Validação ANTES de iniciar upload: tamanho (<=50MB)
     if (file.size > 50 * 1024 * 1024) {
-      setErrorMessage(`O arquivo excede o limite de 50 MB. Tamanho atual: ${(file.size / (1024 * 1024)).toFixed(1)} MB.`);
+      setErrorMessage('Arquivo muito grande — o limite é 50MB.');
+      setUploadFailed(true);
+      track('pdf_upload_failed', { reason: 'size', source: 'onboarding' });
       return;
     }
 
@@ -195,7 +260,6 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
     setErrorMessage(null);
 
     try {
-      // Garante que temos um subjectId
       let targetSubjectId = createdSubjectIds.length > 0 ? createdSubjectIds[0] : null;
 
       if (!targetSubjectId) {
@@ -214,12 +278,19 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
         headers: { 'Content-Type': 'multipart/form-data' }
       });
 
+      const sizeMb = Number((file.size / (1024 * 1024)).toFixed(2));
+      track('pdf_upload_completed', { source: 'onboarding', size_mb: sizeMb });
+
       setUploadedFileName(file.name);
       setUploadSuccess(true);
+      setUploadFailed(false);
     } catch (err: unknown) {
       console.error('Erro ao enviar PDF:', err);
       const axiosErr = err as { response?: { data?: { message?: string } } };
-      setErrorMessage(axiosErr.response?.data?.message || 'Erro ao enviar o PDF. Verifique se o arquivo é válido.');
+      const msg = axiosErr.response?.data?.message || 'Falha de conexão ao enviar o arquivo. Verifique sua rede e tente novamente.';
+      setErrorMessage(msg);
+      setUploadFailed(true);
+      track('pdf_upload_failed', { reason: 'network', source: 'onboarding' });
     } finally {
       setLoading(false);
     }
@@ -234,7 +305,16 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
   };
 
   return (
-    <div className="modal-overlay" style={{ zIndex: 9999 }}>
+    <div
+      className="modal-overlay"
+      style={{ zIndex: 9999 }}
+      onClick={(e) => {
+        // Fechar ao clicar no backdrop preservando dados
+        if (e.target === e.currentTarget) {
+          handleDismiss();
+        }
+      }}
+    >
       <div
         className="modal-content"
         style={{
@@ -250,6 +330,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
         }}
         role="dialog"
         aria-modal="true"
+        onClick={(e) => e.stopPropagation()}
       >
         {/* Close Button (salva e fecha) */}
         <button
@@ -324,12 +405,22 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               fontSize: '0.85rem',
               display: 'flex',
               alignItems: 'center',
+              justifyContent: 'space-between',
               gap: '8px',
               marginBottom: '16px'
             }}
           >
-            <AlertCircle size={16} style={{ flexShrink: 0 }} />
-            <span>{errorMessage}</span>
+            <div style={{ display: 'flex', alignItems: 'center', gap: '8px' }}>
+              <AlertCircle size={16} style={{ flexShrink: 0 }} />
+              <span>{errorMessage}</span>
+            </div>
+            <button
+              type="button"
+              onClick={() => setErrorMessage(null)}
+              style={{ background: 'transparent', border: 'none', color: '#ef4444', cursor: 'pointer', padding: '2px', fontWeight: 700 }}
+            >
+              ✕
+            </button>
           </div>
         )}
 
@@ -543,10 +634,22 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               onClick={() => !loading && !uploadSuccess && fileInputRef.current?.click()}
               style={{
                 border: '2px dashed',
-                borderColor: uploadSuccess ? 'var(--success, #22c55e)' : isDragging ? 'var(--primary)' : 'var(--border-color)',
-                backgroundColor: uploadSuccess ? 'rgba(34, 197, 94, 0.08)' : isDragging ? 'var(--primary-glow)' : 'var(--bg-tertiary)',
+                borderColor: uploadSuccess
+                  ? 'var(--success, #22c55e)'
+                  : uploadFailed
+                  ? '#ef4444'
+                  : isDragging
+                  ? 'var(--primary)'
+                  : 'var(--border-color)',
+                backgroundColor: uploadSuccess
+                  ? 'rgba(34, 197, 94, 0.08)'
+                  : uploadFailed
+                  ? 'rgba(239, 68, 68, 0.06)'
+                  : isDragging
+                  ? 'var(--primary-glow)'
+                  : 'var(--bg-tertiary)',
                 borderRadius: '12px',
-                padding: '36px 20px',
+                padding: '32px 20px',
                 textAlign: 'center',
                 cursor: uploadSuccess ? 'default' : 'pointer',
                 transition: 'all 0.2s ease',
@@ -560,7 +663,9 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                 style={{ display: 'none' }}
                 onChange={e => {
                   if (e.target.files && e.target.files.length > 0) {
-                    processFileUpload(e.target.files[0]);
+                    const file = e.target.files[0];
+                    e.target.value = '';
+                    processFileUpload(file);
                   }
                 }}
               />
@@ -597,6 +702,54 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
                   <span style={{ fontSize: '0.8rem', color: 'var(--success, #22c55e)', fontWeight: 600 }}>
                     PDF pronto para gerar simulados e flashcards!
                   </span>
+                </div>
+              ) : uploadFailed && selectedFile ? (
+                <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '10px' }}>
+                  <div
+                    style={{
+                      width: '48px',
+                      height: '48px',
+                      borderRadius: '50%',
+                      backgroundColor: 'rgba(239, 68, 68, 0.15)',
+                      display: 'flex',
+                      alignItems: 'center',
+                      justifyContent: 'center',
+                      color: '#ef4444'
+                    }}
+                  >
+                    <AlertCircle size={26} />
+                  </div>
+                  <span style={{ fontWeight: 700, fontSize: '0.95rem', color: 'var(--text-primary)' }}>
+                    {selectedFile.name}
+                  </span>
+                  <span style={{ fontSize: '0.85rem', color: '#ef4444', fontWeight: 600, textAlign: 'center', maxWidth: '380px' }}>
+                    {errorMessage || 'Ocorreu uma falha no upload deste arquivo'}
+                  </span>
+                  <div style={{ display: 'flex', gap: '10px', marginTop: '6px' }}>
+                    <button
+                      type="button"
+                      className="btn btn-primary btn-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        processFileUpload(selectedFile);
+                      }}
+                      style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                    >
+                      <RefreshCw size={14} />
+                      <span>Tentar novamente</span>
+                    </button>
+                    <button
+                      type="button"
+                      className="btn btn-secondary btn-sm"
+                      onClick={(e) => {
+                        e.stopPropagation();
+                        track('onboarding_step_skipped', { step: 3 });
+                        handleFinishOnboarding();
+                      }}
+                    >
+                      <span>Enviar depois</span>
+                    </button>
+                  </div>
                 </div>
               ) : (
                 <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
@@ -646,7 +799,7 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
             <button
               type="button"
               className="btn btn-secondary btn-sm"
-              onClick={() => { setErrorMessage(null); setStep(step - 1); }}
+              onClick={() => { setErrorMessage(null); setUploadFailed(false); setStep(step - 1); }}
               disabled={loading}
               style={{ display: 'inline-flex', alignItems: 'center', gap: '4px' }}
             >
@@ -663,7 +816,10 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
-                onClick={() => setStep(2)}
+                onClick={() => {
+                  track('onboarding_step_skipped', { step: 2 });
+                  setStep(2);
+                }}
                 disabled={loading}
               >
                 Posso adicionar depois
@@ -674,7 +830,10 @@ export default function OnboardingModal({ isOpen, onClose }: OnboardingModalProp
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
-                onClick={handleFinishOnboarding}
+                onClick={() => {
+                  track('onboarding_step_skipped', { step: 3 });
+                  handleFinishOnboarding();
+                }}
                 disabled={loading}
               >
                 Enviar depois

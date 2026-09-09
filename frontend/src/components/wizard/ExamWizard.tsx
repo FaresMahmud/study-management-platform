@@ -8,6 +8,7 @@ import { MaterialUpload } from './MaterialUpload';
 import { Button } from '../ui/Button';
 import { Card } from '../ui/Card';
 import { apiClient } from '../../api/client';
+import { track } from '../../utils/analytics';
 import './ExamWizard.css';
 
 interface Subject { id: number; subjectName: string; }
@@ -83,11 +84,24 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
       });
       
       if (matType === 'pdf' && file) {
+        track('pdf_upload_started', { source: 'subject' });
+        const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+        if (!isPdf) {
+          throw new Error('Formato não suportado — envie um arquivo PDF.');
+        }
+        if (file.size > 50 * 1024 * 1024) {
+          throw new Error('Arquivo muito grande — o limite é 50MB.');
+        }
+
         const formData = new FormData();
         formData.append('file', file);
         formData.append('subjectId', String(subjectId));
         await apiClient.post('/api/files/upload', formData, {
           headers: { 'Content-Type': 'multipart/form-data' }
+        });
+        track('pdf_upload_completed', {
+          source: 'subject',
+          size_mb: Number((file.size / (1024 * 1024)).toFixed(2))
         });
       } else if (matType === 'text' && text.trim()) {
         await apiClient.post('/api/summaries', {
@@ -116,13 +130,17 @@ export default function ExamWizard({ onClose, onFinished }: ExamWizardProps) {
       }
       // Msg mais específica para erro de upload de PDF
       if (matType === 'pdf' && file) {
-        if (message.includes('50 MB') || message.includes('limit')) {
-          message = `O arquivo "${file.name}" excede o limite de 50 MB. Tamanho atual: ${(file.size / (1024 * 1024)).toFixed(1)} MB.`;
-        } else if (message.includes('400') || message.includes('Bad Request')) {
+        let reason: 'size' | 'type' | 'network' = 'network';
+        if (message.includes('50MB') || message.includes('50 MB') || message.includes('limite') || message.includes('limit')) {
+          reason = 'size';
+          message = `O arquivo "${file.name}" excede o limite de 50MB. Tamanho atual: ${(file.size / (1024 * 1024)).toFixed(1)} MB.`;
+        } else if (message.includes('PDF') || message.includes('suportado') || message.includes('400') || message.includes('Bad Request')) {
+          reason = 'type';
           message = `O arquivo "${file.name}" não é um PDF válido. Selecione um arquivo com extensão .pdf.`;
         } else {
           message = `Erro ao enviar o PDF "${file.name}": ${message}`;
         }
+        track('pdf_upload_failed', { reason, source: 'subject' });
       }
       setErrorMsg(message);
     } finally {

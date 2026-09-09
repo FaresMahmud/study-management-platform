@@ -2,6 +2,7 @@ import React, { useEffect } from 'react';
 import { useNavigate } from 'react-router-dom';
 import { Sparkles, Compass, FileText, X, Brain } from 'lucide-react';
 import { triggerConfetti } from '../utils/confetti';
+import { track } from '../utils/analytics';
 
 interface PostUploadModalProps {
   isOpen: boolean;
@@ -29,6 +30,7 @@ export default function PostUploadModal({
   if (!isOpen) return null;
 
   const handleGenerateQuestions = () => {
+    track('post_upload_cta_clicked', { cta: 'generate_questions' });
     onClose();
     const query = new URLSearchParams();
     if (subjectId) query.set('subjectId', String(subjectId));
@@ -37,10 +39,16 @@ export default function PostUploadModal({
   };
 
   const handleStartSimulation = () => {
+    track('post_upload_cta_clicked', { cta: 'start_simulation' });
     onClose();
     const query = new URLSearchParams();
     if (subjectId) query.set('subjectId', String(subjectId));
     navigate(`/simulation?${query.toString()}`);
+  };
+
+  const handleViewMaterial = () => {
+    track('post_upload_cta_clicked', { cta: 'view_material' });
+    onClose();
   };
 
   return (
@@ -214,7 +222,7 @@ export default function PostUploadModal({
         {/* Tertiary CTA */}
         <div style={{ textAlign: 'center', marginTop: '14px' }}>
           <button
-            onClick={onClose}
+            onClick={handleViewMaterial}
             style={{
               background: 'transparent',
               border: 'none',

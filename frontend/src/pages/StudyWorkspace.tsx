@@ -14,6 +14,7 @@ import PaywallModal from '../components/PaywallModal';
 import PdfViewer from '../components/PdfViewer';
 import SummaryEditor from '../components/SummaryEditor';
 import PostUploadModal from '../components/PostUploadModal';
+import { track } from '../utils/analytics';
 
 export default function StudyWorkspace() {
   const queryClient = useQueryClient();
@@ -146,6 +147,11 @@ export default function StudyWorkspace() {
       queryClient.invalidateQueries({ queryKey: ['pdf-files', selectedSubjectId] });
       queryClient.invalidateQueries({ queryKey: ['uploaded-files'] });
       setActiveFileId(data.id); // Abre o arquivo recém-enviado imediatamente
+      const sizeMb = (data as any).fileSize ? Number(((data as any).fileSize / (1024 * 1024)).toFixed(2)) : 0;
+      track('pdf_upload_completed', {
+        source: selectedSubjectId ? 'subject' : 'workspace',
+        size_mb: sizeMb
+      });
       setPostUploadData({
         fileName: data.fileName,
         subjectId: selectedSubjectId ? Number(selectedSubjectId) : undefined,
@@ -156,6 +162,7 @@ export default function StudyWorkspace() {
     onError: (error: Error & { response?: { data?: { message?: string } } }) => {
       const msg = error.response?.data?.message || error.message || 'Erro ao enviar o arquivo.';
       setUploadError(msg);
+      track('pdf_upload_failed', { reason: 'network', source: selectedSubjectId ? 'subject' : 'workspace' });
       toast.error(msg);
     }
   });
@@ -235,6 +242,23 @@ export default function StudyWorkspace() {
   const handleFileUpload = (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0 || !selectedSubjectId) return;
     const file = e.target.files[0];
+    track('pdf_upload_started', { source: 'subject' });
+
+    // Validação ANTES de iniciar upload
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+    if (!isPdf) {
+      toast.error('Formato não suportado — envie um arquivo PDF.');
+      track('pdf_upload_failed', { reason: 'type', source: 'subject' });
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Arquivo muito grande — o limite é 50MB.');
+      track('pdf_upload_failed', { reason: 'size', source: 'subject' });
+      e.target.value = '';
+      return;
+    }
+
     setUploadError(null);
     const formData = new FormData();
     formData.append('file', file);
@@ -246,6 +270,23 @@ export default function StudyWorkspace() {
   const handleDirectFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
     if (!e.target.files || e.target.files.length === 0) return;
     const file = e.target.files[0];
+    track('pdf_upload_started', { source: 'workspace' });
+
+    // Validação ANTES de iniciar upload
+    const isPdf = file.name.toLowerCase().endsWith('.pdf') || file.type === 'application/pdf';
+    if (!isPdf) {
+      toast.error('Formato não suportado — envie um arquivo PDF.');
+      track('pdf_upload_failed', { reason: 'type', source: 'workspace' });
+      e.target.value = '';
+      return;
+    }
+    if (file.size > 50 * 1024 * 1024) {
+      toast.error('Arquivo muito grande — o limite é 50MB.');
+      track('pdf_upload_failed', { reason: 'size', source: 'workspace' });
+      e.target.value = '';
+      return;
+    }
+
     let targetSubId = selectedSubjectId;
 
     if (!targetSubId) {

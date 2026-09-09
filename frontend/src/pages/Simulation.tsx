@@ -5,6 +5,7 @@ import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient, normalizeListResponse } from '../api/client';
 import { triggerConfetti } from '../utils/confetti';
 import ExamWizard from '../components/wizard/ExamWizard';
+import { trackOnce } from '../utils/analytics';
 
 interface ExamPrep {
   id: number;
@@ -98,6 +99,10 @@ export default function Simulation() {
         }
       }));
       setQuestions(formatted);
+
+      // Tracking de funil: primeiro simulado iniciado e primeiras questões geradas
+      trackOnce('first_simulation_started');
+      trackOnce('first_questions_generated', { count: formatted.length });
 
       setAnswers({});
       setMarkedQuestions({});

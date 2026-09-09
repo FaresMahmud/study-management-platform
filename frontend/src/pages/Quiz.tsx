@@ -5,6 +5,7 @@ import { apiClient } from '../api/client';
 import type { Subject } from '../types';
 import { triggerConfetti } from '../utils/confetti';
 import { useToast } from '../hooks/useToast';
+import { trackOnce } from '../utils/analytics';
 
 interface ExamPrep {
   id: number;
@@ -136,7 +137,9 @@ export default function Quiz() {
   const handleStartQuiz = () => {
     // dynamic questions or predefined
     const questionsPool = PREDEFINED_QUESTIONS.default;
-    setQuestions([...questionsPool].sort(() => 0.5 - Math.random()).slice(0, 3));
+    const selected = [...questionsPool].sort(() => 0.5 - Math.random()).slice(0, 3);
+    setQuestions(selected);
+    trackOnce('first_questions_generated', { count: selected.length });
     setCurrentIdx(0);
     setSelectedAnswer(null);
     setCorrectAnswersCount(0);
