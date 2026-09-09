@@ -5,7 +5,7 @@ import { useState } from 'react';
 import { Link } from 'react-router-dom';
 import { apiClient, normalizeListResponse } from '../api/client';
 import { useToast } from '../hooks/useToast';
-import type { SpringPage, Subject, Summary, Goal, Flashcard, StudySession } from '../types';
+import type { SpringPage, Subject, Summary, Goal, Flashcard, StudySession, PDFFile } from '../types';
 
 const PREDEFINED_COLORS = [
   '#6366f1', // Indigo
@@ -74,6 +74,15 @@ export default function Subjects() {
     queryFn: async () => {
       const response = await apiClient.get<{ content?: StudySession[] }>('/api/study-sessions?size=1000');
       return normalizeListResponse<StudySession>(response.data);
+    },
+  });
+
+  // Fetch uploaded files (PDFs)
+  const { data: uploadedFiles = [] } = useQuery<PDFFile[]>({
+    queryKey: ['uploaded-files'],
+    queryFn: async () => {
+      const response = await apiClient.get<SpringPage<PDFFile>>('/api/files?size=1000');
+      return normalizeListResponse<PDFFile>(response.data);
     },
   });
 
@@ -302,11 +311,15 @@ export default function Subjects() {
                   <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}>
                     {(() => {
                       const cardsCount = flashcards.filter(f => f.subject?.id === subj.id).length;
-                      const pdfsCount = summaries.filter(s => s.subject?.id === subj.id).length;
+                      const subjectFiles = uploadedFiles.filter(f => f.subjectId === subj.id || (f as any).subject?.id === subj.id);
+                      const subjectSummaries = summaries.filter(s => s.subject?.id === subj.id);
                       return (
-                        <div style={{ display: 'flex', gap: 'var(--space-md)', fontSize: '11px', color: 'var(--text-muted)' }}>
+                        <div style={{ display: 'flex', gap: 'var(--space-sm)', fontSize: '11px', color: 'var(--text-muted)', flexWrap: 'wrap' }}>
                           <span><strong>{cardsCount}</strong> Flashcards</span>
-                          <span><strong>{pdfsCount}</strong> PDFs / Resumos</span>
+                          <span>•</span>
+                          <span><strong>{subjectFiles.length}</strong> PDFs</span>
+                          <span>•</span>
+                          <span><strong>{subjectSummaries.length}</strong> Resumos</span>
                         </div>
                       );
                     })()}
@@ -322,31 +335,68 @@ export default function Subjects() {
                   </div>
 
                   {expandedSubjectId === subj.id && (
-                    <div style={{ marginTop: '13px', paddingTop: '13px', borderTop: '1px dashed var(--border-color)' }}>
-                      <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 'var(--space-xs)' }}>
-                        <FileText size={13} style={{ color: subj.color || 'var(--primary)' }} />
-                        PDFs Extraídos
-                      </span>
-
+                    <div style={{ marginTop: '13px', paddingTop: '13px', borderTop: '1px dashed var(--border-color)', display: 'flex', flexDirection: 'column', gap: '12px' }}>
+                      {/* Seção 1: PDFs enviados */}
                       {(() => {
-                        const subjectSummaries = summaries.filter(s => s.subject.id === subj.id);
-                        if (subjectSummaries.length === 0) {
-                          return <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>Nenhum PDF processado para esta matéria.</p>;
-                        }
+                        const subjectFiles = uploadedFiles.filter(f => f.subjectId === subj.id || (f as any).subject?.id === subj.id);
                         return (
-                          <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
-                            {subjectSummaries.map(sum => (
-                              <Link
-                                key={sum.id}
-                                to="/summaries"
-                                state={{ activeSummaryId: sum.id }}
-                                className="sessao-recente-item"
-                                style={{ padding: '8px 12px', fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
-                              >
-                                <span>{sum.title}</span>
-                                <ArrowRight size={12} />
-                              </Link>
-                            ))}
+                          <div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 'var(--space-xs)' }}>
+                              <FileText size={13} style={{ color: subj.color || 'var(--primary)' }} />
+                              PDFs de Estudo ({subjectFiles.length})
+                            </span>
+                            {subjectFiles.length === 0 ? (
+                              <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                Nenhum PDF anexado. <Link to={`/workspace?subjectId=${subj.id}`} style={{ color: 'var(--primary)', textDecoration: 'underline' }}>Enviar PDF na Área de Estudo</Link>
+                              </p>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                {subjectFiles.map(f => (
+                                  <Link
+                                    key={f.id}
+                                    to={`/workspace?subjectId=${subj.id}&fileId=${f.id}`}
+                                    className="sessao-recente-item"
+                                    style={{ padding: '8px 12px', fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                    title="Abrir este PDF na Área de Estudos"
+                                  >
+                                    <span style={{ textOverflow: 'ellipsis', overflow: 'hidden', whiteSpace: 'nowrap' }}>📄 {f.fileName}</span>
+                                    <ArrowRight size={12} />
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
+                          </div>
+                        );
+                      })()}
+
+                      {/* Seção 2: Resumos & Anotações */}
+                      {(() => {
+                        const subjectSummaries = summaries.filter(s => s.subject?.id === subj.id);
+                        return (
+                          <div>
+                            <span style={{ fontSize: '0.75rem', fontWeight: 700, color: 'var(--text-secondary)', display: 'flex', alignItems: 'center', gap: '6px', marginBottom: 'var(--space-xs)' }}>
+                              <BookOpen size={13} style={{ color: subj.color || 'var(--primary)' }} />
+                              Páginas de Resumos ({subjectSummaries.length})
+                            </span>
+                            {subjectSummaries.length === 0 ? (
+                              <p style={{ fontSize: '11px', color: 'var(--text-muted)', fontStyle: 'italic' }}>
+                                Nenhum resumo criado ainda.
+                              </p>
+                            ) : (
+                              <div style={{ display: 'flex', flexDirection: 'column', gap: '6px' }}>
+                                {subjectSummaries.map(sum => (
+                                  <Link
+                                    key={sum.id}
+                                    to={`/workspace?subjectId=${subj.id}&summaryId=${sum.id}`}
+                                    className="sessao-recente-item"
+                                    style={{ padding: '8px 12px', fontSize: '0.75rem', display: 'flex', justifyContent: 'space-between', alignItems: 'center' }}
+                                  >
+                                    <span>📝 {sum.title}</span>
+                                    <ArrowRight size={12} />
+                                  </Link>
+                                ))}
+                              </div>
+                            )}
                           </div>
                         );
                       })()}

@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X, AlertCircle, RefreshCw } from 'lucide-react';
 import axios from 'axios';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -167,105 +167,92 @@ export default function PdfViewer({
     window.addEventListener('mouseup', onMouseUp);
   };
 
+  const [pdfError, setPdfError] = useState<string | null>(null);
+
+  const loadPdfDoc = useCallback(async (fileId: number) => {
+    setPdfLoading(true);
+    setPdfError(null);
+    try {
+      // Usa instância axios sem interceptors para obter o ArrayBuffer puro
+      const token = useAuthStore.getState().token;
+      const response = await pdfAxios.get(`/api/v1/files/${fileId}/view`, {
+        headers: token ? { Authorization: `Bearer ${token}` } : {},
+      });
+
+      let rawData: ArrayBuffer;
+      if (response.data instanceof ArrayBuffer) {
+        rawData = response.data;
+      } else if (ArrayBuffer.isView(response.data)) {
+        rawData = response.data.buffer as ArrayBuffer;
+      } else {
+        rawData = new Uint8Array(response.data).buffer as ArrayBuffer;
+      }
+
+      if (rawData.byteLength > 0) {
+        const header = new Uint8Array(rawData.slice(0, 10));
+        const headerStr = String.fromCharCode(...header);
+        const isPDF = headerStr.startsWith('%PDF');
+
+        if (!isPDF) {
+          setPdfError('O arquivo recebido não é um PDF válido ou está corrompido.');
+          loadedFileIdRef.current = null;
+          return;
+        }
+      }
+
+      if (!rawData || rawData.byteLength === 0) {
+        setPdfError('O arquivo PDF está vazio no servidor.');
+        loadedFileIdRef.current = null;
+        return;
+      }
+
+      const loadingTask = pdfjsLib.getDocument({
+        data: new Uint8Array(rawData),
+      });
+
+      const pdf = await loadingTask.promise;
+      setPdfDoc(pdf);
+      setNumPages(pdf.numPages);
+      setPageNum(1);
+      setPdfError(null);
+    } catch (err) {
+      loadedFileIdRef.current = null;
+      setPdfDoc(null);
+      console.error('Erro ao renderizar o PDF:', err);
+      let msg = 'Não foi possível carregar o arquivo PDF do servidor.';
+      if (err && typeof err === 'object' && 'response' in err) {
+        const axiosErr = err as { response?: { status?: number } };
+        if (axiosErr.response?.status === 404) {
+          msg = 'Arquivo PDF não encontrado no servidor. Ele pode ter sido removido ou o upload não foi concluído.';
+        } else if (axiosErr.response?.status === 403) {
+          msg = 'Você não tem permissão para acessar este arquivo.';
+        } else if (axiosErr.response?.status === 401) {
+          msg = 'Sessão expirada. Faça login novamente.';
+        }
+      } else if (err instanceof Error && err.message?.includes('Password')) {
+        msg = 'Este PDF está protegido por senha e não pode ser aberto.';
+      }
+      setPdfError(msg);
+    } finally {
+      setPdfLoading(false);
+    }
+  }, []);
+
   // Load PDF document
   useEffect(() => {
     if (!activeFileId) {
-      setTimeout(() => {
-        setPdfDoc(null);
-        setPageNum(1);
-      }, 0);
+      setPdfDoc(null);
+      setPageNum(1);
+      setPdfError(null);
       loadedFileIdRef.current = null;
       return;
     }
 
-    // Avoid re-loading if already loaded for this exact file
     if (loadedFileIdRef.current === activeFileId) return;
     loadedFileIdRef.current = activeFileId;
 
-    const loadPdf = async () => {
-      setPdfLoading(true);
-      try {
-        // Usa instância axios sem interceptors para obter o ArrayBuffer puro
-        const token = useAuthStore.getState().token;
-        const response = await pdfAxios.get(`/api/v1/files/${activeFileId}/view`, {
-          headers: token ? { Authorization: `Bearer ${token}` } : {},
-        });
-
-        // Diagnóstico: verifica o que o servidor retornou
-        console.log('[PdfViewer] Content-Type:', response.headers?.['content-type']);
-        console.log('[PdfViewer] Status:', response.status);
-        console.log('[PdfViewer] Data type:', typeof response.data, response.data?.constructor?.name);
-
-        // Garante que recebemos um ArrayBuffer válido
-        let rawData: ArrayBuffer;
-        if (response.data instanceof ArrayBuffer) {
-          rawData = response.data;
-        } else if (ArrayBuffer.isView(response.data)) {
-          rawData = response.data.buffer as ArrayBuffer;
-        } else {
-          rawData = new Uint8Array(response.data).buffer as ArrayBuffer;
-        }
-
-        console.log('[PdfViewer] ArrayBuffer size:', rawData.byteLength, 'bytes');
-
-        // Diagnóstico: verifica os primeiros bytes (PDF começa com %PDF)
-        if (rawData.byteLength > 0) {
-          const header = new Uint8Array(rawData.slice(0, 10));
-          const headerStr = String.fromCharCode(...header);
-          console.log('[PdfViewer] File header:', headerStr.replace(/[^\x20-\x7E]/g, '.'));
-          const isPDF = headerStr.startsWith('%PDF');
-          console.log('[PdfViewer] Starts with %PDF:', isPDF);
-
-          if (!isPDF) {
-            // Provavelmente é uma resposta de erro HTML/JSON em vez de PDF
-            const textPreview = new TextDecoder('utf-8', { fatal: false }).decode(rawData.slice(0, 500));
-            console.log('[PdfViewer] Response is NOT a PDF. Content preview:', textPreview);
-            alert('O servidor não retornou um PDF válido. Verifique se o arquivo existe e é um PDF legível.');
-            loadedFileIdRef.current = null;
-            return;
-          }
-        }
-
-        if (!rawData || rawData.byteLength === 0) {
-          alert('O servidor retornou um arquivo PDF vazio.');
-          loadedFileIdRef.current = null;
-          return;
-        }
-
-        const loadingTask = pdfjsLib.getDocument({
-          data: new Uint8Array(rawData),
-        });
-
-        const pdf = await loadingTask.promise;
-        setTimeout(() => {
-          setPdfDoc(pdf);
-          setNumPages(pdf.numPages);
-          setPageNum(1);
-        }, 0);
-      } catch (err) {
-        loadedFileIdRef.current = null;
-        console.error('Erro ao renderizar o PDF:', err);
-        let msg = 'Não foi possível ler o PDF do servidor.';
-        if (err && typeof err === 'object' && 'response' in err) {
-          const axiosErr = err as { response?: { status?: number } };
-          if (axiosErr.response?.status === 404) {
-            msg = 'Arquivo PDF não encontrado no servidor. Ele pode ter sido removido.';
-          } else if (axiosErr.response?.status === 403) {
-            msg = 'Você não tem permissão para acessar este arquivo.';
-          } else if (axiosErr.response?.status === 401) {
-            msg = 'Sessão expirada. Faça login novamente.';
-          }
-        } else if (err instanceof Error && err.message?.includes('Password')) {
-          msg = 'Este PDF está protegido por senha e não pode ser aberto.';
-        }
-        alert(msg);
-      } finally {
-        setPdfLoading(false);
-      }
-    };
-
-    loadPdf();
-  }, [activeFileId]);
+    loadPdfDoc(activeFileId);
+  }, [activeFileId, loadPdfDoc]);
 
   // Draw highlights and drawings
   const drawStoredHighlights = useCallback(() => {
@@ -595,14 +582,51 @@ export default function PdfViewer({
       </div>
 
       {/* PDF VIEWER SCROLLPORT */}
-      <div className="workspace__pdf" style={{ backgroundColor: '#334155', display: 'flex', justifyContent: 'center', position: 'relative' }}>
+      <div className="workspace__pdf" style={{ backgroundColor: '#334155', display: 'flex', justifyContent: 'center', position: 'relative', overflow: 'auto', minHeight: '300px' }}>
         {pdfLoading && (
-          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', zIndex: 5 }}>
-            Renderizando PDF...
+          <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', zIndex: 15, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
+            <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite' }} />
+            <span style={{ fontSize: '0.9rem', fontWeight: 500 }}>Carregando arquivo PDF...</span>
           </div>
         )}
-        
-        <div style={{ position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', height: 'fit-content' }}>
+
+        {pdfError && !pdfLoading && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '2rem', textAlign: 'center', color: '#94a3b8', margin: 'auto' }}>
+            <AlertCircle size={44} style={{ color: 'var(--danger)', marginBottom: '1rem' }} />
+            <h3 style={{ color: 'white', marginBottom: '0.5rem', fontSize: '1.1rem' }}>Não foi possível exibir o PDF</h3>
+            <p style={{ maxWidth: '380px', fontSize: '0.85rem', color: '#cbd5e1', marginBottom: '1.25rem', lineHeight: 1.5 }}>
+              {pdfError}
+            </p>
+            {activeFileId && (
+              <button
+                className="btn btn-primary btn-sm"
+                onClick={() => {
+                  loadedFileIdRef.current = null;
+                  loadPdfDoc(activeFileId);
+                }}
+                style={{ display: 'flex', alignItems: 'center', gap: '6px' }}
+              >
+                <RefreshCw size={14} />
+                Tentar novamente
+              </button>
+            )}
+          </div>
+        )}
+
+        {!pdfError && !pdfLoading && (!activeFileId || pdfFiles.length === 0) && (
+          <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '2rem', textAlign: 'center', color: '#94a3b8', margin: 'auto' }}>
+            <FileText size={48} style={{ color: 'var(--primary)', opacity: 0.7, marginBottom: '1rem' }} />
+            <h3 style={{ color: 'white', marginBottom: '0.5rem', fontSize: '1.1rem' }}>Nenhum PDF selecionado</h3>
+            <p style={{ maxWidth: '360px', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', lineHeight: 1.5 }}>
+              {pdfFiles.length === 0
+                ? 'Esta matéria ainda não possui arquivos PDF. Clique em "+ PDF" no topo para enviar o material de aula.'
+                : 'Selecione um dos PDFs da lista acima para iniciar a leitura e anotações.'}
+            </p>
+          </div>
+        )}
+
+        {pdfDoc && !pdfError && (
+          <div style={{ position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', height: 'fit-content' }}>
           {/* Rendered PDF Page */}
           <canvas ref={canvasRef} />
           
@@ -822,6 +846,7 @@ export default function PdfViewer({
             </div>
           )}
         </div>
+        )}
       </div>
     </div>
   );

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { BookOpen, Plus, Sparkles, Upload, FileText } from 'lucide-react';
+import { BookOpen, Plus, Sparkles, Upload, FileText, Trash2 } from 'lucide-react';
 import React, { useRef, useState, useEffect } from 'react';
+import { useSearchParams } from 'react-router-dom';
 import { apiClient, normalizeListResponse } from '../api/client';
 import { useAuthStore } from '../store/authStore';
 import { useToast } from '../hooks/useToast';
@@ -17,11 +18,22 @@ export default function StudyWorkspace() {
   const queryClient = useQueryClient();
   const toast = useToast();
   const premium = useAuthStore(state => state.premium);
+  const [searchParams] = useSearchParams();
+
+  const querySubjectId = searchParams.get('subjectId');
+  const queryFileId = searchParams.get('fileId');
+  const querySummaryId = searchParams.get('summaryId');
 
   // ─── Estados de Navegação e Layout ────────────────────────────────────
-  const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>('');
-  const [activeFileId, setActiveFileId] = useState<number | null>(null);
-  const [activeSummaryId, setActiveSummaryId] = useState<number | null>(null);
+  const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>(
+    querySubjectId ? Number(querySubjectId) : ''
+  );
+  const [activeFileId, setActiveFileId] = useState<number | null>(
+    queryFileId ? Number(queryFileId) : null
+  );
+  const [activeSummaryId, setActiveSummaryId] = useState<number | null>(
+    querySummaryId ? Number(querySummaryId) : null
+  );
   const [splitRatio, setSplitRatio] = useState<number>(55); // 55% PDF, 45% Editor
 
   // ─── Estados dos Modais Auxiliares ────────────────────────────────────
@@ -64,21 +76,49 @@ export default function StudyWorkspace() {
   // ─── Auto-seleção inteligente para evitar tela vazia ──────────────────
   useEffect(() => {
     if (!selectedSubjectId && subjects.length > 0) {
-      setSelectedSubjectId(subjects[0].id);
+      if (querySubjectId && subjects.some(s => s.id === Number(querySubjectId))) {
+        setSelectedSubjectId(Number(querySubjectId));
+      } else {
+        setSelectedSubjectId(subjects[0].id);
+      }
     }
-  }, [subjects, selectedSubjectId]);
+  }, [subjects, selectedSubjectId, querySubjectId]);
+
+  // Reseta ou inicializa IDs ao mudar de matéria
+  useEffect(() => {
+    if (selectedSubjectId) {
+      if (queryFileId && selectedSubjectId === Number(querySubjectId)) {
+        setActiveFileId(Number(queryFileId));
+      } else {
+        setActiveFileId(null);
+      }
+      if (querySummaryId && selectedSubjectId === Number(querySubjectId)) {
+        setActiveSummaryId(Number(querySummaryId));
+      } else {
+        setActiveSummaryId(null);
+      }
+    }
+  }, [selectedSubjectId, queryFileId, querySummaryId, querySubjectId]);
 
   useEffect(() => {
-    if (pdfFiles.length > 0 && (!activeFileId || !pdfFiles.some(f => f.id === activeFileId))) {
-      setActiveFileId(pdfFiles[0].id);
+    if (pdfFiles.length > 0) {
+      if (!activeFileId || !pdfFiles.some(f => f.id === activeFileId)) {
+        setActiveFileId(pdfFiles[0].id);
+      }
+    } else {
+      setActiveFileId(null);
     }
-  }, [pdfFiles, activeFileId]);
+  }, [pdfFiles]);
 
   useEffect(() => {
-    if (summaries.length > 0 && (!activeSummaryId || !summaries.some(s => s.id === activeSummaryId))) {
-      setActiveSummaryId(summaries[0].id);
+    if (summaries.length > 0) {
+      if (!activeSummaryId || !summaries.some(s => s.id === activeSummaryId)) {
+        setActiveSummaryId(summaries[0].id);
+      }
+    } else {
+      setActiveSummaryId(null);
     }
-  }, [summaries, activeSummaryId]);
+  }, [summaries]);
 
   // ─── Mutations de Arquivos e Resumos ──────────────────────────────────
   const [uploadError, setUploadError] = useState<string | null>(null);
@@ -91,7 +131,13 @@ export default function StudyWorkspace() {
     },
     onSuccess: (data) => {
       setUploadError(null);
+      // Atualiza o cache do React Query imediatamente para evitar race condition com useEffect
+      queryClient.setQueryData<PDFFile[]>(['pdf-files', selectedSubjectId], (old = []) => {
+        const filtered = old.filter(f => f.id !== data.id);
+        return [...filtered, data];
+      });
       queryClient.invalidateQueries({ queryKey: ['pdf-files', selectedSubjectId] });
+      queryClient.invalidateQueries({ queryKey: ['uploaded-files'] });
       setActiveFileId(data.id); // Abre o arquivo recém-enviado imediatamente
       triggerConfetti();
       toast.success(`PDF "${data.fileName}" carregado e pronto para estudo! 📄✨`);
@@ -100,6 +146,24 @@ export default function StudyWorkspace() {
       const msg = error.response?.data?.message || error.message || 'Erro ao enviar o arquivo.';
       setUploadError(msg);
       toast.error(msg);
+    }
+  });
+
+  const deleteFileMutation = useMutation({
+    mutationFn: async (fileId: number) => {
+      await apiClient.delete(`/api/files/${fileId}`);
+    },
+    onSuccess: (_, fileId) => {
+      queryClient.setQueryData<PDFFile[]>(['pdf-files', selectedSubjectId], (old = []) =>
+        old.filter(f => f.id !== fileId)
+      );
+      queryClient.invalidateQueries({ queryKey: ['pdf-files', selectedSubjectId] });
+      queryClient.invalidateQueries({ queryKey: ['uploaded-files'] });
+      setActiveFileId(null);
+      toast.success('Arquivo PDF removido com sucesso!');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir o arquivo PDF.');
     }
   });
 
@@ -242,8 +306,26 @@ export default function StudyWorkspace() {
             <label className="btn btn-secondary btn-sm" style={{ cursor: 'pointer', margin: 0, display: 'flex', alignItems: 'center', gap: '4px', opacity: uploadMutation.isPending ? 0.6 : 1 }}>
               <Upload size={14} />
               {uploadMutation.isPending ? 'Enviando...' : 'PDF'}
-              <input type="file" accept="application/pdf" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploadMutation.isPending} />
+              <input type="file" accept="application/pdf,.pdf" style={{ display: 'none' }} onChange={handleFileUpload} disabled={uploadMutation.isPending} />
             </label>
+
+            {/* Excluir PDF ativo */}
+            {activeFileId && (
+              <button
+                className="btn btn-secondary btn-sm"
+                style={{ padding: '6px 8px', color: 'var(--danger)', margin: 0 }}
+                title="Excluir PDF selecionado"
+                disabled={deleteFileMutation.isPending}
+                onClick={() => {
+                  const activeFile = pdfFiles.find(f => f.id === activeFileId);
+                  if (confirm(`Deseja realmente excluir o arquivo "${activeFile?.fileName || 'PDF'}" desta matéria?`)) {
+                    deleteFileMutation.mutate(activeFileId);
+                  }
+                }}
+              >
+                <Trash2 size={14} />
+              </button>
+            )}
 
             {/* Botão de destaque: Gerar Resumo Inteligente com IA */}
             <button

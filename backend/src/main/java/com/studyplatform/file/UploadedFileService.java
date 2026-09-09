@@ -16,6 +16,7 @@ import java.nio.file.Files;
 import java.nio.file.Path;
 import java.nio.file.Paths;
 import java.nio.file.StandardCopyOption;
+import java.util.ArrayList;
 import java.util.List;
 import java.util.UUID;
 import lombok.RequiredArgsConstructor;
@@ -99,22 +100,55 @@ public class UploadedFileService {
     }
 
 
-    @Transactional(readOnly = true)
+    @Transactional
     public Page<UploadedFileResponseDTO> listAll(int page, int size) {
         User user = getAuthenticatedUser();
         Pageable pageable = PageRequest.of(page, size, Sort.by("id").descending());
+        Page<UploadedFile> filesPage = uploadedFileRepository.findByUserId(user.getId(), pageable);
+
+        for (UploadedFile file : filesPage.getContent()) {
+            Path path = this.fileStorageLocation.resolve(file.getFilePath()).normalize();
+            if (!Files.exists(path)) {
+                log.warn("Arquivo órfão detectado em listAll: ID {}, Caminho: {}. Limpando registro.", file.getId(), file.getFilePath());
+                cleanupOrphanedFile(file);
+            }
+        }
 
         return uploadedFileRepository.findByUserId(user.getId(), pageable)
                 .map(this::mapToResponseDTO);
     }
 
-    @Transactional(readOnly = true)
+    @Transactional
     public List<UploadedFileResponseDTO> listBySubject(Long subjectId) {
         User user = getAuthenticatedUser();
-        return uploadedFileRepository.findByUserIdAndSubjectId(user.getId(), subjectId)
-                .stream()
+        List<UploadedFile> files = uploadedFileRepository.findByUserIdAndSubjectId(user.getId(), subjectId);
+        List<UploadedFile> validFiles = new ArrayList<>();
+
+        for (UploadedFile file : files) {
+            Path path = this.fileStorageLocation.resolve(file.getFilePath()).normalize();
+            if (Files.exists(path)) {
+                validFiles.add(file);
+            } else {
+                log.warn("Arquivo órfão detectado em listBySubject: ID {}, Caminho: {}. Limpando registro.", file.getId(), file.getFilePath());
+                cleanupOrphanedFile(file);
+            }
+        }
+
+        return validFiles.stream()
                 .map(this::mapToResponseDTO)
                 .toList();
+    }
+
+    private void cleanupOrphanedFile(UploadedFile file) {
+        try {
+            List<PdfChunk> chunks = pdfChunkRepository.findByUploadedFileId(file.getId());
+            pdfChunkRepository.deleteAll(chunks);
+            List<FileAnnotation> annotations = fileAnnotationRepository.findByUploadedFileId(file.getId());
+            fileAnnotationRepository.deleteAll(annotations);
+            uploadedFileRepository.delete(file);
+        } catch (Exception ex) {
+            log.error("Erro ao limpar arquivo órfão ID: {}", file.getId(), ex);
+        }
     }
 
     @Transactional(readOnly = true)
@@ -123,7 +157,11 @@ public class UploadedFileService {
         UploadedFile uploadedFile = uploadedFileRepository.findByIdAndUserId(fileId, user.getId())
                 .orElseThrow(() -> new ResourceNotFoundException("Arquivo não encontrado"));
 
-        return this.fileStorageLocation.resolve(uploadedFile.getFilePath()).normalize();
+        Path path = this.fileStorageLocation.resolve(uploadedFile.getFilePath()).normalize();
+        if (!Files.exists(path)) {
+            throw new ResourceNotFoundException("Arquivo físico não encontrado no servidor.");
+        }
+        return path;
     }
 
     @Transactional

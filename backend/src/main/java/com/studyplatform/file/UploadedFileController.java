@@ -35,10 +35,11 @@ public class UploadedFileController {
             return ResponseEntity.badRequest().build();
         }
         String contentType = file.getContentType();
-        boolean isPdf = "application/pdf".equals(contentType)
-                || (contentType != null && contentType.startsWith("application/pdf"));
-        boolean isOctetStream = "application/octet-stream".equals(contentType);
-        if (!isPdf && !isOctetStream) {
+        String originalName = file.getOriginalFilename();
+        boolean hasPdfExtension = originalName != null && originalName.toLowerCase().endsWith(".pdf");
+        boolean isPdf = (contentType != null && (contentType.toLowerCase().contains("pdf") || contentType.toLowerCase().contains("octet-stream")))
+                || hasPdfExtension;
+        if (!isPdf) {
             return ResponseEntity.badRequest().build();
         }
         return ResponseEntity.status(HttpStatus.CREATED).body(uploadedFileService.uploadFile(file, subjectId));
