@@ -35,6 +35,7 @@ export default function PostUploadModal({
     const query = new URLSearchParams();
     if (subjectId) query.set('subjectId', String(subjectId));
     if (fileId) query.set('fileId', String(fileId));
+    query.set('autoStart', 'true');
     navigate(`/simulation?${query.toString()}`);
   };
 
@@ -43,6 +44,7 @@ export default function PostUploadModal({
     onClose();
     const query = new URLSearchParams();
     if (subjectId) query.set('subjectId', String(subjectId));
+    if (fileId) query.set('fileId', String(fileId));
     navigate(`/simulation?${query.toString()}`);
   };
 

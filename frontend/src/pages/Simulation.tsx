@@ -74,13 +74,28 @@ export default function Simulation() {
     }
   });
 
+  const { data: subjects = [] } = useQuery<Array<{ id: number; subjectName: string; examPrepId?: number }>>({
+    queryKey: ['subjects'],
+    queryFn: async () => {
+      const res = await apiClient.get<Array<{ id: number; subjectName: string; examPrepId?: number }>>('/api/subjects');
+      return normalizeListResponse(res.data);
+    }
+  });
+
   useEffect(() => {
     if (queryExamPrepId && examPreps.some(ep => ep.id === Number(queryExamPrepId))) {
       setSelectedExamPrepId(Number(queryExamPrepId));
+    } else if (querySubjectId && subjects.length > 0) {
+      const subj = subjects.find(s => s.id === Number(querySubjectId));
+      if (subj?.examPrepId && examPreps.some(ep => ep.id === subj.examPrepId)) {
+        setSelectedExamPrepId(subj.examPrepId);
+      } else if (examPreps.length > 0 && selectedExamPrepId === '') {
+        setSelectedExamPrepId(examPreps[0].id);
+      }
     } else if (examPreps.length > 0 && selectedExamPrepId === '') {
       setSelectedExamPrepId(examPreps[0].id);
     }
-  }, [examPreps, selectedExamPrepId, queryExamPrepId]);
+  }, [examPreps, subjects, selectedExamPrepId, queryExamPrepId, querySubjectId]);
 
   const selectedPrep = examPreps.find(ep => ep.id === selectedExamPrepId);
 
@@ -122,6 +137,21 @@ export default function Simulation() {
       setStartError(msg);
     }
   });
+
+  const autoStartedRef = useRef(false);
+  useEffect(() => {
+    const shouldAutoStart = searchParams.get('autoStart') === 'true' || searchParams.get('action') === 'generate';
+    if (
+      shouldAutoStart &&
+      selectedExamPrepId &&
+      !autoStartedRef.current &&
+      !simulationStarted &&
+      !startSimulationMutation.isPending
+    ) {
+      autoStartedRef.current = true;
+      startSimulationMutation.mutate(Number(selectedExamPrepId));
+    }
+  }, [selectedExamPrepId, searchParams, simulationStarted, startSimulationMutation]);
 
   const handleStartSimulation = () => {
     setStartError(null);
