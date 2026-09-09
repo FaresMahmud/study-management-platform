@@ -8,4 +8,5 @@ import java.util.List;
 public interface PdfChunkRepository extends JpaRepository<PdfChunk, Long> {
     List<PdfChunk> findByUploadedFileId(Long fileId);
     List<PdfChunk> findByExamPrepId(Long examPrepId);
+    List<PdfChunk> findByUploadedFileSubjectId(Long subjectId);
 }

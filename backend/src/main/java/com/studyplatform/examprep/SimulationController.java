@@ -20,10 +20,20 @@ public class SimulationController {
 
     private final ExamSimulationService examSimulationService;
 
-    @Operation(summary = "Iniciar simulado cronometrado", description = "Gera 3 questões inéditas via IA sem respostas imediatas e inicia o cronômetro de 15 minutos")
+    @Operation(summary = "Iniciar simulado cronometrado",
+               description = "Inicia simulado a partir do banco de questões da matéria ou dispara geração assíncrona")
     @PostMapping("/start")
-    public ResponseEntity<ExamSimulationResponseDTO> start(@RequestParam Long examPrepId) {
-        ExamSimulationResponseDTO simulation = examSimulationService.startSimulation(examPrepId);
+    public ResponseEntity<ExamSimulationResponseDTO> start(
+            @RequestParam(required = false) Long examPrepId,
+            @RequestParam(required = false) Long subjectId,
+            @RequestParam(required = false, defaultValue = "10") Integer questionCount,
+            @RequestBody(required = false) com.studyplatform.examprep.dto.SimulationStartRequestDTO request) {
+
+        Long targetExamPrepId = (request != null && request.getExamPrepId() != null) ? request.getExamPrepId() : examPrepId;
+        Long targetSubjectId = (request != null && request.getSubjectId() != null) ? request.getSubjectId() : subjectId;
+        Integer targetCount = (request != null && request.getQuestionCount() != null) ? request.getQuestionCount() : questionCount;
+
+        ExamSimulationResponseDTO simulation = examSimulationService.startSimulation(targetExamPrepId, targetSubjectId, targetCount);
         return ResponseEntity.ok(simulation);
     }
 

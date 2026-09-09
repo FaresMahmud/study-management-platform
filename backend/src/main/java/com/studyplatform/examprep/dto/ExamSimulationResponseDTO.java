@@ -25,4 +25,8 @@ public class ExamSimulationResponseDTO {
     private Integer score;
     private SimulationStatus status;
     private String contentJson;
+    private Boolean partial;
+    private Integer available;
+    private Integer requested;
+    private String generationJobId;
 }

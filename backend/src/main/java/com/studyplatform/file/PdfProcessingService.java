@@ -21,6 +21,7 @@ public class PdfProcessingService {
 
     private final PdfChunkRepository pdfChunkRepository;
     private final VectorIndexer vectorIndexer;
+    private final com.studyplatform.questionbank.SubjectStyleProfileRepository subjectStyleProfileRepository;
 
     public String extractText(InputStream inputStream) throws Exception {
         Tika tika = new Tika();
@@ -98,6 +99,19 @@ public class PdfProcessingService {
 
             List<PdfChunk> savedChunks = pdfChunkRepository.saveAll(chunksToSave);
             log.info("Salvo {} chunks no banco de dados para arquivo ID: {}", savedChunks.size(), file.getId());
+
+            // Invalida cache de perfil de estilo para a matéria para regeneração no próximo lote
+            if (file.getSubject() != null && file.getSubject().getId() != null) {
+                try {
+                    subjectStyleProfileRepository.findBySubjectId(file.getSubject().getId()).ifPresent(profile -> {
+                        profile.setNeedsRegeneration(true);
+                        subjectStyleProfileRepository.save(profile);
+                        log.info("Perfil de estilo da matéria {} marcado para regeneração após novo PDF.", file.getSubject().getId());
+                    });
+                } catch (Exception styleEx) {
+                    log.warn("Aviso ao invalidar perfil de estilo da matéria após upload de PDF", styleEx);
+                }
+            }
 
             try {
                 vectorIndexer.storeChunks(savedChunks);
