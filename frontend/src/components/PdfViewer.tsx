@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X, AlertCircle, RefreshCw } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X, AlertCircle, RefreshCw, Maximize2 } from 'lucide-react';
 import axios from 'axios';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -37,9 +37,14 @@ export default function PdfViewer({
   const [pageNum, setPageNum] = useState(1);
   const [numPages, setNumPages] = useState(0);
   const [scale, setScale] = useState(1.0);
+  const [isAutoFit, setIsAutoFit] = useState(true);
   const [pdfLoading, setPdfLoading] = useState(false);
   const [overlayCanvasSize, setOverlayCanvasSize] = useState({ width: 0, height: 0 });
   const loadedFileIdRef = useRef<number | null>(null);
+  const scrollContainerRef = useRef<HTMLDivElement | null>(null);
+  const naturalWidthRef = useRef<number>(800);
+  const naturalHeightRef = useRef<number>(1100);
+  const renderTaskRef = useRef<any>(null);
   const [dragPositions, setDragPositions] = useState<Record<number, { x: number; y: number }>>({});
   const [draggingAnnId, setDraggingAnnId] = useState<number | null>(null);
 
@@ -148,10 +153,14 @@ export default function PdfViewer({
 
         try {
           const parsed = JSON.parse(ann.content);
+          const finalXRatio = Number((finalX / canvasW).toFixed(4));
+          const finalYRatio = Number((finalY / canvasH).toFixed(4));
           const updatedContent = JSON.stringify({
             ...parsed,
             x: Math.round(finalX),
-            y: Math.round(finalY)
+            y: Math.round(finalY),
+            xRatio: finalXRatio,
+            yRatio: finalYRatio
           });
           saveAnnotationMutation.mutate({
             ...ann,
@@ -268,7 +277,16 @@ export default function PdfViewer({
         try {
           const coords = JSON.parse(ann.content);
           ctx.fillStyle = coords.color || 'rgba(250, 204, 21, 0.4)';
-          ctx.fillRect(coords.x, coords.y, coords.w, coords.h);
+          if (coords.xRatio !== undefined) {
+            ctx.fillRect(
+              coords.xRatio * canvas.width,
+              coords.yRatio * canvas.height,
+              coords.wRatio * canvas.width,
+              coords.hRatio * canvas.height
+            );
+          } else {
+            ctx.fillRect(coords.x, coords.y, coords.w, coords.h);
+          }
         } catch (_e) {
           console.error(_e);
         }
@@ -299,33 +317,73 @@ export default function PdfViewer({
   const renderPage = useCallback(async () => {
     if (!pdfDoc || !canvasRef.current) return;
 
+    if (renderTaskRef.current) {
+      try {
+        renderTaskRef.current.cancel();
+      } catch (_e) {}
+      renderTaskRef.current = null;
+    }
+
     try {
       const page = await pdfDoc.getPage(pageNum);
-      const viewport = page.getViewport({ scale });
+      const baseViewport = page.getViewport({ scale: 1.0 });
+      naturalWidthRef.current = baseViewport.width;
+      naturalHeightRef.current = baseViewport.height;
+
+      let currentScale = scale;
+      if (isAutoFit && scrollContainerRef.current) {
+        const containerWidth = scrollContainerRef.current.clientWidth;
+        if (containerWidth > 100) {
+          const availableWidth = Math.max(200, containerWidth - 40);
+          const fitScale = Number((availableWidth / baseViewport.width).toFixed(3));
+          if (Math.abs(fitScale - scale) > 0.02) {
+            setScale(fitScale);
+            currentScale = fitScale;
+          }
+        }
+      }
+
+      const outputScale = window.devicePixelRatio || 1;
+      const viewport = page.getViewport({ scale: currentScale });
       const canvas = canvasRef.current;
       const context = canvas.getContext('2d');
 
       if (!context) return;
-      canvas.height = viewport.height;
-      canvas.width = viewport.width;
+      canvas.width = Math.floor(viewport.width * outputScale);
+      canvas.height = Math.floor(viewport.height * outputScale);
+      canvas.style.width = `${Math.floor(viewport.width)}px`;
+      canvas.style.height = `${Math.floor(viewport.height)}px`;
 
       if (overlayCanvasRef.current) {
-        overlayCanvasRef.current.height = viewport.height;
-        overlayCanvasRef.current.width = viewport.width;
-        setOverlayCanvasSize({ width: viewport.width, height: viewport.height });
+        overlayCanvasRef.current.width = Math.floor(viewport.width);
+        overlayCanvasRef.current.height = Math.floor(viewport.height);
+        overlayCanvasRef.current.style.width = `${Math.floor(viewport.width)}px`;
+        overlayCanvasRef.current.style.height = `${Math.floor(viewport.height)}px`;
+        setOverlayCanvasSize({ width: Math.floor(viewport.width), height: Math.floor(viewport.height) });
       }
 
-      await page.render({
+      const transform = outputScale !== 1
+        ? [outputScale, 0, 0, outputScale, 0, 0]
+        : undefined;
+
+      const renderTask = page.render({
         canvas: canvas,
         canvasContext: context,
+        transform: transform,
         viewport: viewport
-      }).promise;
+      });
+      renderTaskRef.current = renderTask;
+      await renderTask.promise;
+      renderTaskRef.current = null;
 
       drawStoredHighlights();
-    } catch (err) {
+    } catch (err: any) {
+      if (err?.name === 'RenderingCancelledException') {
+        return;
+      }
       console.error('Erro ao renderizar a página do PDF:', err);
     }
-  }, [pdfDoc, pageNum, scale, drawStoredHighlights]);
+  }, [pdfDoc, pageNum, scale, isAutoFit, drawStoredHighlights]);
 
   // Keep refs in sync with latest functions
   const renderPageRef = useRef(renderPage);
@@ -340,11 +398,51 @@ export default function PdfViewer({
 
   useEffect(() => {
     renderPageRef.current();
-  }, [pdfDoc, pageNum, scale]);
+  }, [pdfDoc, pageNum, scale, isAutoFit]);
 
   useEffect(() => {
     drawStoredHighlightsRef.current();
   }, [dbAnnotations]);
+
+  // ResizeObserver para manter o auto-fit sempre perfeito ao mexer no split ou janela
+  useEffect(() => {
+    const container = scrollContainerRef.current;
+    if (!container) return;
+
+    let resizeTimer: ReturnType<typeof setTimeout>;
+    const observer = new ResizeObserver((entries) => {
+      for (const entry of entries) {
+        if (entry.contentRect.width > 100 && isAutoFit && naturalWidthRef.current > 0) {
+          clearTimeout(resizeTimer);
+          resizeTimer = setTimeout(() => {
+            const availableWidth = Math.max(200, entry.contentRect.width - 40);
+            const newScale = Math.max(0.3, Math.min(3.0, availableWidth / naturalWidthRef.current));
+            setScale(Number(newScale.toFixed(3)));
+          }, 50);
+        }
+      }
+    });
+
+    observer.observe(container);
+    return () => {
+      clearTimeout(resizeTimer);
+      observer.disconnect();
+    };
+  }, [isAutoFit]);
+
+  const handleToggleFitWidth = () => {
+    if (isAutoFit) {
+      setIsAutoFit(false);
+      setScale(1.0);
+    } else {
+      setIsAutoFit(true);
+      if (scrollContainerRef.current && naturalWidthRef.current > 0) {
+        const availableWidth = Math.max(200, scrollContainerRef.current.clientWidth - 40);
+        const newScale = Math.max(0.3, Math.min(3.0, availableWidth / naturalWidthRef.current));
+        setScale(Number(newScale.toFixed(3)));
+      }
+    }
+  };
 
   // Mouse coords
   const getMousePos = (e: React.MouseEvent<HTMLCanvasElement>) => {
@@ -413,11 +511,21 @@ export default function PdfViewer({
 
       if (w < 5 || h < 5 || !activeFileId) return;
 
+      const canvasW = overlayCanvasSize.width || 1;
+      const canvasH = overlayCanvasSize.height || 1;
+
       const newHighlight: FileAnnotation = {
         fileId: activeFileId,
         pageNumber: pageNum,
         type: 'highlight',
-        content: JSON.stringify({ x, y, w, h, color: 'rgba(250, 204, 21, 0.4)' })
+        content: JSON.stringify({ 
+          x, y, w, h,
+          xRatio: Number((x / canvasW).toFixed(4)),
+          yRatio: Number((y / canvasH).toFixed(4)),
+          wRatio: Number((w / canvasW).toFixed(4)),
+          hRatio: Number((h / canvasH).toFixed(4)),
+          color: 'rgba(250, 204, 21, 0.4)' 
+        })
       };
 
       saveAnnotationMutation.mutate(newHighlight);
@@ -455,12 +563,23 @@ export default function PdfViewer({
   const handleConfirmCustomInput = () => {
     if (!textInputModal || !customInputValue.trim() || !activeFileId) return;
 
+    const canvasW = overlayCanvasSize.width || 800;
+    const canvasH = overlayCanvasSize.height || 1100;
+    const xRatio = Number((textInputModal.x / canvasW).toFixed(4));
+    const yRatio = Number((textInputModal.y / canvasH).toFixed(4));
+
     if (textInputModal.type === 'note') {
       const newNote: FileAnnotation = {
         fileId: activeFileId,
         pageNumber: pageNum,
         type: 'note',
-        content: JSON.stringify({ x: textInputModal.x, y: textInputModal.y, text: customInputValue.trim() })
+        content: JSON.stringify({ 
+          x: textInputModal.x, 
+          y: textInputModal.y, 
+          xRatio,
+          yRatio,
+          text: customInputValue.trim() 
+        })
       };
       saveAnnotationMutation.mutate(newNote);
     } else if (textInputModal.type === 'textbox') {
@@ -468,7 +587,13 @@ export default function PdfViewer({
         fileId: activeFileId,
         pageNumber: pageNum,
         type: 'textbox',
-        content: JSON.stringify({ x: textInputModal.x, y: textInputModal.y, text: customInputValue.trim() })
+        content: JSON.stringify({ 
+          x: textInputModal.x, 
+          y: textInputModal.y, 
+          xRatio,
+          yRatio,
+          text: customInputValue.trim() 
+        })
       };
       saveAnnotationMutation.mutate(newTextbox);
     }
@@ -507,82 +632,142 @@ export default function PdfViewer({
   return (
     <div className="workspace">
       {/* PDF CONTROLLER */}
-      <div className="workspace__toolbar flex-between">
-        <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+      <div className="workspace__toolbar">
+        {/* Navigation */}
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexShrink: 0 }}>
           <button 
             className="btn btn-secondary btn-sm" 
-            style={{ padding: '6px' }}
+            style={{ padding: '5px 8px' }}
             disabled={pageNum <= 1} 
             onClick={() => setPageNum(p => p - 1)}
+            title="Página anterior"
           >
             <ChevronLeft size={16} />
           </button>
-          <span style={{ fontSize: '0.8rem', fontWeight: 600 }}>Página {pageNum} de {numPages}</span>
+          <span style={{ fontSize: '0.8rem', fontWeight: 600, minWidth: '68px', textAlign: 'center', color: 'var(--text-secondary)' }}>
+            {pageNum} / {numPages || 1}
+          </span>
           <button 
             className="btn btn-secondary btn-sm" 
-            style={{ padding: '6px' }}
+            style={{ padding: '5px 8px' }}
             disabled={pageNum >= numPages} 
             onClick={() => setPageNum(p => p + 1)}
+            title="Próxima página"
           >
             <ChevronRight size={16} />
           </button>
         </div>
 
         {/* Annotation Tools */}
-        <div style={{ display: 'flex', gap: '6px', flexWrap: 'wrap' }}>
+        <div style={{ display: 'flex', gap: '4px', alignItems: 'center', flexWrap: 'wrap' }}>
           <button 
             className={`btn btn-sm ${annotationTool === 'highlight' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setAnnotationTool(annotationTool === 'highlight' ? 'none' : 'highlight')}
-            title="Marca-texto"
+            title="Marca-texto: destaque partes do texto"
+            style={{ padding: '5px 9px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <Highlighter size={14} />
-            Marcação
+            <span>Marcação</span>
           </button>
           <button 
             className={`btn btn-sm ${annotationTool === 'drawing' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setAnnotationTool(annotationTool === 'drawing' ? 'none' : 'drawing')}
             title="Desenhar livremente (Caneta)"
+            style={{ padding: '5px 9px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <Edit3 size={14} />
-            Caneta
+            <span>Caneta</span>
           </button>
           <button 
             className={`btn btn-sm ${annotationTool === 'textbox' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setAnnotationTool(annotationTool === 'textbox' ? 'none' : 'textbox')}
-            title="Adicionar Texto na Página"
+            title="Adicionar texto digitado na página"
+            style={{ padding: '5px 9px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <Type size={14} />
-            Texto
+            <span>Texto</span>
           </button>
           <button 
             className={`btn btn-sm ${annotationTool === 'note' ? 'btn-primary' : 'btn-secondary'}`}
             onClick={() => setAnnotationTool(annotationTool === 'note' ? 'none' : 'note')}
-            title="Adicionar Post-it"
+            title="Adicionar Post-it / Nota adesiva"
+            style={{ padding: '5px 9px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px' }}
           >
             <MessageSquare size={14} />
-            Nota
+            <span>Nota</span>
           </button>
           {activeSummaryId && (
             <button 
               className="btn btn-secondary btn-sm"
               onClick={handleCiteInSummary}
               title="Citar o texto selecionado no resumo"
+              style={{ padding: '5px 9px', fontSize: '0.78rem', display: 'flex', alignItems: 'center', gap: '4px', borderColor: 'var(--primary)', color: 'var(--primary)' }}
             >
               <ArrowRight size={14} />
-              Citar
+              <span>Citar</span>
             </button>
           )}
         </div>
 
         {/* Zoom controls */}
-        <div style={{ display: 'flex', gap: '4px' }}>
-          <button className="btn btn-secondary btn-sm" style={{ padding: '6px' }} onClick={() => setScale(s => Math.max(0.6, s - 0.1))}><ZoomOut size={14} /></button>
-          <button className="btn btn-secondary btn-sm" style={{ padding: '6px' }} onClick={() => setScale(s => Math.min(2.5, s + 0.1))}><ZoomIn size={14} /></button>
+        <div style={{ display: 'flex', gap: '3px', alignItems: 'center', flexShrink: 0 }}>
+          <button 
+            className="btn btn-secondary btn-sm" 
+            style={{ padding: '5px 7px' }} 
+            onClick={() => {
+              setIsAutoFit(false);
+              setScale(s => Math.max(0.4, Number((s - 0.15).toFixed(2))));
+            }}
+            title="Reduzir zoom (-)"
+          >
+            <ZoomOut size={14} />
+          </button>
+          
+          <button
+            className="btn btn-secondary btn-sm"
+            style={{ 
+              padding: '4px 8px', 
+              fontSize: '0.75rem', 
+              fontWeight: 600, 
+              minWidth: '56px',
+              textAlign: 'center',
+              backgroundColor: isAutoFit ? 'var(--bg-tertiary)' : undefined,
+              borderColor: isAutoFit ? 'var(--primary)' : undefined
+            }}
+            onClick={handleToggleFitWidth}
+            title={isAutoFit ? "Modo: Ajustado à Largura (Clique para 100%)" : "Clique para Ajustar à Largura"}
+          >
+            {isAutoFit ? 'Ajustar' : `${Math.round(scale * 100)}%`}
+          </button>
+
+          <button 
+            className="btn btn-secondary btn-sm" 
+            style={{ padding: '5px 7px' }} 
+            onClick={() => {
+              setIsAutoFit(false);
+              setScale(s => Math.min(3.0, Number((s + 0.15).toFixed(2))));
+            }}
+            title="Aumentar zoom (+)"
+          >
+            <ZoomIn size={14} />
+          </button>
+
+          <button
+            className={`btn btn-sm ${isAutoFit ? 'btn-primary' : 'btn-secondary'}`}
+            style={{ padding: '5px 7px' }}
+            onClick={handleToggleFitWidth}
+            title="Ajustar à largura do painel"
+          >
+            <Maximize2 size={14} />
+          </button>
         </div>
       </div>
 
       {/* PDF VIEWER SCROLLPORT */}
-      <div className="workspace__pdf" style={{ backgroundColor: '#334155', display: 'flex', justifyContent: 'center', position: 'relative', overflow: 'auto', minHeight: '300px' }}>
+      <div 
+        ref={scrollContainerRef}
+        className="workspace__pdf"
+      >
         {pdfLoading && (
           <div style={{ position: 'absolute', top: '50%', left: '50%', transform: 'translate(-50%, -50%)', color: 'white', zIndex: 15, display: 'flex', flexDirection: 'column', alignItems: 'center', gap: '8px' }}>
             <RefreshCw size={24} style={{ animation: 'spin 1s linear infinite' }} />
@@ -626,117 +811,123 @@ export default function PdfViewer({
         )}
 
         {pdfDoc && !pdfError && (
-          <div style={{ position: 'relative', boxShadow: '0 10px 25px rgba(0,0,0,0.5)', height: 'fit-content' }}>
-          {/* Rendered PDF Page */}
-          <canvas ref={canvasRef} />
-          
-          {/* Overlay Canvas para destaques temporários e capturas de mouse */}
-          <canvas 
-            ref={overlayCanvasRef} 
-            style={{ 
-              position: 'absolute', 
-              top: 0, 
-              left: 0, 
-              cursor: annotationTool !== 'none' ? 'crosshair' : 'default'
-            }}
-            onMouseDown={handleMouseDown}
-            onMouseMove={handleMouseMove}
-            onMouseUp={handleMouseUp}
-            onClick={handleOverlayClick}
-          />
+          <div style={{ display: 'flex', justifyContent: 'center', minWidth: 'min-content', width: '100%' }}>
+            <div className="pdf-canvas-card">
+              {/* Rendered PDF Page */}
+              <canvas ref={canvasRef} style={{ display: 'block' }} />
+              
+              {/* Overlay Canvas para destaques temporários e capturas de mouse */}
+              <canvas 
+                ref={overlayCanvasRef} 
+                style={{ 
+                  position: 'absolute', 
+                  top: 0, 
+                  left: 0, 
+                  cursor: annotationTool !== 'none' ? 'crosshair' : 'default',
+                  display: 'block'
+                }}
+                onMouseDown={handleMouseDown}
+                onMouseMove={handleMouseMove}
+                onMouseUp={handleMouseUp}
+                onClick={handleOverlayClick}
+              />
 
-          {/* Rendered Sticky notes, textboxes & drawing badges */}
-          {dbAnnotations.map((ann) => {
-            if (ann.type === 'note') {
-              try {
-                const note = JSON.parse(ann.content);
-                const posX = dragPositions[ann.id!]?.x ?? note.x;
-                const posY = dragPositions[ann.id!]?.y ?? note.y;
-                const isDraggingThis = draggingAnnId === ann.id;
-                return (
-                  <div 
-                    key={ann.id}
-                    onMouseDown={(e) => handleStartDrag(e, ann, posX, posY)}
-                    style={{ 
-                      position: 'absolute', 
-                      left: `${(posX / (overlayCanvasSize.width || 1)) * 100}%`,
-                      top: `${(posY / (overlayCanvasSize.height || 1)) * 100}%`,
-                      zIndex: isDraggingThis ? 30 : 10,
-                      transform: 'translate(-50%, -50%)',
-                      cursor: isDraggingThis ? 'grabbing' : 'grab',
-                      userSelect: 'none',
-                    }}
-                    className="pdf-sticky-container"
-                  >
-                    <div 
-                      className="pdf-sticky-bubble" 
-                      title={`${note.text} (Arraste para reposicionar)`}
-                      style={{ 
-                        boxShadow: isDraggingThis ? '0 0 14px var(--primary)' : undefined,
-                        transform: isDraggingThis ? 'scale(1.15)' : undefined,
-                        transition: isDraggingThis ? 'none' : 'transform 0.15s, box-shadow 0.15s',
-                      }}
-                    >
-                      <MessageSquare size={16} fill="var(--primary)" color="white" />
-                      <div className="pdf-sticky-tooltip">
-                        <span>{note.text}</span>
-                        <button onClick={(e) => { e.stopPropagation(); if (confirm('Excluir esta nota?')) deleteAnnotationMutation.mutate(ann.id!); }}>
-                          <Trash2 size={12} style={{ color: 'var(--danger)' }} />
+              {/* Rendered Sticky notes, textboxes & drawing badges */}
+              {dbAnnotations.map((ann) => {
+                if (ann.type === 'note') {
+                  try {
+                    const note = JSON.parse(ann.content);
+                    const posXRatio = note.xRatio !== undefined ? note.xRatio : (note.x / (overlayCanvasSize.width || 1));
+                    const posYRatio = note.yRatio !== undefined ? note.yRatio : (note.y / (overlayCanvasSize.height || 1));
+                    const isDraggingThis = draggingAnnId === ann.id;
+                    const posX = isDraggingThis && dragPositions[ann.id!] ? dragPositions[ann.id!].x : (posXRatio * (overlayCanvasSize.width || 1));
+                    const posY = isDraggingThis && dragPositions[ann.id!] ? dragPositions[ann.id!].y : (posYRatio * (overlayCanvasSize.height || 1));
+                    return (
+                      <div 
+                        key={ann.id}
+                        onMouseDown={(e) => handleStartDrag(e, ann, posX, posY)}
+                        style={{ 
+                          position: 'absolute', 
+                          left: `${(posX / (overlayCanvasSize.width || 1)) * 100}%`,
+                          top: `${(posY / (overlayCanvasSize.height || 1)) * 100}%`,
+                          zIndex: isDraggingThis ? 30 : 10,
+                          transform: 'translate(-50%, -50%)',
+                          cursor: isDraggingThis ? 'grabbing' : 'grab',
+                          userSelect: 'none',
+                        }}
+                        className="pdf-sticky-container"
+                      >
+                        <div 
+                          className="pdf-sticky-bubble" 
+                          title={`${note.text} (Arraste para reposicionar)`}
+                          style={{ 
+                            boxShadow: isDraggingThis ? '0 0 14px var(--primary)' : undefined,
+                            transform: isDraggingThis ? 'scale(1.15)' : undefined,
+                            transition: isDraggingThis ? 'none' : 'transform 0.15s, box-shadow 0.15s',
+                          }}
+                        >
+                          <MessageSquare size={16} fill="var(--primary)" color="white" />
+                          <div className="pdf-sticky-tooltip">
+                            <span>{note.text}</span>
+                            <button onClick={(e) => { e.stopPropagation(); if (confirm('Excluir esta nota?')) deleteAnnotationMutation.mutate(ann.id!); }}>
+                              <Trash2 size={12} style={{ color: 'var(--danger)' }} />
+                            </button>
+                          </div>
+                        </div>
+                      </div>
+                    );
+                  } catch {
+                    return null;
+                  }
+                }
+
+                if (ann.type === 'textbox') {
+                  try {
+                    const box = JSON.parse(ann.content);
+                    const posXRatio = box.xRatio !== undefined ? box.xRatio : (box.x / (overlayCanvasSize.width || 1));
+                    const posYRatio = box.yRatio !== undefined ? box.yRatio : (box.y / (overlayCanvasSize.height || 1));
+                    const isDraggingThis = draggingAnnId === ann.id;
+                    const posX = isDraggingThis && dragPositions[ann.id!] ? dragPositions[ann.id!].x : (posXRatio * (overlayCanvasSize.width || 1));
+                    const posY = isDraggingThis && dragPositions[ann.id!] ? dragPositions[ann.id!].y : (posYRatio * (overlayCanvasSize.height || 1));
+                    return (
+                      <div
+                        key={ann.id}
+                        onMouseDown={(e) => handleStartDrag(e, ann, posX, posY)}
+                        style={{
+                          position: 'absolute',
+                          left: `${(posX / (overlayCanvasSize.width || 1)) * 100}%`,
+                          top: `${(posY / (overlayCanvasSize.height || 1)) * 100}%`,
+                          zIndex: isDraggingThis ? 30 : 10,
+                          color: 'var(--text-primary)',
+                          backgroundColor: 'var(--bg-secondary)',
+                          border: isDraggingThis ? '1px solid var(--primary)' : '1px solid var(--border-color)',
+                          borderRadius: 'var(--radius-sm)',
+                          padding: '4px 8px',
+                          fontSize: '0.8rem',
+                          transform: 'translate(-50%, -50%)',
+                          display: 'flex',
+                          alignItems: 'center',
+                          gap: '6px',
+                          boxShadow: isDraggingThis ? '0 6px 20px rgba(99, 102, 241, 0.4)' : '0 2px 8px rgba(0,0,0,0.15)',
+                          whiteSpace: 'nowrap',
+                          cursor: isDraggingThis ? 'grabbing' : 'grab',
+                          userSelect: 'none',
+                        }}
+                        title="Arraste para reposicionar"
+                      >
+                        <span>{box.text}</span>
+                        <button 
+                          style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
+                          onClick={(e) => { e.stopPropagation(); if (confirm('Excluir este texto?')) deleteAnnotationMutation.mutate(ann.id!); }}
+                        >
+                          <X size={12} style={{ color: 'var(--danger)' }} />
                         </button>
                       </div>
-                    </div>
-                  </div>
-                );
-              } catch {
-                return null;
-              }
-            }
-
-            if (ann.type === 'textbox') {
-              try {
-                const box = JSON.parse(ann.content);
-                const posX = dragPositions[ann.id!]?.x ?? box.x;
-                const posY = dragPositions[ann.id!]?.y ?? box.y;
-                const isDraggingThis = draggingAnnId === ann.id;
-                return (
-                  <div
-                    key={ann.id}
-                    onMouseDown={(e) => handleStartDrag(e, ann, posX, posY)}
-                    style={{
-                      position: 'absolute',
-                      left: `${(posX / (overlayCanvasSize.width || 1)) * 100}%`,
-                      top: `${(posY / (overlayCanvasSize.height || 1)) * 100}%`,
-                      zIndex: isDraggingThis ? 30 : 10,
-                      color: 'var(--text-primary)',
-                      backgroundColor: 'var(--bg-secondary)',
-                      border: isDraggingThis ? '1px solid var(--primary)' : '1px solid var(--border-color)',
-                      borderRadius: 'var(--radius-sm)',
-                      padding: '4px 8px',
-                      fontSize: '0.8rem',
-                      transform: 'translate(-50%, -50%)',
-                      display: 'flex',
-                      alignItems: 'center',
-                      gap: '6px',
-                      boxShadow: isDraggingThis ? '0 6px 20px rgba(99, 102, 241, 0.4)' : '0 2px 8px rgba(0,0,0,0.15)',
-                      whiteSpace: 'nowrap',
-                      cursor: isDraggingThis ? 'grabbing' : 'grab',
-                      userSelect: 'none',
-                    }}
-                    title="Arraste para reposicionar"
-                  >
-                    <span>{box.text}</span>
-                    <button 
-                      style={{ background: 'transparent', border: 'none', cursor: 'pointer', padding: 0, display: 'flex', alignItems: 'center' }}
-                      onClick={(e) => { e.stopPropagation(); if (confirm('Excluir este texto?')) deleteAnnotationMutation.mutate(ann.id!); }}
-                    >
-                      <X size={12} style={{ color: 'var(--danger)' }} />
-                    </button>
-                  </div>
-                );
-              } catch {
-                return null;
-              }
-            }
+                    );
+                  } catch {
+                    return null;
+                  }
+                }
 
             if (ann.type === 'drawing') {
               try {
@@ -845,7 +1036,8 @@ export default function PdfViewer({
               </div>
             </div>
           )}
-        </div>
+            </div>
+          </div>
         )}
       </div>
     </div>

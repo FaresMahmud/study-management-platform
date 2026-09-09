@@ -266,62 +266,76 @@ export default function SummaryEditor({
   return (
     <div className="editor-container" style={{ flex: 1, display: 'flex', flexDirection: 'column', overflow: 'hidden', padding: '16px var(--space-md)' }}>
       {/* Editor Header */}
-      <div className="editor-header" style={{ marginBottom: '16px', flexShrink: 0, display: 'flex', justifyContent: 'space-between', alignItems: 'flex-start' }}>
-        <div style={{ display: 'flex', flexDirection: 'column', flex: 1 }}>
+      <div className="editor-header-wrapper" style={{ marginBottom: '12px', flexShrink: 0 }}>
+        {/* Title row with full width */}
+        <div style={{ marginBottom: '8px' }}>
           <input 
             type="text"
             className="editor-title-input"
             placeholder="Sem Título"
             value={editorTitle}
             onChange={handleTitleChange}
-            style={{ fontSize: '1.5rem', fontWeight: 700, border: 'none', background: 'transparent', outline: 'none', width: '100%' }}
+            style={{ 
+              fontSize: '1.4rem', 
+              fontWeight: 700, 
+              border: 'none', 
+              background: 'transparent', 
+              outline: 'none', 
+              width: '100%',
+              color: 'var(--text-primary)',
+              padding: '2px 0'
+            }}
           />
-          <span style={{ fontSize: '0.72rem', color: 'var(--text-muted)', marginTop: '4px' }}>
-            {salvando ? 'Salvando resumo...' : ultimoSalvo ? `Salvo às ${ultimoSalvo}` : 'Pronto'}
-          </span>
         </div>
 
-        <div style={{ display: 'flex', gap: '8px', flexShrink: 0, alignItems: 'center' }}>
-          {onGenerateAiSummary && (
-            <button
-              className="btn btn-secondary btn-sm"
-              onClick={onGenerateAiSummary}
-              disabled={isGeneratingSummary}
-              title="Gerar novo resumo inteligente via IA a partir do material"
-              style={{ display: 'flex', alignItems: 'center', gap: '4px', border: '1px solid rgba(168, 85, 247, 0.4)', color: 'var(--secondary)' }}
+        {/* Sub-row: Auto-save status on left, Action buttons on right */}
+        <div style={{ 
+          display: 'flex', 
+          justifyContent: 'space-between', 
+          alignItems: 'center', 
+          flexWrap: 'wrap', 
+          gap: '8px',
+          paddingBottom: '10px',
+          borderBottom: '1px solid var(--border-color)'
+        }}>
+          <div style={{ display: 'flex', alignItems: 'center', gap: '6px' }}>
+            <span style={{ fontSize: '0.75rem', color: 'var(--text-muted)' }}>
+              {salvando ? 'Salvando resumo...' : ultimoSalvo ? `Salvo às ${ultimoSalvo}` : 'Pronto'}
+            </span>
+          </div>
+
+          <div style={{ display: 'flex', gap: '8px', alignItems: 'center' }}>
+            <button 
+              className="btn btn-secondary btn-sm" 
+              onClick={handleCreateFlashcardFromSelection} 
+              title="Criar Flashcard Manual a partir do texto selecionado"
+              style={{ display: 'flex', alignItems: 'center', gap: '5px', fontSize: '0.8rem', padding: '5px 10px' }}
             >
-              <Sparkles size={13} className={isGeneratingSummary ? "animate-spin" : ""} />
-              <span>{isGeneratingSummary ? "Sintetizando..." : "+ Resumo IA"}</span>
+              <Brain size={14} />
+              <span>+ Flashcard</span>
             </button>
-          )}
-          <button 
-            className="btn btn-secondary btn-sm" 
-            onClick={handleCreateFlashcardFromSelection} 
-            title="Criar Flashcard Manual da seleção"
-            style={{ display: 'flex', alignItems: 'center', gap: '4px' }}
-          >
-            <Brain size={14} />
-            <span>+ Manual</span>
-          </button>
-          <button 
-            className="btn btn-primary btn-sm" 
-            style={{ 
-              background: 'linear-gradient(to right, var(--primary), var(--secondary))',
-              border: 'none',
-              color: 'white',
-              fontWeight: 'bold',
-              boxShadow: '0 0 10px rgba(99,102,241,0.3)',
-              display: 'flex',
-              alignItems: 'center',
-              gap: '4px'
-            }}
-            onClick={handleGenerateAiFlashcards} 
-            disabled={generateAiMutation.isPending}
-            title="Gerar Flashcards automaticamente com Inteligência Artificial"
-          >
-            <Sparkles size={14} className={generateAiMutation.isPending ? "animate-spin" : ""} />
-            <span>{generateAiMutation.isPending ? "Gerando..." : "Flashcards IA"}</span>
-          </button>
+            <button 
+              className="btn btn-primary btn-sm" 
+              style={{ 
+                background: 'linear-gradient(to right, var(--primary), var(--secondary))',
+                border: 'none',
+                color: 'white',
+                fontWeight: 700,
+                boxShadow: '0 0 10px rgba(99,102,241,0.3)',
+                display: 'flex',
+                alignItems: 'center',
+                gap: '5px',
+                fontSize: '0.8rem',
+                padding: '5px 12px'
+              }}
+              onClick={handleGenerateAiFlashcards} 
+              disabled={generateAiMutation.isPending}
+              title="Gerar Flashcards automaticamente com Inteligência Artificial a partir deste resumo"
+            >
+              <Sparkles size={14} className={generateAiMutation.isPending ? "animate-spin" : ""} />
+              <span>{generateAiMutation.isPending ? "Gerando..." : "Flashcards IA"}</span>
+            </button>
+          </div>
         </div>
       </div>
 

@@ -179,6 +179,25 @@ export default function StudyWorkspace() {
     }
   });
 
+  const deleteSummaryMutation = useMutation({
+    mutationFn: async (summaryId: number) => {
+      await apiClient.delete(`/api/summaries/${summaryId}`);
+    },
+    onSuccess: (_, summaryId) => {
+      queryClient.setQueryData<Summary[]>(['summaries-by-subject', selectedSubjectId], (old = []) =>
+        old.filter(s => s.id !== summaryId)
+      );
+      queryClient.invalidateQueries({ queryKey: ['summaries-by-subject', selectedSubjectId] });
+      if (activeSummaryId === summaryId) {
+        setActiveSummaryId(null);
+      }
+      toast.success('Página de anotações removida.');
+    },
+    onError: () => {
+      toast.error('Erro ao excluir página.');
+    }
+  });
+
   // Mutação para geração de resumo inteligente por IA a partir do PDF
   const generateSummaryMutation = useMutation({
     mutationFn: async (payload: { subjectId: number; fileId?: number | null; text?: string }) => {
@@ -434,26 +453,58 @@ export default function StudyWorkspace() {
                   </span>
                 ) : (
                   summaries.map(s => (
-                    <button
+                    <div
                       key={s.id}
-                      onClick={() => setActiveSummaryId(s.id)}
                       style={{
-                        padding: '4px 10px',
-                        fontSize: '0.78rem',
-                        fontWeight: activeSummaryId === s.id ? 700 : 500,
+                        display: 'flex',
+                        alignItems: 'center',
                         backgroundColor: activeSummaryId === s.id ? 'var(--primary)' : 'var(--bg-tertiary)',
-                        color: activeSummaryId === s.id ? '#ffffff' : 'var(--text-secondary)',
                         border: '1px solid',
                         borderColor: activeSummaryId === s.id ? 'var(--primary)' : 'var(--border-color)',
                         borderRadius: 'var(--radius-sm)',
-                        cursor: 'pointer',
-                        whiteSpace: 'nowrap',
+                        padding: '3px 6px 3px 10px',
+                        gap: '6px',
                         transition: 'all 0.15s ease'
                       }}
-                      title={s.title}
                     >
-                      {truncate(s.title || 'Sem título', 18)}
-                    </button>
+                      <button
+                        onClick={() => setActiveSummaryId(s.id)}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          padding: 0,
+                          fontSize: '0.78rem',
+                          fontWeight: activeSummaryId === s.id ? 700 : 500,
+                          color: activeSummaryId === s.id ? '#ffffff' : 'var(--text-secondary)',
+                          cursor: 'pointer',
+                          whiteSpace: 'nowrap',
+                        }}
+                        title={s.title}
+                      >
+                        {truncate(s.title || 'Sem título', 18)}
+                      </button>
+                      <button
+                        onClick={(e) => {
+                          e.stopPropagation();
+                          if (confirm(`Deseja excluir a página "${s.title || 'Sem título'}"?`)) {
+                            deleteSummaryMutation.mutate(s.id);
+                          }
+                        }}
+                        style={{
+                          background: 'transparent',
+                          border: 'none',
+                          color: activeSummaryId === s.id ? 'rgba(255,255,255,0.7)' : 'var(--text-muted)',
+                          cursor: 'pointer',
+                          padding: '2px',
+                          display: 'flex',
+                          alignItems: 'center',
+                          borderRadius: '2px'
+                        }}
+                        title="Excluir esta página"
+                      >
+                        <Trash2 size={12} />
+                      </button>
+                    </div>
                   ))
                 )}
               </div>
@@ -467,7 +518,7 @@ export default function StudyWorkspace() {
                   title="Criar nova página de anotações em branco ao lado do PDF"
                 >
                   <Plus size={14} style={{ color: 'var(--primary)' }} />
-                  <span>+ Criar Página</span>
+                  <span>Nova Página</span>
                 </button>
 
                 <button
