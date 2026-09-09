@@ -13,6 +13,7 @@ import FlashcardCreatorModal from '../components/FlashcardCreatorModal';
 import PaywallModal from '../components/PaywallModal';
 import PdfViewer from '../components/PdfViewer';
 import SummaryEditor from '../components/SummaryEditor';
+import PostUploadModal from '../components/PostUploadModal';
 
 export default function StudyWorkspace() {
   const queryClient = useQueryClient();
@@ -23,6 +24,12 @@ export default function StudyWorkspace() {
   const querySubjectId = searchParams.get('subjectId');
   const queryFileId = searchParams.get('fileId');
   const querySummaryId = searchParams.get('summaryId');
+
+  const [postUploadData, setPostUploadData] = useState<{
+    fileName: string;
+    subjectId?: number;
+    fileId?: number;
+  } | null>(null);
 
   // ─── Estados de Navegação e Layout ────────────────────────────────────
   const [selectedSubjectId, setSelectedSubjectId] = useState<number | ''>(
@@ -139,7 +146,11 @@ export default function StudyWorkspace() {
       queryClient.invalidateQueries({ queryKey: ['pdf-files', selectedSubjectId] });
       queryClient.invalidateQueries({ queryKey: ['uploaded-files'] });
       setActiveFileId(data.id); // Abre o arquivo recém-enviado imediatamente
-      triggerConfetti();
+      setPostUploadData({
+        fileName: data.fileName,
+        subjectId: selectedSubjectId ? Number(selectedSubjectId) : undefined,
+        fileId: data.id
+      });
       toast.success(`PDF "${data.fileName}" carregado e pronto para estudo! 📄✨`);
     },
     onError: (error: Error & { response?: { data?: { message?: string } } }) => {
@@ -228,6 +239,36 @@ export default function StudyWorkspace() {
     const formData = new FormData();
     formData.append('file', file);
     formData.append('subjectId', String(selectedSubjectId));
+    uploadMutation.mutate(formData);
+    e.target.value = '';
+  };
+
+  const handleDirectFileUpload = async (e: React.ChangeEvent<HTMLInputElement>) => {
+    if (!e.target.files || e.target.files.length === 0) return;
+    const file = e.target.files[0];
+    let targetSubId = selectedSubjectId;
+
+    if (!targetSubId) {
+      if (subjects.length > 0) {
+        targetSubId = subjects[0].id;
+        setSelectedSubjectId(targetSubId);
+      } else {
+        try {
+          const res = await apiClient.post<Subject>('/api/subjects', { subjectName: 'Geral', color: '#6366f1' });
+          targetSubId = res.data.id;
+          setSelectedSubjectId(targetSubId);
+          queryClient.invalidateQueries({ queryKey: ['subjects'] });
+        } catch {
+          toast.error('Erro ao preparar matéria para o arquivo.');
+          return;
+        }
+      }
+    }
+
+    setUploadError(null);
+    const formData = new FormData();
+    formData.append('file', file);
+    formData.append('subjectId', String(targetSubId));
     uploadMutation.mutate(formData);
     e.target.value = '';
   };
@@ -408,12 +449,37 @@ export default function StudyWorkspace() {
 
       {/* WORKSPACE DIVIDIDO */}
       {!selectedSubjectId ? (
-        <div className="flex-center" style={{ flex: 1, flexDirection: 'column', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'center', alignItems: 'center' }}>
+        <div className="flex-center" style={{ flex: 1, flexDirection: 'column', color: 'var(--text-secondary)', display: 'flex', justifyContent: 'center', alignItems: 'center', padding: '24px' }}>
           <Sparkles size={56} style={{ color: 'var(--primary)', marginBottom: '1.25rem' }} />
-          <h2>Abra sua Área de Estudos</h2>
-          <p style={{ maxWidth: '400px', textAlign: 'center', marginTop: 'var(--space-xs)', fontSize: '0.9rem' }}>
+          <h2 style={{ fontSize: '1.5rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+            Abra sua Área de Estudos
+          </h2>
+          <p style={{ maxWidth: '420px', textAlign: 'center', marginTop: 'var(--space-xs)', fontSize: '0.9rem', marginBottom: '22px', lineHeight: 1.5 }}>
             Selecione uma matéria acima para carregar seus arquivos PDF da aula e escrever seus resumos integrados lado a lado.
           </p>
+
+          <label
+            className="btn btn-primary"
+            style={{
+              cursor: 'pointer',
+              display: 'inline-flex',
+              alignItems: 'center',
+              gap: '8px',
+              padding: '12px 24px',
+              fontSize: '0.95rem',
+              fontWeight: 700,
+              boxShadow: '0 4px 16px rgba(99, 102, 241, 0.4)'
+            }}
+          >
+            <Upload size={18} />
+            <span>Enviar meu primeiro PDF</span>
+            <input
+              type="file"
+              accept="application/pdf,.pdf"
+              style={{ display: 'none' }}
+              onChange={handleDirectFileUpload}
+            />
+          </label>
         </div>
       ) : (
         <div style={{ display: 'flex', flex: 1, overflow: 'hidden' }}>
@@ -422,10 +488,11 @@ export default function StudyWorkspace() {
           <div style={{ width: `${splitRatio}%`, display: splitRatio === 0 ? 'none' : 'flex', flexDirection: 'column', borderRight: '1px solid var(--border-color)', height: '100%', overflow: 'hidden' }}>
             <PdfViewer
               activeFileId={activeFileId}
-              selectedSubjectId={selectedSubjectId}
+              selectedSubjectId={Number(selectedSubjectId)}
               activeSummaryId={activeSummaryId}
               pdfFiles={pdfFiles}
               onCite={handleCite}
+              onUpload={handleFileUpload}
             />
           </div>
 
@@ -574,6 +641,14 @@ export default function StudyWorkspace() {
       <PaywallModal
         isOpen={paywallModalOpen}
         onClose={() => setPaywallModalOpen(false)}
+      />
+
+      <PostUploadModal
+        isOpen={!!postUploadData}
+        onClose={() => setPostUploadData(null)}
+        fileName={postUploadData?.fileName || ''}
+        subjectId={postUploadData?.subjectId}
+        fileId={postUploadData?.fileId}
       />
     </div>
   );

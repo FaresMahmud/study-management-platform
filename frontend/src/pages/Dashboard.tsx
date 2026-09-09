@@ -16,6 +16,7 @@ import { mockActivities } from '../components/dashboard/mocks';
 import ExamWizard from '../components/wizard/ExamWizard';
 import { pluralize } from '../utils/format';
 import { DailyGoal } from '../components/dashboard/DailyGoal';
+import { FirstStepsChecklist } from '../components/dashboard/FirstStepsChecklist';
 import { FadeIn } from '../components/ui/FadeIn';
 import type { Subject, StudySession, Goal, ExamPrep } from '../types';
 import './Dashboard.css';
@@ -85,17 +86,33 @@ export default function Dashboard() {
     }
   };
 
+  const [showWelcomeBanner, setShowWelcomeBanner] = useState(() => {
+    return localStorage.getItem('show_onboarding_welcome') === 'true';
+  });
+
+  const handleCloseWelcomeBanner = () => {
+    localStorage.removeItem('show_onboarding_welcome');
+    setShowWelcomeBanner(false);
+  };
+
   const { data: subjects, loading: loadSub, error: errSub, refetch: refSub } = useApi<Subject[]>('/api/subjects');
   const { data: sessions, loading: loadSes, error: errSes, refetch: refSes } = useApi<StudySession[]>('/api/study-sessions');
   const { data: goals, loading: loadGoals, error: errGoals, refetch: refGoals } = useApi<Goal[]>('/api/goals');
   const { data: prepsData, loading: loadPreps, error: errPreps, refetch: refPreps } = useApi<{ content: ExamPrep[] }>('/api/v1/exam-preps');
+  const { data: filesData, loading: loadFiles, refetch: refFiles } = useApi<any[]>('/api/v1/files');
 
   const gamification = useGamification(sessions || [], goals || []);
 
-  const loading = loadSub || loadSes || loadGoals || loadPreps;
+  const loading = loadSub || loadSes || loadGoals || loadPreps || loadFiles;
   const error = errSub || errSes || errGoals || errPreps;
 
-  const handleRefetch = () => { refSub(); refSes(); refGoals(); refPreps(); };
+  const handleRefetch = () => { refSub(); refSes(); refGoals(); refPreps(); refFiles(); };
+
+  const hasGoals = Boolean((goals && goals.length > 0) || (prepsData?.content && prepsData.content.length > 0));
+  const hasPdfs = Boolean(filesData && filesData.length > 0);
+  const hasSimulations = Boolean(sessions && sessions.length > 0);
+  const isFirstStepsComplete = hasGoals && hasPdfs && hasSimulations;
+  const isTotallyEmpty = !hasGoals && !hasPdfs;
 
   const handleSendChatMessage = async (e: React.FormEvent) => {
     e.preventDefault();
@@ -157,6 +174,7 @@ export default function Dashboard() {
     studyTime: '4h 20m',
   }));
 
+  const latestPrep = prepsData?.content && prepsData.content.length > 0 ? prepsData.content[0] : null;
   const latestGoal = goals && goals.length > 0 ? goals[goals.length - 1] : null;
   let daysRemaining = 0;
   let isSoon = false;
@@ -164,11 +182,15 @@ export default function Dashboard() {
     const diff = new Date(latestGoal.endDateGoal).getTime() - new Date().setHours(0, 0, 0, 0);
     daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
     isSoon = daysRemaining >= 0 && daysRemaining < 7;
+  } else if (latestPrep?.examDate) {
+    const diff = new Date(latestPrep.examDate).getTime() - new Date().setHours(0, 0, 0, 0);
+    daysRemaining = Math.ceil(diff / (1000 * 60 * 60 * 24));
+    isSoon = daysRemaining >= 0 && daysRemaining < 7;
   }
 
-  const subjectName = latestGoal?.subject?.subjectName || 'MATÉRIA GERAL';
-  const goalTitle = latestGoal?.title || '';
-  const targetMastery = latestGoal?.targetMastery || 80;
+  const subjectName = latestGoal?.subject?.subjectName || (subjects && subjects.length > 0 ? subjects[0].subjectName : 'MATÉRIA GERAL');
+  const goalTitle = latestGoal?.title || latestPrep?.title || 'Foco da Semana';
+  const targetMastery = latestGoal?.targetMastery || latestPrep?.targetScore || 80;
 
   const activities = [
     { ...mockActivities[0], title: 'Área de Estudos', description: 'Leitura e resumos de PDFs', onClick: () => navigate('/workspace') },
@@ -192,16 +214,76 @@ export default function Dashboard() {
         </div>
       </header>
 
-      {(!goals || goals.length === 0) ? (
-        <EmptyState 
-          icon="🎯" 
-          title="Sem Metas Definidas" 
-          description="Você ainda não definiu nenhuma meta de prova. Planeje seu primeiro objetivo!" 
-          ctaText="Configurar Objetivo" 
-          ctaAction={() => setShowWizard(true)} 
-        />
+      {showWelcomeBanner && (
+        <div
+          style={{
+            backgroundColor: 'rgba(34, 197, 94, 0.12)',
+            border: '1px solid rgba(34, 197, 94, 0.3)',
+            borderRadius: 'var(--radius-md, 8px)',
+            padding: '12px 18px',
+            marginBottom: '20px',
+            display: 'flex',
+            alignItems: 'center',
+            justifyContent: 'space-between',
+            gap: '12px'
+          }}
+        >
+          <div style={{ display: 'flex', alignItems: 'center', gap: '10px' }}>
+            <Sparkles size={20} style={{ color: 'var(--success, #22c55e)' }} />
+            <span style={{ fontSize: '0.92rem', fontWeight: 600, color: 'var(--text-primary)' }}>
+              Tudo pronto! Sua prova, matérias e material já estão configurados. 🎉
+            </span>
+          </div>
+          <button
+            onClick={handleCloseWelcomeBanner}
+            style={{
+              background: 'transparent',
+              border: 'none',
+              color: 'var(--text-muted)',
+              cursor: 'pointer',
+              padding: '4px'
+            }}
+            aria-label="Fechar"
+          >
+            <X size={16} />
+          </button>
+        </div>
+      )}
+
+      {isTotallyEmpty ? (
+        <div style={{ maxWidth: '840px', margin: '16px auto 40px auto' }}>
+          <div style={{ textAlign: 'center', marginBottom: '28px' }}>
+            <h2 style={{ fontSize: '1.75rem', fontWeight: 800, color: 'var(--text-primary)', marginBottom: '8px' }}>
+              Bem-vindo ao StudyFlow! 🎓
+            </h2>
+            <p style={{ fontSize: '0.95rem', color: 'var(--text-secondary)', maxWidth: '520px', margin: '0 auto', lineHeight: 1.5 }}>
+              Jogue seus PDFs aqui e a IA cria questões, flashcards e simulados pra você.
+            </p>
+          </div>
+
+          <FirstStepsChecklist
+            hasGoals={hasGoals}
+            hasPdfs={hasPdfs}
+            hasSimulations={hasSimulations}
+            onDefineGoal={() => setShowWizard(true)}
+            onUploadPdf={() => navigate('/workspace')}
+          />
+        </div>
       ) : (
         <>
+          {!isFirstStepsComplete && (
+            <section className="dashboard-section" style={{ marginBottom: '24px' }}>
+              <FirstStepsChecklist
+                hasGoals={hasGoals}
+                hasPdfs={hasPdfs}
+                hasSimulations={hasSimulations}
+                onDefineGoal={() => setShowWizard(true)}
+                onUploadPdf={() => navigate('/workspace')}
+                isCompact
+              />
+            </section>
+          )}
+
           <section className="dashboard-section">
             <FadeIn>
               <HeroSession

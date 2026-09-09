@@ -51,8 +51,8 @@ function ProtectedLayout() {
     if (hasCheckedOnboarding.current) return;
     hasCheckedOnboarding.current = true;
 
-    const onboarded = localStorage.getItem('study_onboarded');
-    if (isAuthenticated && onboarded !== 'true') {
+    const onboarded = localStorage.getItem('study_onboarded') === 'true' || !!localStorage.getItem('onboarding_completed_at');
+    if (isAuthenticated && !onboarded) {
       // Defer setState to avoid synchronous setState in effect
       setTimeout(() => setOnboardingOpen(true), 0);
     }

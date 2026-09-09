@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
 import { Brain, Check, Edit3, HelpCircle, Layers, Plus, Trash2, X, Sparkles } from 'lucide-react';
 import React, { useCallback, useEffect, useMemo, useState } from 'react';
+import { useNavigate } from 'react-router-dom';
 import { apiClient } from '../api/client';
 import { useToast } from '../hooks/useToast';
 import type { Flashcard, Subject } from '../types';
@@ -8,6 +9,7 @@ import { pluralize } from '../utils/format';
 import './Flashcards.css';
 
 export default function Flashcards() {
+  const navigate = useNavigate();
   const queryClient = useQueryClient();
   const toast = useToast();
   const [activeTab, setActiveTab] = useState<'review' | 'manage'>('review');
@@ -342,6 +344,39 @@ export default function Flashcards() {
 
           {loadingDue ? (
             <div className="flex-center" style={{ height: '240px' }}>Carregando revisões...</div>
+          ) : allCards.length === 0 ? (
+            <div className="card empty-state" style={{ textAlign: 'center', padding: '40px 24px', maxWidth: '600px', margin: '0 auto' }}>
+              <Brain size={52} className="text-primary" style={{ marginBottom: '16px' }} />
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '10px' }}>
+                Transforme seus PDFs em flashcards automaticamente
+              </h2>
+              <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.5, maxWidth: '480px', margin: '0 auto 24px auto' }}>
+                Nossa IA analisa suas apostilas e gera cartões de repetição espaçada no método Leitner.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => navigate('/workspace')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 20px',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+                  }}
+                >
+                  <Sparkles size={16} />
+                  <span>Gerar do meu PDF</span>
+                </button>
+                <button
+                  className="btn btn-secondary"
+                  onClick={() => { setEditingCard(null); setFormFront(''); setFormBack(''); setFormSubjectId(subjects.length > 0 ? subjects[0].id : ''); setModalOpen(true); }}
+                >
+                  Criar Manualmente
+                </button>
+              </div>
+            </div>
           ) : activeDeck.length === 0 ? (
             <div className="card empty-state" style={{ textAlign: 'center', padding: '34px' }}>
               <Check size={48} style={{ color: 'var(--success)', marginBottom: '13px' }} />
@@ -482,10 +517,34 @@ export default function Flashcards() {
           {loadingAll ? (
             <div className="flex-center" style={{ minHeight: '200px' }}>Carregando cartões...</div>
           ) : allCards.length === 0 ? (
-            <div className="card empty-state" style={{ textAlign: 'center', padding: '34px' }}>
-              <HelpCircle size={48} style={{ color: 'var(--text-muted)', marginBottom: '13px' }} />
-              <h2>Nenhum flashcard criado</h2>
-              <button className="btn btn-primary" onClick={abrirCriar}>Criar Primeiro Flashcard</button>
+            <div className="card empty-state" style={{ textAlign: 'center', padding: '40px 24px', maxWidth: '600px', margin: '20px auto' }}>
+              <Brain size={52} className="text-primary" style={{ marginBottom: '16px' }} />
+              <h2 style={{ fontSize: '1.4rem', fontWeight: 800, marginBottom: '10px' }}>
+                Transforme seus PDFs em flashcards automaticamente
+              </h2>
+              <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '24px', lineHeight: 1.5, maxWidth: '480px', margin: '0 auto 24px auto' }}>
+                Nossa IA analisa suas apostilas e gera cartões de repetição espaçada no método Leitner.
+              </p>
+              <div style={{ display: 'flex', gap: '12px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                <button
+                  className="btn btn-primary"
+                  onClick={() => navigate('/workspace')}
+                  style={{
+                    display: 'inline-flex',
+                    alignItems: 'center',
+                    gap: '8px',
+                    padding: '10px 20px',
+                    fontWeight: 700,
+                    boxShadow: '0 4px 14px rgba(99, 102, 241, 0.4)'
+                  }}
+                >
+                  <Sparkles size={16} />
+                  <span>Gerar do meu PDF</span>
+                </button>
+                <button className="btn btn-secondary" onClick={abrirCriar}>
+                  Criar Manualmente
+                </button>
+              </div>
             </div>
           ) : (
             <div className="table-container">

@@ -1,6 +1,7 @@
 import { useMutation, useQuery, useQueryClient } from '@tanstack/react-query';
-import { Award, Clock, Compass, Flag, Plus } from 'lucide-react';
+import { Award, Clock, Compass, Flag, Plus, AlertCircle } from 'lucide-react';
 import { useCallback, useEffect, useRef, useState } from 'react';
+import { useSearchParams, useNavigate } from 'react-router-dom';
 import { apiClient, normalizeListResponse } from '../api/client';
 import { triggerConfetti } from '../utils/confetti';
 import ExamWizard from '../components/wizard/ExamWizard';
@@ -38,7 +39,12 @@ interface ExamSimulation {
 }
 
 export default function Simulation() {
+  const navigate = useNavigate();
+  const [searchParams] = useSearchParams();
   const queryClient = useQueryClient();
+
+  const queryExamPrepId = searchParams.get('examPrepId');
+  const querySubjectId = searchParams.get('subjectId');
 
   const [selectedExamPrepId, setSelectedExamPrepId] = useState<number | ''>('');
   const [simulationStarted, setSimulationStarted] = useState(false);
@@ -57,6 +63,7 @@ export default function Simulation() {
   const [simulationCompleted, setSimulationCompleted] = useState(false);
   const [resultScore, setResultScore] = useState<number | null>(null);
   const [showWizard, setShowWizard] = useState(false);
+  const [startError, setStartError] = useState<string | null>(null);
 
   const { data: examPreps = [] } = useQuery<ExamPrep[]>({
     queryKey: ['exam-preps'],
@@ -67,10 +74,12 @@ export default function Simulation() {
   });
 
   useEffect(() => {
-    if (examPreps.length > 0 && selectedExamPrepId === '') {
+    if (queryExamPrepId && examPreps.some(ep => ep.id === Number(queryExamPrepId))) {
+      setSelectedExamPrepId(Number(queryExamPrepId));
+    } else if (examPreps.length > 0 && selectedExamPrepId === '') {
       setSelectedExamPrepId(examPreps[0].id);
     }
-  }, [examPreps, selectedExamPrepId]);
+  }, [examPreps, selectedExamPrepId, queryExamPrepId]);
 
   const selectedPrep = examPreps.find(ep => ep.id === selectedExamPrepId);
 
@@ -104,12 +113,13 @@ export default function Simulation() {
       }
     },
     onError: (error: { response?: { data?: { message?: string } } }) => {
-      const msg = error?.response?.data?.message || 'Erro ao iniciar simulado. Verifique se há material de estudo disponível.';
-      alert(msg);
+      const msg = error?.response?.data?.message || 'Ainda não encontramos questões para esta prova. Envie um PDF na Área de Estudos para que a IA gere seu simulado!';
+      setStartError(msg);
     }
   });
 
   const handleStartSimulation = () => {
+    setStartError(null);
     if (selectedExamPrepId) {
       startSimulationMutation.mutate(Number(selectedExamPrepId));
     }
@@ -271,9 +281,27 @@ export default function Simulation() {
             </p>
           </div>
 
+          {startError && (
+            <div style={{ padding: '12px 16px', backgroundColor: 'rgba(239, 68, 68, 0.12)', border: '1px solid rgba(239, 68, 68, 0.3)', borderRadius: '8px', color: '#ef4444', marginBottom: '20px', fontSize: '0.88rem' }}>
+              <div style={{ display: 'flex', alignItems: 'center', gap: '8px', marginBottom: '6px' }}>
+                <AlertCircle size={16} />
+                <span style={{ fontWeight: 700 }}>Atenção</span>
+              </div>
+              <p style={{ margin: '0 0 10px 0', fontSize: '0.84rem', lineHeight: 1.4 }}>{startError}</p>
+              <button
+                type="button"
+                className="btn btn-secondary btn-sm"
+                onClick={() => navigate('/workspace')}
+                style={{ fontSize: '0.8rem', padding: '5px 12px' }}
+              >
+                Ir para Área de Estudos e enviar PDF →
+              </button>
+            </div>
+          )}
+
           <div className="form-group" style={{ marginBottom: '20px' }}>
             <div style={{ display: 'flex', justifyContent: 'space-between', alignItems: 'center', marginBottom: '8px' }}>
-              <label className="form-label" style={{ margin: 0 }}>Selecione o Exame Alvo</label>
+              <label className="form-label" style={{ margin: 0 }}>De qual prova será o simulado?</label>
               <button
                 type="button"
                 className="btn btn-secondary btn-sm"
@@ -286,28 +314,43 @@ export default function Simulation() {
             </div>
 
             {examPreps.length === 0 ? (
-              <div style={{ padding: '16px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
-                <p style={{ fontSize: '13px', color: 'var(--text-secondary)', marginBottom: '12px' }}>
-                  Nenhuma prova cadastrada ainda. Crie seu plano de estudos para iniciar o simulado!
+              <div style={{ padding: '24px 16px', borderRadius: '8px', background: 'var(--bg-tertiary)', border: '1px dashed var(--border-color)', textAlign: 'center' }}>
+                <p style={{ fontSize: '0.92rem', color: 'var(--text-secondary)', marginBottom: '16px', lineHeight: 1.5 }}>
+                  Você ainda não tem questões. Envie um PDF e a IA cria questões de vestibular pra você.
                 </p>
-                <button
-                  type="button"
-                  className="btn btn-primary btn-sm"
-                  onClick={() => setShowWizard(true)}
-                >
-                  + Cadastrar Primeira Prova
-                </button>
+                <div style={{ display: 'flex', gap: '10px', justifyContent: 'center', flexWrap: 'wrap' }}>
+                  <button
+                    type="button"
+                    className="btn btn-primary btn-sm"
+                    onClick={() => navigate('/workspace')}
+                    style={{ display: 'inline-flex', alignItems: 'center', gap: '6px' }}
+                  >
+                    <span>Enviar PDF</span>
+                  </button>
+                  <button
+                    type="button"
+                    className="btn btn-secondary btn-sm"
+                    onClick={() => setShowWizard(true)}
+                  >
+                    + Cadastrar Primeira Prova
+                  </button>
+                </div>
               </div>
             ) : (
-              <select className="form-input" value={selectedExamPrepId} onChange={e => setSelectedExamPrepId(e.target.value ? Number(e.target.value) : '')}>
-                <option value="">Escolher Exame...</option>
+              <select className="form-input" value={selectedExamPrepId} onChange={e => { setSelectedExamPrepId(e.target.value ? Number(e.target.value) : ''); setStartError(null); }}>
+                <option value="">Escolher Prova...</option>
                 {examPreps.map(e => <option key={e.id} value={e.id}>{e.title}</option>)}
               </select>
             )}
           </div>
 
-          <button className="btn btn-primary" style={{ width: '100%' }} disabled={!selectedExamPrepId} onClick={handleStartSimulation}>
-            Iniciar Simulado (15 Minutos)
+          <button
+            className="btn btn-primary"
+            style={{ width: '100%' }}
+            disabled={!selectedExamPrepId || startSimulationMutation.isPending}
+            onClick={handleStartSimulation}
+          >
+            {startSimulationMutation.isPending ? 'Preparando Simulado...' : 'Iniciar Simulado (15 Minutos)'}
           </button>
         </div>
       ) : simulationCompleted ? (

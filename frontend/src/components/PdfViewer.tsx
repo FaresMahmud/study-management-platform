@@ -1,6 +1,6 @@
 import React, { useState, useEffect, useRef, useCallback } from 'react';
 import { useQuery, useMutation } from '@tanstack/react-query';
-import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X, AlertCircle, RefreshCw, Maximize2 } from 'lucide-react';
+import { ChevronLeft, ChevronRight, Highlighter, MessageSquare, ZoomIn, ZoomOut, ArrowRight, Trash2, FileText, Edit3, Type, X, AlertCircle, RefreshCw, Maximize2, Upload } from 'lucide-react';
 import axios from 'axios';
 import { apiClient } from '../api/client';
 import { useAuthStore } from '../store/authStore';
@@ -25,13 +25,15 @@ interface PdfViewerProps {
   pdfFiles: PDFFile[];
   onCite: (text: string, fileName: string, pageNum: number) => void;
   selectedSubjectId?: number;
+  onUpload?: (e: React.ChangeEvent<HTMLInputElement>) => void;
 }
 
 export default function PdfViewer({
   activeFileId,
   activeSummaryId,
   pdfFiles,
-  onCite
+  onCite,
+  onUpload
 }: PdfViewerProps) {
   const [pdfDoc, setPdfDoc] = useState<pdfjsLib.PDFDocumentProxy | null>(null);
   const [pageNum, setPageNum] = useState(1);
@@ -801,12 +803,29 @@ export default function PdfViewer({
         {!pdfError && !pdfLoading && (!activeFileId || pdfFiles.length === 0) && (
           <div style={{ display: 'flex', flexDirection: 'column', alignItems: 'center', justifyContent: 'center', height: '100%', padding: '2rem', textAlign: 'center', color: '#94a3b8', margin: 'auto' }}>
             <FileText size={48} style={{ color: 'var(--primary)', opacity: 0.7, marginBottom: '1rem' }} />
-            <h3 style={{ color: 'white', marginBottom: '0.5rem', fontSize: '1.1rem' }}>Nenhum PDF selecionado</h3>
-            <p style={{ maxWidth: '360px', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1rem', lineHeight: 1.5 }}>
+            <h3 style={{ color: 'white', marginBottom: '0.5rem', fontSize: '1.1rem' }}>
+              {pdfFiles.length === 0 ? 'Nenhum PDF nesta matéria' : 'Nenhum PDF selecionado'}
+            </h3>
+            <p style={{ maxWidth: '360px', fontSize: '0.85rem', color: '#94a3b8', marginBottom: '1.25rem', lineHeight: 1.5 }}>
               {pdfFiles.length === 0
-                ? 'Esta matéria ainda não possui arquivos PDF. Clique em "+ PDF" no topo para enviar o material de aula.'
+                ? 'Esta matéria ainda não possui arquivos PDF. Envie seu material para ler e gerar anotações integradas.'
                 : 'Selecione um dos PDFs da lista acima para iniciar a leitura e anotações.'}
             </p>
+            {pdfFiles.length === 0 && onUpload && (
+              <label
+                className="btn btn-primary btn-sm"
+                style={{ cursor: 'pointer', display: 'inline-flex', alignItems: 'center', gap: '6px', padding: '8px 18px', fontWeight: 700 }}
+              >
+                <Upload size={15} />
+                <span>Enviar meu primeiro PDF</span>
+                <input
+                  type="file"
+                  accept="application/pdf,.pdf"
+                  style={{ display: 'none' }}
+                  onChange={onUpload}
+                />
+              </label>
+            )}
           </div>
         )}
 
