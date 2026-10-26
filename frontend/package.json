@@ -14,15 +14,15 @@
   },
   "dependencies": {
     "@tanstack/react-query": "^5.101.0",
-    "axios": "^1.17.0",
-    "lucide-react": "^1.17.0",
-    "pdfjs-dist": "^6.1.200",
+    "axios": "^1.20.0",
+    "lucide-react": "^1.61.0",
+    "pdfjs-dist": "^6.4.299",
     "react": "^19.2.6",
     "react-dom": "^19.2.6",
     "react-is": "^19.2.7",
     "react-router-dom": "^7.17.0",
     "recharts": "^3.8.1",
-    "zustand": "^5.0.14"
+    "zustand": "^5.0.16"
   },
   "devDependencies": {
     "@eslint/js": "^10.0.1",
